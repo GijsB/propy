@@ -1,0 +1,1 @@
+from propy.wageningen_b import WageningenBPropeller
