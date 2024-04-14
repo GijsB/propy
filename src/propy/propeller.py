@@ -479,6 +479,54 @@ class Propeller(ABC):
             x0=1e-3
         ).root
 
+    def kq_inv(self, kq):
+        """
+        The inverse function of the kq polynomial (vectorized)
+
+        Calculates j as a function of a given kq. This function differs from kq_inv_single in that this approximation is
+        made using a cubic spline interpolation. This way, it's very fast for calculating array's of kq's.
+
+        Parameters
+        ----------
+        kq: float or array-like
+            The torque coefficients
+
+        Returns
+        -------
+        j: float or array-like
+            The advance ratio's
+        """
+        if not hasattr(self, '_kq_inv'):
+            j = linspace(-0.1, self.j_max+0.1, 100)
+            j = j[::-1]
+            kqs = self.kq(j)
+            self._kq_inv = CubicSpline(kqs, j)
+        return self._kq_inv(kq)
+
+    def kq_inv_single(self, kq):
+        """
+        The inverse function of the kq polynomial (single)
+
+        Calculates j as a function of a given kq. This function differs from kq_inv in that this approximation is
+        made using a root finding algorithm. This way, it's more precise, but only a single value can be calculated at a
+        time.
+
+        Parameters
+        ----------
+        kq: float
+            The torque coefficient
+
+        Returns
+        -------
+        j: float
+            The advance ratio
+        """
+        return root_scalar(
+            f=lambda j: self.kq(j) - kq,
+            bracket=[-1e-9, self.j_max],
+            x0=1e-3
+        ).root
+
     def _find_j_for_ktj2(self, ktj2):
         return root_scalar(
             f=lambda j: self.kt(j)/j**2 - ktj2,
