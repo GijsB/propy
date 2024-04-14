@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, replace
-from numpy import pi, ndarray, array
+from numpy import pi, ndarray, array, linspace
 from scipy.optimize import root_scalar, minimize
+from scipy.interpolate import CubicSpline
 
 
 @dataclass
@@ -429,6 +430,54 @@ class Propeller(ABC):
             The torque coefficients of the propeller
         """
         pass
+
+    def kt_inv(self, kt):
+        """
+        The inverse function of the kt polynomial (vectorized)
+
+        Calculates j as a function of a given kt. This function differs from kt_inv_single in that this approximation is
+        made using a cubic spline interpolation. This way, it's very fast for calculating array's of kt's.
+
+        Parameters
+        ----------
+        kt: float or array-like
+            The thrust coefficients
+
+        Returns
+        -------
+        j: float or array-like
+            The advance ratio's
+        """
+        if not hasattr(self, '_kt_inv'):
+            j = linspace(-0.1, self.j_max+0.1, 100)
+            j = j[::-1]
+            kts = self.kt(j)
+            self._kt_inv = CubicSpline(kts, j)
+        return self._kt_inv(kt)
+
+    def kt_inv_single(self, kt):
+        """
+        The inverse function of the kt polynomial (single)
+
+        Calculates j as a function of a given kt. This function differs from kt_inv in that this approximation is
+        made using a root finding algorithm. This way, it's more precise, but only a single value can be calculated at a
+        time.
+
+        Parameters
+        ----------
+        kt: float
+            The thrust coefficient
+
+        Returns
+        -------
+        j: float
+            The advance ratio
+        """
+        return root_scalar(
+            f=lambda j: self.kt(j) - kt,
+            bracket=[-1e-9, self.j_max],
+            x0=1e-3
+        ).root
 
     def _find_j_for_ktj2(self, ktj2):
         return root_scalar(
