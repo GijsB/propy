@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, replace
 from numpy import pi, ndarray, array
-from scipy.optimize import root_scalar, minimize, minimize_scalar
+from scipy.optimize import root_scalar, minimize
 
 
 @dataclass
@@ -49,16 +49,23 @@ class Propeller(ABC):
 
         return res
 
-    def find_j_for_ktj2(self, ktj2):
+    def _find_j_for_ktj2(self, ktj2):
         return root_scalar(
             f=lambda j: self.kt(j)/j**2 - ktj2,
             bracket=[1e-9, self.j_max],
             x0=0.8*self.j_max
         ).root
 
-    def find_j_for_ktj4(self, ktj4):
+    def _find_j_for_ktj4(self, ktj4):
         return root_scalar(
             f=lambda j: self.kt(j)/j**4 - ktj4,
+            bracket=[1e-9, self.j_max],
+            x0=0.8*self.j_max
+        ).root
+
+    def _find_j_for_kqj5(self, kqj5):
+        return root_scalar(
+            f=lambda j: self.kq(j)/j**5 - kqj5,
             bracket=[1e-9, self.j_max],
             x0=0.8*self.j_max
         ).root
@@ -76,7 +83,7 @@ class Propeller(ABC):
 
         def losses(x):
             p = replace(self, area_ratio=x[0], pd_ratio=x[1])
-            return 1 - p.eta(p.find_j_for_ktj2(ktj2))
+            return 1 - p.eta(p._find_j_for_ktj2(ktj2))
 
         opt_res = minimize(
             fun=losses,
@@ -93,18 +100,18 @@ class Propeller(ABC):
 
         def losses(x):
             p = replace(self, area_ratio=x[0], pd_ratio=x[1])
-            return 1 - p.eta(p.find_j_for_ktj4(ktj4))
+            return 1 - p.eta(p._find_j_for_ktj4(ktj4))
 
         def cavitation_margin(x):
             p = replace(self, area_ratio=x[0], pd_ratio=x[1])
-            d = velocity / n / p.find_j_for_ktj4(ktj4)
+            d = velocity / n / p._find_j_for_ktj4(ktj4)
             p = replace(p, diameter=d)
             min_ear = p.minimum_area_ratio(thrust, immersion, single_screw=single_screw, rho=rho)
             return x[0] - min_ear
 
         def immersion_margin(x):
             p = replace(self, area_ratio=x[0], pd_ratio=x[1])
-            d = velocity / n / p.find_j_for_ktj4(ktj4)
+            d = velocity / n / p._find_j_for_ktj4(ktj4)
             return immersion - d/2
 
         # noinspection PyTypeChecker
@@ -120,7 +127,46 @@ class Propeller(ABC):
         )
 
         prop = replace(self, area_ratio=opt_res.x[0], pd_ratio=opt_res.x[1])
-        diameter = velocity / n / prop.find_j_for_ktj4(ktj4)
+        diameter = velocity / n / prop._find_j_for_ktj4(ktj4)
+        prop = replace(prop, diameter=diameter)
+
+        return prop
+
+    def optimize_for_rotation_rate_and_power(self, power, n, velocity, immersion, single_screw=False, rho=1025):
+        kqj5 = power * n**2 / 2 / pi / rho / velocity**5
+
+        def losses(x):
+            p = replace(self, area_ratio=x[0], pd_ratio=x[1])
+            return 1 - p.eta(p._find_j_for_kqj5(kqj5))
+
+        def cavitation_margin(x):
+            p = replace(self, area_ratio=x[0], pd_ratio=x[1])
+            j = p._find_j_for_kqj5(kqj5)
+            d = velocity / n / j
+            p = replace(p, diameter=d)
+            thrust = p.kt(j) * rho * n**2 * d**4
+            min_ear = p.minimum_area_ratio(thrust, immersion, single_screw=single_screw, rho=rho)
+            return x[0] - min_ear
+
+        def immersion_margin(x):
+            p = replace(self, area_ratio=x[0], pd_ratio=x[1])
+            d = velocity / n / p._find_j_for_kqj5(kqj5)
+            return immersion - d/2
+
+        # noinspection PyTypeChecker
+        opt_res = minimize(
+            fun=losses,
+            x0=array([self.area_ratio, self.pd_ratio]),
+            bounds=[(self.area_ratio_min, self.area_ratio_max),
+                    (self.pd_ratio_min, self.pd_ratio_max)],
+            constraints=[
+                {'type': 'ineq', 'fun': cavitation_margin},
+                {'type': 'ineq', 'fun': immersion_margin}
+            ]
+        )
+
+        prop = replace(self, area_ratio=opt_res.x[0], pd_ratio=opt_res.x[1])
+        diameter = velocity / n / prop._find_j_for_kqj5(kqj5)
         prop = replace(prop, diameter=diameter)
 
         return prop
