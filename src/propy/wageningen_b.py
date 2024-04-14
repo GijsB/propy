@@ -4,36 +4,16 @@ from dataclasses import dataclass
 from numpy.polynomial.polynomial import Polynomial
 
 
-
 @dataclass
 class WageningenBPropeller(Propeller):
-    area_ratio: float
-    pd_ratio: float
 
     def __post_init__(self):
         super().__post_init__()
 
-        if not (self.blades >= 2):
-            raise ValueError(f'Amount of blades (= {self.blades}) must be >= 2')
-
-        if not (self.blades <= 7):
-            raise ValueError(f'Amount of blades (= {self.blades}) must be <= 7')
-
-        if not (self.area_ratio >= 0.3):
-            raise ValueError(f'Area ratio (= {self.area_ratio}) must be >= 0.3')
-
-        if not (self.area_ratio <= 1.05):
-            raise ValueError(f'Area ratio (= {self.area_ratio}) must be <= 1.05')
-
-        if not (self.pd_ratio >= 0.5):
-            raise ValueError(f'Pitch/Diameter ratio (= {self.pd_ratio}) must be >= 0.5')
-
-        if not (self.pd_ratio <= 1.4):
-            raise ValueError(f'Pitch/Diameter ratio (= {self.pd_ratio}) must be <= 1.4')
-
         self.kt = self._calc_kt_pol()
         self.kq = self._calc_kq_pol()
-
+        kt_root = self.kt.roots()
+        self._j_max = min(kt_root[(kt_root > 0) & (kt_root < 1.6)])
 
     def _calc_kq_pol(self):
         return Polynomial(coef=[
@@ -129,6 +109,34 @@ class WageningenBPropeller(Propeller):
             - 0.001022960 * self.pd_ratio**3 * self.area_ratio**0 * self.blades**1 +
               0.0000565229* self.pd_ratio**6 * self.area_ratio**1 * self.blades**2
         ], symbol='J')
+
+    @property
+    def blades_min(self):
+        return 2
+
+    @property
+    def blades_max(self):
+        return 7
+
+    @property
+    def area_ratio_min(self):
+        return 0.3
+
+    @property
+    def area_ratio_max(self):
+        return 1.05
+
+    @property
+    def pd_ratio_min(self):
+        return 0.5
+
+    @property
+    def pd_ratio_max(self):
+        return 1.4
+
+    @property
+    def j_max(self):
+        return self._j_max
 
     def kt(self, j):
         pass
