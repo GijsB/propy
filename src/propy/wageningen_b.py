@@ -6,6 +6,27 @@ from numpy.polynomial.polynomial import Polynomial
 
 @dataclass
 class WageningenBPropeller(Propeller):
+    """
+    A propeller of the Wageningen-B type. This propeller is defined by 2 polynomials for the thrust- and
+    torque-coefficients. The polynomials are defined in [1].
+
+    References
+    ----------
+        [1] M. M. Bernitsas, D. Ray and P. Kinley: Kt, Kq and efficiency curves for the wageningen b-series propellers,
+        Department of Naval Architecture and Marine Engineering, University of Michigan. May 1981.
+
+    Fields
+    ------
+    blades: int
+        The amount of blades on the propeller
+    diameter: float
+        The diameter of the propeller in [m], must be >0.
+    area_ratio: float
+        The expanded area ratio of the propeller, which is defined as the ratio of the expanded blade area and the
+        disk-area of the propeller.
+    pd_ratio: float
+        The ratio between the pitch [m] and the diameter [m] of the propeller.
+    """
 
     def __post_init__(self):
         super().__post_init__()
