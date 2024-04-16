@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, replace
-from numpy import pi, ndarray, array, linspace
+
+
+from numpy import pi, ndarray, array, linspace, inf
 from scipy.optimize import root_scalar, minimize
 from scipy.interpolate import CubicSpline
 
@@ -100,21 +102,22 @@ class Propeller(ABC):
             min_area_ratio += 0.2
         return min_area_ratio
 
-    def optimize_for_t_d(self, thrust, velocity, immersion, single_screw=False, rho=1025):
+    def optimize_for_t_v(self, thrust, velocity, n_max=1e300, q_max=1e300, diameter_max=inf, immersion=inf,
+                         single_screw=False, rho=1025):
         """
-        Optimize the propeller for a given thrust and diameter
+        Optimize the propeller for a given thrust and velocity
 
-        This propeller will be optimized for a given amount of thrust, the propeller diameter will also be held
-        constant. The optimization will attempt to optimize the efficiency of the propeller at a given velocity. The
-        result will be returned in the form of a new propeller of the same type, but with the following fields
-        optimized:
+        This propeller will be optimized for a given amount of thrust and velocity. The optimization will attempt to
+        optimize the efficiency of the propeller at a given velocity. The result will be returned in the form of a new
+        propeller of the same type, but with the following fields optimized:
+         - diameter: The total diameter of the propeller
          - area_ratio: The expanded area ratio
          - pd_ratio: The pitch/diameter ratio
         The optimization occurs via the method explained in [1].
 
         References
         ----------
-            [1] G. Kuiper, The Wageningen propeller series, MARIN Publication 92-001, 1992
+        .. [1] G. Kuiper, The Wageningen propeller series, MARIN Publication 92-001, 1992
 
         Parameters
         ----------
@@ -122,6 +125,12 @@ class Propeller(ABC):
             The required thrust for this working point [N]
         velocity: float
             The velocity of the propeller [m/s]
+        n_max: float
+            The maximum rotational speed [1/s] or [Hz]
+        q_max: float
+            The maximum required torque [Nm]
+        diameter_max: float
+            The maximum allowed diameter [m]
         immersion: float
             The minimum expected immersion below the waterline [m].
         single_screw: bool
@@ -132,23 +141,49 @@ class Propeller(ABC):
         Returns
         -------
         Propeller
-            A new propeller with optimum area_ratio and pd_ratio
+            A new propeller with optimum diameter, area_ratio and pd_ratio
         """
-        min_area_ratio = self.minimum_area_ratio(thrust, immersion, single_screw=single_screw, rho=rho)
-        min_area_ratio = max(min_area_ratio, 0.3)
-        ktj2 = thrust / rho / velocity ** 2 / self.diameter ** 2
-
         def losses(x):
-            p = replace(self, area_ratio=x[0], pd_ratio=x[1])
+            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            ktj2 = thrust / rho / velocity ** 2 / x[0] ** 2
             return 1 - p.eta(p._find_j_for_ktj2(ktj2))
 
+        def cavitation_margin(x):
+            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            min_ear = p.minimum_area_ratio(thrust, immersion, single_screw=single_screw, rho=rho)
+            return x[1] - min_ear
+
+        def n_margin(x):
+            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            _, n, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
+            return n_max - n
+
+        def q_margin(x):
+            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            q, _, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
+            return q_max - q
+
+        # noinspection PyTypeChecker
         opt_res = minimize(
             fun=losses,
-            x0=array([self.area_ratio, self.pd_ratio]),
-            bounds=[(min_area_ratio, 1.05), (0.5, 1.4)]
+            x0=array([
+                self.diameter,
+                self.area_ratio,
+                self.pd_ratio]
+            ),
+            bounds=[
+                (0, min(2*immersion, diameter_max)),
+                (self.area_ratio_min, self.area_ratio_max),
+                (self.pd_ratio_min, self.pd_ratio_max)
+            ],
+            constraints=[
+                {'type': 'ineq', 'fun': cavitation_margin},
+                {'type': 'ineq', 'fun': n_margin},
+                {'type': 'ineq', 'fun': q_margin},
+            ]
         )
 
-        prop = replace(self, area_ratio=opt_res.x[0], pd_ratio=opt_res.x[1])
+        prop = replace(self, diameter=opt_res.x[0], area_ratio=opt_res.x[1], pd_ratio=opt_res.x[2])
 
         return prop
 
@@ -526,6 +561,16 @@ class Propeller(ABC):
             bracket=[-1e-9, self.j_max],
             x0=1e-3
         ).root
+
+    def calculate_operating_point(self, thrust, velocity, rho=1025.0):
+        ktj2 = thrust / rho / velocity**2 / self.diameter**2
+        j = self._find_j_for_ktj2(ktj2)
+        kt = ktj2 * j**2
+        kq = self.kq(j)
+        eta = kt * j / 2 / pi / kq
+        n = velocity / j / self.diameter
+        torque = kq * rho * n**2 * self.diameter**5
+        return torque, n, j, kt, kq, eta
 
     def _find_j_for_ktj2(self, ktj2):
         return root_scalar(
