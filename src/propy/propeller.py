@@ -102,18 +102,17 @@ class Propeller(ABC):
             min_area_ratio += 0.2
         return min_area_ratio
 
-    def optimize_for_t_v(self, thrust, velocity, n_max=1e300, q_max=1e300, diameter_max=inf, immersion=inf,
-                         single_screw=False, rho=1025):
+    def optimize_efficiency_for_t_v(self, thrust, velocity, n_max=None, q_max=None, diameter_max=None, immersion=None,
+                                    single_screw=False, rho=1025):
         """
-        Optimize the propeller for a given thrust and velocity
+        Optimize the efficiency of a propeller for a given thrust and velocity
 
-        This propeller will be optimized for a given amount of thrust and velocity. The optimization will attempt to
-        optimize the efficiency of the propeller at a given velocity. The result will be returned in the form of a new
-        propeller of the same type, but with the following fields optimized:
+        This propeller will be optimized for a given amount of thrust and velocity. The result will be returned in the
+        form of a new propeller of the same type, but with the following fields optimized:
          - diameter: The total diameter of the propeller
          - area_ratio: The expanded area ratio
          - pd_ratio: The pitch/diameter ratio
-        The optimization occurs via the method explained in [1].
+        The optimization is inspired by [1].
 
         References
         ----------
@@ -145,7 +144,7 @@ class Propeller(ABC):
         """
         def losses(x):
             p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
-            ktj2 = thrust / rho / velocity ** 2 / x[0] ** 2
+            ktj2 = thrust / rho / velocity ** 2 / p.diameter**2
             return 1 - p.eta(p._find_j_for_ktj2(ktj2))
 
         def cavitation_margin(x):
@@ -163,6 +162,21 @@ class Propeller(ABC):
             q, _, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
             return q_max - q
 
+        constraints = []
+        if immersion:
+            constraints.append({'type': 'ineq', 'fun': cavitation_margin})
+            if diameter_max:
+                diameter_max = min(diameter_max, immersion*2)
+            else:
+                diameter_max = immersion*2
+        else:
+            if diameter_max is None:
+                diameter_max = inf
+        if n_max:
+            constraints.append({'type': 'ineq', 'fun': n_margin})
+        if q_max:
+            constraints.append({'type': 'ineq', 'fun': q_margin})
+
         # noinspection PyTypeChecker
         opt_res = minimize(
             fun=losses,
@@ -172,163 +186,67 @@ class Propeller(ABC):
                 self.pd_ratio]
             ),
             bounds=[
-                (0, min(2*immersion, diameter_max)),
+                (0, diameter_max),
                 (self.area_ratio_min, self.area_ratio_max),
                 (self.pd_ratio_min, self.pd_ratio_max)
             ],
-            constraints=[
-                {'type': 'ineq', 'fun': cavitation_margin},
-                {'type': 'ineq', 'fun': n_margin},
-                {'type': 'ineq', 'fun': q_margin},
-            ]
+            constraints=constraints
         )
 
         prop = replace(self, diameter=opt_res.x[0], area_ratio=opt_res.x[1], pd_ratio=opt_res.x[2])
 
         return prop
 
-    def optimize_for_t_n(self, thrust, n, velocity, immersion, single_screw=False, rho=1025):
-        """
-        Optimize the propeller for a given thrust and rotation speed
-
-        This propeller will be optimized for a given amount of thrust and rotation speed. The optimization will attempt
-        to optimize the efficiency of the propeller at a given velocity. The result will be returned in the form of a
-        new propeller of the same type, but with the following fields optimized:
-         - diameter: The diameter of the propeller
-         - area_ratio: The expanded area ratio
-         - pd_ratio: The pitch/diameter ratio
-        The optimization occurs via the method explained in [1].
-
-        References
-        ----------
-            [1] G. Kuiper, The Wageningen propeller series, MARIN Publication 92-001, 1992
-
-        Parameters
-        ----------
-        thrust: float
-            The required thrust for this working point [N]
-        n: float
-            The rotation speed of the propeller [1/s] or [Hz]
-        velocity: float
-            The velocity of the propeller [m/s]
-        immersion: float
-            The minimum expected immersion below the waterline [m].
-        single_screw: bool
-            True when the ship has a single screw and this has a non-smooth wake.
-        rho: float
-            The density of the fluid [kg/m^3].
-
-        Returns
-        -------
-        Propeller
-            A new propeller with optimum diameter, area_ratio and pd_ratio
-        """
-        ktj4 = thrust * n**2 / rho / velocity**4
-
-        def losses(x):
+    def optimize_bollard_thrust_for_q_n(self, q, n, diameter_max=None, immersion=None, single_screw=False, rho=1025):
+        def neg_thrust(x):
             p = replace(self, area_ratio=x[0], pd_ratio=x[1])
-            return 1 - p.eta(p._find_j_for_ktj4(ktj4))
+            d = (q / rho / n**2 / p.kq_max) ** (1 / 5)
+            t = p.kt_max * rho * n**2 * d**4
+            return -t
 
         def cavitation_margin(x):
             p = replace(self, area_ratio=x[0], pd_ratio=x[1])
-            d = velocity / n / p._find_j_for_ktj4(ktj4)
+            d = (q / rho / n ** 2 / p.kq_max) ** (1 / 5)
+            t = p.kt_max * rho * n ** 2 * d ** 4
             p = replace(p, diameter=d)
-            min_ear = p.minimum_area_ratio(thrust, immersion, single_screw=single_screw, rho=rho)
-            return x[0] - min_ear
+            min_ear = p.minimum_area_ratio(t, immersion, single_screw=single_screw, rho=rho)
+            return x[1] - min_ear
 
-        def immersion_margin(x):
+        constraints = []
+        if immersion:
+            constraints.append({'type': 'ineq', 'fun': cavitation_margin})
+            if diameter_max:
+                diameter_max = min(diameter_max, immersion * 2)
+            else:
+                diameter_max = immersion * 2
+
+        def diameter_margin(x):
             p = replace(self, area_ratio=x[0], pd_ratio=x[1])
-            d = velocity / n / p._find_j_for_ktj4(ktj4)
-            return immersion - d/2
+            d = (q / rho / n ** 2 / p.kq_max) ** (1 / 5)
+            return diameter_max - d
+
+        if diameter_max:
+            constraints.append({'type': 'ineq', 'fun': diameter_margin})
 
         # noinspection PyTypeChecker
         opt_res = minimize(
-            fun=losses,
-            x0=array([self.area_ratio, self.pd_ratio]),
-            bounds=[(self.area_ratio_min, self.area_ratio_max),
-                    (self.pd_ratio_min, self.pd_ratio_max)],
-            constraints=[
-                {'type': 'ineq', 'fun': cavitation_margin},
-                {'type': 'ineq', 'fun': immersion_margin}
-            ]
+            fun=neg_thrust,
+            x0=array([
+                self.area_ratio,
+                self.pd_ratio]
+            ),
+            bounds=[
+                (self.area_ratio_min, self.area_ratio_max),
+                (self.pd_ratio_min, self.pd_ratio_max)
+            ],
+            constraints=constraints
         )
 
-        prop = replace(self, area_ratio=opt_res.x[0], pd_ratio=opt_res.x[1])
-        diameter = velocity / n / prop._find_j_for_ktj4(ktj4)
-        prop = replace(prop, diameter=diameter)
-
-        return prop
-
-    def optimize_for_p_n(self, power, n, velocity, immersion, single_screw=False, rho=1025):
-        """
-        Optimize the propeller for a given motor power and rotation speed
-
-        This propeller will be optimized for a given amount of motor power and rotation speed. The optimization will
-        attempt to optimize the efficiency of the propeller at a given velocity. The result will be returned in the form
-        of a new propeller of the same type, but with the following fields optimized:
-         - diameter: The diameter of the propeller
-         - area_ratio: The expanded area ratio
-         - pd_ratio: The pitch/diameter ratio
-        The optimization occurs via the method explained in [1].
-
-        References
-        ----------
-            [1] G. Kuiper, The Wageningen propeller series, MARIN Publication 92-001, 1992
-
-        Parameters
-        ----------
-        power: float
-            The motor power for this working point [N]
-        n: float
-            The rotation speed of the propeller [1/s] or [Hz]
-        velocity: float
-            The velocity of the propeller [m/s]
-        immersion: float
-            The minimum expected immersion below the waterline [m].
-        single_screw: bool
-            True when the ship has a single screw and this has a non-smooth wake.
-        rho: float
-            The density of the fluid [kg/m^3].
-
-        Returns
-        -------
-        Propeller
-            A new propeller with optimum diameter, area_ratio and pd_ratio
-        """
-        kqj5 = power * n**2 / 2 / pi / rho / velocity**5
-
-        def losses(x):
-            p = replace(self, area_ratio=x[0], pd_ratio=x[1])
-            return 1 - p.eta(p._find_j_for_kqj5(kqj5))
-
-        def cavitation_margin(x):
-            p = replace(self, area_ratio=x[0], pd_ratio=x[1])
-            j = p._find_j_for_kqj5(kqj5)
-            d = velocity / n / j
-            p = replace(p, diameter=d)
-            thrust = p.kt(j) * rho * n**2 * d**4
-            min_ear = p.minimum_area_ratio(thrust, immersion, single_screw=single_screw, rho=rho)
-            return x[0] - min_ear
-
-        def immersion_margin(x):
-            p = replace(self, area_ratio=x[0], pd_ratio=x[1])
-            d = velocity / n / p._find_j_for_kqj5(kqj5)
-            return immersion - d/2
-
-        # noinspection PyTypeChecker
-        opt_res = minimize(
-            fun=losses,
-            x0=array([self.area_ratio, self.pd_ratio]),
-            bounds=[(self.area_ratio_min, self.area_ratio_max),
-                    (self.pd_ratio_min, self.pd_ratio_max)],
-            constraints=[
-                {'type': 'ineq', 'fun': cavitation_margin},
-                {'type': 'ineq', 'fun': immersion_margin}
-            ]
-        )
+        if not opt_res.success:
+            print(opt_res)
 
         prop = replace(self, area_ratio=opt_res.x[0], pd_ratio=opt_res.x[1])
-        diameter = velocity / n / prop._find_j_for_kqj5(kqj5)
+        diameter = (q / rho / n ** 2 / prop.kq_max) ** (1 / 5)
         prop = replace(prop, diameter=diameter)
 
         return prop
@@ -357,48 +275,6 @@ class Propeller(ABC):
 
         if not (self.pd_ratio <= self.pd_ratio_max):
             raise ValueError(f'Pitch/Diameter ratio (= {self.pd_ratio}) must be <= {self.pd_ratio_max}')
-
-    @property
-    @abstractmethod
-    def j_max(self):
-        """The maximum valid advance-ratio of this propeller"""
-        pass
-
-    @property
-    @abstractmethod
-    def blades_min(self):
-        """The minimum amount of blades of this propeller type"""
-        pass
-
-    @property
-    @abstractmethod
-    def blades_max(self):
-        """The maximum amount of blades of this propeller type"""
-        pass
-
-    @property
-    @abstractmethod
-    def area_ratio_min(self):
-        """The minimum expanded area ratio of this propeller type"""
-        pass
-
-    @property
-    @abstractmethod
-    def area_ratio_max(self):
-        """The maximum expanded area ratio of this propeller type"""
-        pass
-
-    @property
-    @abstractmethod
-    def pd_ratio_min(self):
-        """The minimum pitch/diameter ratio of this propeller type"""
-        pass
-
-    @property
-    @abstractmethod
-    def pd_ratio_max(self):
-        """The maximum pitch/diameter ratio of this propeller type"""
-        pass
 
     @abstractmethod
     def kt(self, j):
@@ -468,35 +344,10 @@ class Propeller(ABC):
 
     def kt_inv(self, kt):
         """
-        The inverse function of the kt polynomial (vectorized)
-
-        Calculates j as a function of a given kt. This function differs from kt_inv_single in that this approximation is
-        made using a cubic spline interpolation. This way, it's very fast for calculating array's of kt's.
-
-        Parameters
-        ----------
-        kt: float or array-like
-            The thrust coefficients
-
-        Returns
-        -------
-        j: float or array-like
-            The advance ratio's
-        """
-        if not hasattr(self, '_kt_inv'):
-            j = linspace(-0.1, self.j_max+0.1, 100)
-            j = j[::-1]
-            kts = self.kt(j)
-            self._kt_inv = CubicSpline(kts, j)
-        return self._kt_inv(kt)
-
-    def kt_inv_single(self, kt):
-        """
         The inverse function of the kt polynomial (single)
 
-        Calculates j as a function of a given kt. This function differs from kt_inv in that this approximation is
-        made using a root finding algorithm. This way, it's more precise, but only a single value can be calculated at a
-        time.
+        Calculates j as a function of a given kt. This is achieved using a root-finding algorithm. This way, it's more
+        precise, but only a single value can be calculated at a time.
 
         Parameters
         ----------
@@ -508,43 +359,23 @@ class Propeller(ABC):
         j: float
             The advance ratio
         """
-        return root_scalar(
-            f=lambda j: self.kt(j) - kt,
-            bracket=[-1e-9, self.j_max],
-            x0=1e-3
-        ).root
+        if kt >= self.kt_max:
+            return 0
+        elif kt <= self.kq_min:
+            return self.j_max
+        else:
+            return root_scalar(
+                f=lambda j: self.kt(j) - kt,
+                bracket=[0, self.j_max],
+                x0=self.j_max * (kt - self.kt_max) / (self.kt_min - self.kt_max)
+            ).root
 
     def kq_inv(self, kq):
         """
-        The inverse function of the kq polynomial (vectorized)
-
-        Calculates j as a function of a given kq. This function differs from kq_inv_single in that this approximation is
-        made using a cubic spline interpolation. This way, it's very fast for calculating array's of kq's.
-
-        Parameters
-        ----------
-        kq: float or array-like
-            The torque coefficients
-
-        Returns
-        -------
-        j: float or array-like
-            The advance ratio's
-        """
-        if not hasattr(self, '_kq_inv'):
-            j = linspace(-0.1, self.j_max+0.1, 100)
-            j = j[::-1]
-            kqs = self.kq(j)
-            self._kq_inv = CubicSpline(kqs, j)
-        return self._kq_inv(kq)
-
-    def kq_inv_single(self, kq):
-        """
         The inverse function of the kq polynomial (single)
 
-        Calculates j as a function of a given kq. This function differs from kq_inv in that this approximation is
-        made using a root finding algorithm. This way, it's more precise, but only a single value can be calculated at a
-        time.
+        Calculates j as a function of a given kq. This is achieved using a root-finding algorithm. This way, it's
+        precise, but only a single value can be calculated at a time.
 
         Parameters
         ----------
@@ -556,11 +387,16 @@ class Propeller(ABC):
         j: float
             The advance ratio
         """
-        return root_scalar(
-            f=lambda j: self.kq(j) - kq,
-            bracket=[-1e-9, self.j_max],
-            x0=1e-3
-        ).root
+        if kq >= self.kq_max:
+            return 0
+        elif kq <= self.kq_min:
+            return self.j_max
+        else:
+            return root_scalar(
+                f=lambda j: self.kq(j) - kq,
+                bracket=[0, self.j_max],
+                x0=self.j_max * (kq - self.kq_max) / (self.kq_min - self.kq_max)
+            ).root
 
     def calculate_operating_point(self, thrust, velocity, rho=1025.0):
         ktj2 = thrust / rho / velocity**2 / self.diameter**2
@@ -572,23 +408,67 @@ class Propeller(ABC):
         torque = kq * rho * n**2 * self.diameter**5
         return torque, n, j, kt, kq, eta
 
+    @property
+    @abstractmethod
+    def j_max(self):
+        """The maximum valid advance-ratio of this propeller"""
+        pass
+
+    @property
+    @abstractmethod
+    def blades_min(self):
+        """The minimum amount of blades of this propeller type"""
+        pass
+
+    @property
+    @abstractmethod
+    def blades_max(self):
+        """The maximum amount of blades of this propeller type"""
+        pass
+
+    @property
+    @abstractmethod
+    def area_ratio_min(self):
+        """The minimum expanded area ratio of this propeller type"""
+        pass
+
+    @property
+    @abstractmethod
+    def area_ratio_max(self):
+        """The maximum expanded area ratio of this propeller type"""
+        pass
+
+    @property
+    @abstractmethod
+    def pd_ratio_min(self):
+        """The minimum pitch/diameter ratio of this propeller type"""
+        pass
+
+    @property
+    @abstractmethod
+    def pd_ratio_max(self):
+        """The maximum pitch/diameter ratio of this propeller type"""
+        pass
+
+    @property
+    def kt_max(self):
+        return self.kt(0)
+
+    @property
+    def kt_min(self):
+        return 0
+
+    @property
+    def kq_max(self):
+        return self.kq(0)
+
+    @property
+    def kq_min(self):
+        return self.kq(self.j_max)
+
     def _find_j_for_ktj2(self, ktj2):
         return root_scalar(
             f=lambda j: self.kt(j)/j**2 - ktj2,
-            bracket=[1e-9, self.j_max],
-            x0=0.8*self.j_max
-        ).root
-
-    def _find_j_for_ktj4(self, ktj4):
-        return root_scalar(
-            f=lambda j: self.kt(j)/j**4 - ktj4,
-            bracket=[1e-9, self.j_max],
-            x0=0.8*self.j_max
-        ).root
-
-    def _find_j_for_kqj5(self, kqj5):
-        return root_scalar(
-            f=lambda j: self.kq(j)/j**5 - kqj5,
             bracket=[1e-9, self.j_max],
             x0=0.8*self.j_max
         ).root
