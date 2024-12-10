@@ -202,7 +202,7 @@ class Propeller(ABC):
             constraints=constraints
         )
 
-        prop = replace(self, diameter=opt_res.x[0], area_ratio=opt_res.x[1], pd_ratio=opt_res.x[2])
+        prop = replace(self, diameter=float(opt_res.x[0]), area_ratio=float(opt_res.x[1]), pd_ratio=float(opt_res.x[2]))
 
         return prop
 
@@ -254,7 +254,7 @@ class Propeller(ABC):
         if not opt_res.success:
             print(opt_res)
 
-        prop = replace(self, area_ratio=opt_res.x[0], pd_ratio=opt_res.x[1])
+        prop = replace(self, area_ratio=float(opt_res.x[0]), pd_ratio=float(opt_res.x[1]))
         diameter = (q / rho / n ** 2 / prop.kq_max) ** (1 / 5)
         prop = replace(prop, diameter=diameter)
 
