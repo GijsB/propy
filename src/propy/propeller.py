@@ -417,6 +417,16 @@ class Propeller(ABC):
         torque = kq * rho * n**2 * self.diameter**5
         return torque, n, j, kt, kq, eta
 
+    def calculate_operating_points(self, thrusts, velocities, rho=1025.0):
+        ktj2s = thrusts / rho / velocities**2 / self.diameter**2
+        js = array([self._find_j_for_ktj2(ktj2) for ktj2 in ktj2s])
+        kts = ktj2s * js**2
+        kqs = self.kq(js)
+        etas = kts * js / 2 / pi / kqs
+        ns = velocities / js / self.diameter
+        torques = kqs * rho * ns**2 * self.diameter**5
+        return torques, ns, js, kts, kqs, etas
+
     @property
     @abstractmethod
     def j_max(self):
