@@ -408,6 +408,40 @@ class Propeller(ABC):
             ).root
 
     def calculate_operating_point(self, thrust, velocity, rho=1025.0):
+        """
+        Calculate an operating point for this propeller.
+
+        Parameters
+        ----------
+        thrust: float
+            The required thrust [N]
+
+        velocity: float
+            The velocity of the incomming flow [m/s]
+
+        rho: float (optional)
+            The density of the fluid [kg/m^3]
+
+        Returns
+        -------
+        torque: float
+            The required torque on the shaft [Nm]
+
+        n: float
+            The required rotational speed of the propeller [Hz]
+
+        j: float
+            The advance ratio of this working point [-]
+
+        kt: float
+            The thrust coefficient of this working point [-]
+
+        kq: float
+            The torque coefficient of this working point [-]
+
+        eta: float
+            The efficiency of the propeller at this working point [-]
+        """
         ktj2 = thrust / rho / velocity**2 / self.diameter**2
         j = self._find_j_for_ktj2(ktj2)
         kt = ktj2 * j**2
@@ -418,6 +452,42 @@ class Propeller(ABC):
         return torque, n, j, kt, kq, eta
 
     def calculate_operating_points(self, thrusts, velocities, rho=1025.0):
+        """
+        Calculate an operating points for this propeller.
+
+        This is a vectorized version of the calculate_operating_point function.
+
+        Parameters
+        ----------
+        thrusts: array-like
+            The required thrusts [N]
+
+        velocities: array-like
+            The velocities of the incomming flow [m/s]
+
+        rho: float (optional)
+            The density of the fluid [kg/m^3]
+
+        Returns
+        -------
+        torques: array-like
+            The required torques on the shaft [Nm]
+
+        ns: array-like
+            The required rotational speed of the propeller [Hz]
+
+        js: array-like
+            The advance ratios of these working points [-]
+
+        kts: array-like
+            The thrust coefficients of these working points [-]
+
+        kqs: array-like
+            The torque coefficients of these workings point [-]
+
+        etas: float
+            The efficiencies of the propeller at these working points [-]
+        """
         ktj2s = thrusts / rho / velocities**2 / self.diameter**2
         js = array([self._find_j_for_ktj2(ktj2) for ktj2 in ktj2s])
         kts = ktj2s * js**2
