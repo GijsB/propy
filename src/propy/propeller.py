@@ -204,6 +204,73 @@ class Propeller(ABC):
 
         return prop
 
+
+    def optimize_eff_with_extremes(self, nom_point, constraint_points=(), n_max=None, q_max=None, diameter_max=None,
+                                   immersion=None, single_screw=False, tip_speed_max=None, rho=1025):
+        def losses(x, thrust, velocity):
+            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            ktj2 = thrust / rho / velocity ** 2 / p.diameter**2
+            return 1 - p.eta(p._find_j_for_ktj2(ktj2))
+
+        def cavitation_margin(x, thrust, velocity):
+            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            min_ear = p.minimum_area_ratio(thrust, immersion, single_screw=single_screw, rho=rho)
+            return x[1] - min_ear
+
+        def n_margin(x, thrust, velocity):
+            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            _, n, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
+            return n_max - n
+
+        def q_margin(x, thrust, velocity):
+            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            q, _, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
+            return q_max - q
+
+        def tip_speed(x, thrust, velocity):
+            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            _, n, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
+            return tip_speed_max - p.diameter * n * pi
+
+        constraint_points = [nom_point] + list(constraint_points)
+
+        constraints = []
+        for constraint_point in constraint_points:
+            if immersion:
+                constraints.append({'type': 'ineq', 'fun': cavitation_margin, 'args': constraint_point})
+                if diameter_max:
+                    diameter_max = min(diameter_max, immersion * 2)
+                else:
+                    diameter_max = immersion * 2
+            else:
+                if diameter_max is None:
+                    diameter_max = inf
+            if n_max:
+                constraints.append({'type': 'ineq', 'fun': n_margin, 'args': constraint_point})
+            if q_max:
+                constraints.append({'type': 'ineq', 'fun': q_margin, 'args': constraint_point})
+            if tip_speed_max:
+                constraints.append({'type': 'ineq', 'fun': tip_speed, 'args': constraint_point})
+
+        # noinspection PyTypeChecker
+        opt_res = minimize(
+            fun=lambda x: losses(x, nom_point[0], nom_point[1]),
+            x0=array([
+                self.diameter,
+                self.area_ratio,
+                self.pd_ratio]
+            ),
+            bounds=[
+                (1e-3, diameter_max),
+                (self.area_ratio_min, self.area_ratio_max),
+                (self.pd_ratio_min, self.pd_ratio_max)
+            ],
+            constraints=constraints
+        )
+
+        return replace(self, diameter=float(opt_res.x[0]), area_ratio=float(opt_res.x[1]), pd_ratio=float(opt_res.x[2]))
+
+
     def optimize_bollard_thrust_for_q_n(self, q, n, diameter_max=None, immersion=None, single_screw=False, rho=1025):
         def neg_thrust(x):
             p = replace(self, area_ratio=x[0], pd_ratio=x[1])
@@ -257,6 +324,8 @@ class Propeller(ABC):
         prop = replace(prop, diameter=diameter)
 
         return prop
+
+
 
     def __post_init__(self):
         if not (self.diameter > 0):
