@@ -1,10 +1,8 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, replace
 
-
-from numpy import pi, ndarray, array, linspace, inf
+from numpy import pi, ndarray, array, inf
 from scipy.optimize import root_scalar, minimize
-from scipy.interpolate import CubicSpline
 
 
 @dataclass
