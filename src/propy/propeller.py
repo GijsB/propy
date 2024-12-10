@@ -195,7 +195,7 @@ class Propeller(ABC):
                 self.pd_ratio]
             ),
             bounds=[
-                (1e-9, diameter_max),
+                (1e-3, diameter_max),
                 (self.area_ratio_min, self.area_ratio_max),
                 (self.pd_ratio_min, self.pd_ratio_max)
             ],
