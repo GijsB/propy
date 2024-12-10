@@ -103,7 +103,7 @@ class Propeller(ABC):
         return min_area_ratio
 
     def optimize_efficiency_for_t_v(self, thrust, velocity, n_max=None, q_max=None, diameter_max=None, immersion=None,
-                                    single_screw=False, rho=1025):
+                                    single_screw=False, tip_speed_max=None, rho=1025):
         """
         Optimize the efficiency of a propeller for a given thrust and velocity
 
@@ -134,6 +134,8 @@ class Propeller(ABC):
             The minimum expected immersion below the waterline [m].
         single_screw: bool
             True when the ship has a single screw and this has a non-smooth wake.
+        tip_speed_max: float
+            The maximum allowed tip speed [m/s]
         rho: float
             The density of the fluid [kg/m^3].
 
@@ -162,6 +164,11 @@ class Propeller(ABC):
             q, _, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
             return q_max - q
 
+        def tip_speed(x):
+            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            _, n, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
+            return tip_speed_max - p.diameter * n * pi
+
         constraints = []
         if immersion:
             constraints.append({'type': 'ineq', 'fun': cavitation_margin})
@@ -176,6 +183,8 @@ class Propeller(ABC):
             constraints.append({'type': 'ineq', 'fun': n_margin})
         if q_max:
             constraints.append({'type': 'ineq', 'fun': q_margin})
+        if tip_speed_max:
+            constraints.append({'type': 'ineq', 'fun': tip_speed})
 
         # noinspection PyTypeChecker
         opt_res = minimize(
