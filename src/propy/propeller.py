@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from functools import cache
+from functools import lru_cache
 from typing import ClassVar
 
 from numpy import pi, ndarray, array, inf
@@ -152,27 +152,27 @@ class Propeller(ABC):
             A new propeller with optimum diameter, area_ratio and pd_ratio
         """
         def losses(x):
-            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             ktj2 = thrust / rho / velocity ** 2 / p.diameter**2
             return 1 - p.eta(p._find_j_for_ktj2(ktj2))
 
         def cavitation_margin(x):
-            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             min_ear = p.minimum_area_ratio(thrust, immersion, single_screw=single_screw, rho=rho)
             return x[1] - min_ear
 
         def n_margin(x):
-            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             _, n, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
             return n_max - n
 
         def q_margin(x):
-            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             q, _, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
             return q_max - q
 
         def tip_speed(x):
-            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             _, n, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
             return tip_speed_max - p.diameter * n * pi
 
@@ -212,33 +212,33 @@ class Propeller(ABC):
         if not opt_res.success:
             print(f'Optimization unsuccessful, reason: {opt_res.message}')
 
-        return self._generate_cached(blades=self.blades, diameter=opt_res.x[0], area_ratio=opt_res.x[1], pd_ratio=opt_res.x[2])
+        return self.new(blades=self.blades, diameter=opt_res.x[0], area_ratio=opt_res.x[1], pd_ratio=opt_res.x[2])
 
 
     def optimize_eff_with_extremes(self, nom_point, constraint_points=(), n_max=None, q_max=None, diameter_max=None,
                                    immersion=None, single_screw=False, tip_speed_max=None, rho=1025):
         def losses(x, thrust, velocity):
-            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             ktj2 = thrust / rho / velocity ** 2 / p.diameter**2
             return 1 - p.eta(p._find_j_for_ktj2(ktj2))
 
         def cavitation_margin(x, thrust, velocity):
-            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             min_ear = p.minimum_area_ratio(thrust, immersion, single_screw=single_screw, rho=rho)
             return x[1] - min_ear
 
         def n_margin(x, thrust, velocity):
-            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             _, n, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
             return n_max - n
 
         def q_margin(x, thrust, velocity):
-            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             q, _, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
             return q_max - q
 
         def tip_speed(x, thrust, velocity):
-            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             _, n, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
             return tip_speed_max - p.diameter * n * pi
 
@@ -281,21 +281,21 @@ class Propeller(ABC):
         if not opt_res.success:
             print(f'Optimization unsuccessful, reason: {opt_res.message}')
 
-        return self._generate_cached(blades=self.blades, diameter=opt_res.x[0], area_ratio=opt_res.x[1], pd_ratio=opt_res.x[2])
+        return self.new(blades=self.blades, diameter=opt_res.x[0], area_ratio=opt_res.x[1], pd_ratio=opt_res.x[2])
 
 
     def optimize_bollard_thrust_for_q_n(self, q, n, diameter_max=None, immersion=None, single_screw=False, rho=1025):
         def neg_thrust(x):
-            p = self._generate_cached(blades=self.blades, diameter=self.diameter, area_ratio=x[0], pd_ratio=x[1])
+            p = self.new(blades=self.blades, diameter=self.diameter, area_ratio=x[0], pd_ratio=x[1])
             d = (q / rho / n**2 / p.kq_max) ** (1 / 5)
             t = p.kt_max * rho * n**2 * d**4
             return -t
 
         def cavitation_margin(x):
-            p = self._generate_cached(blades=self.blades, diameter=self.diameter, area_ratio=x[0], pd_ratio=x[1])
+            p = self.new(blades=self.blades, diameter=self.diameter, area_ratio=x[0], pd_ratio=x[1])
             d = (q / rho / n ** 2 / p.kq_max) ** (1 / 5)
             t = p.kt_max * rho * n ** 2 * d ** 4
-            p = self._generate_cached(blades=p.blades, diameter=d, area_ratio=p.area_ratio, pd_ratio=p.pd_ratio)
+            p = self.new(blades=p.blades, diameter=d, area_ratio=p.area_ratio, pd_ratio=p.pd_ratio)
             min_ear = p.minimum_area_ratio(t, immersion, single_screw=single_screw, rho=rho)
             return x[1] - min_ear
 
@@ -308,7 +308,7 @@ class Propeller(ABC):
                 diameter_max = immersion * 2
 
         def diameter_margin(x):
-            p = self._generate_cached(blades=self.blades, diameter=self.diameter, area_ratio=x[0], pd_ratio=x[1])
+            p = self.new(blades=self.blades, diameter=self.diameter, area_ratio=x[0], pd_ratio=x[1])
             d = (q / rho / n ** 2 / p.kq_max) ** (1 / 5)
             return diameter_max - d
 
@@ -332,9 +332,9 @@ class Propeller(ABC):
         if not opt_res.success:
             print(f'Optimization unsuccessful, reason: {opt_res.message}')
 
-        p = self._generate_cached(blades=self.blades, diameter=self.diameter, area_ratio=opt_res.x[0], pd_ratio=opt_res.x[1])
+        p = self.new(blades=self.blades, diameter=self.diameter, area_ratio=opt_res.x[0], pd_ratio=opt_res.x[1])
         diameter = (q / rho / n ** 2 / p.kq_max) ** (1 / 5)
-        return self._generate_cached(blades=p.blades, diameter=diameter, area_ratio=p.area_ratio, pd_ratio=p.pd_ratio)
+        return self.new(blades=p.blades, diameter=diameter, area_ratio=p.area_ratio, pd_ratio=p.pd_ratio)
 
 
 
@@ -607,6 +607,6 @@ class Propeller(ABC):
         ).root
 
     @classmethod
-    @cache
-    def _generate_cached(cls, *args, **kwargs):
+    @lru_cache
+    def new(cls, *args, **kwargs):
         return cls(*args, **kwargs)
