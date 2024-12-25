@@ -7,8 +7,7 @@ from numpy import pi, ndarray, array, inf
 from scipy.optimize import root_scalar, minimize
 
 
-
-@dataclass
+@dataclass(frozen=True)
 class Propeller(ABC):
     """
     Fields

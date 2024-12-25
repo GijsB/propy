@@ -8,7 +8,7 @@ from numpy.polynomial.polynomial import Polynomial
 from numpy import roots, isreal
 
 
-@dataclass
+@dataclass(frozen=True)
 class WageningenBPropeller(Propeller):
     """
     A propeller of the Wageningen-B type. This propeller is defined by 2 polynomials for the thrust- and
