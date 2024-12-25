@@ -370,8 +370,8 @@ class Propeller(ABC):
         """
         Thrust coefficient of the propeller
 
-        This function calculates the thrust coefficient curve of this propeller as a function of the advance ratio.
-        The advance ratio can be defined as a single point or an array of points.
+        This function returns a callable to calculate the thrust coefficient curve of this propeller as a function of
+        the advance ratio. The advance ratio can be defined as a single point or an array of points.
 
         The advance ratio is defined as:
             j = v / n / d
@@ -404,8 +404,8 @@ class Propeller(ABC):
         """
         Torque coefficient of the propeller
 
-        This function calculates the torque coefficient curve of this propeller as a function of the advance ratio.
-        The advance ratio can be defined as a single point or an array of points.
+        This function returns a callable to calculate the torque coefficient curve of this propeller as a function of
+        the advance ratio. The advance ratio can be defined as a single point or an array of points.
 
         The advance ratio is defined as:
             j = v / n / d

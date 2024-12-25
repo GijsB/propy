@@ -39,19 +39,6 @@ class WageningenBPropeller(Propeller):
     pd_ratio_min: ClassVar[float] = 0.5
     pd_ratio_max: ClassVar[float] = 1.4
 
-    def __post_init__(self):
-        super().__post_init__()
-
-        # self.kt = self._calc_kt_pol()
-        # self.kq = self._calc_kq_pol()
-        kt_root = roots(self.kt.coef[::-1])
-        kt_root = kt_root[(kt_root > 0) & (kt_root < 1.6)]
-        kt_root = min(kt_root)
-        assert isreal(kt_root)
-        self._j_max = kt_root
-        # self.kt = self.kt.convert(domain=[0, self.j_max], window=[0, self.j_max])
-        # self.kq = self.kq.convert(domain=[0, self.j_max], window=[0, self.j_max])
-
     @cached_property
     def kq(self):
         return Polynomial(symbol='J', coef=[
@@ -148,9 +135,13 @@ class WageningenBPropeller(Propeller):
               0.0000565229* self.pd_ratio**6 * self.area_ratio**1 * self.blades**2
         ])
 
-    @property
+    @cached_property
     def j_max(self):
-        return self._j_max
+        kt_root = roots(self.kt.coef[::-1])
+        kt_root = kt_root[(kt_root > 0) & (kt_root < 1.6)]
+        kt_root = min(kt_root)
+        assert isreal(kt_root)
+        return kt_root
 
     def _find_j_for_ktj2(self, ktj2):
         # Define a new polynomial: kt(j) - kt/j^2 * j^2
