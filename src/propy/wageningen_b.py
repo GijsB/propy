@@ -1,6 +1,9 @@
 from propy.propeller import Propeller
 
 from dataclasses import dataclass
+from functools import cached_property
+from typing import ClassVar
+
 from numpy.polynomial.polynomial import Polynomial
 from numpy import roots, isreal
 
@@ -29,20 +32,28 @@ class WageningenBPropeller(Propeller):
         The ratio between the pitch [m] and the diameter [m] of the propeller.
     """
 
+    blades_min: ClassVar[int] = 2
+    blades_max: ClassVar[int] = 7
+    area_ratio_min: ClassVar[float] = 0.3
+    area_ratio_max: ClassVar[float] = 1.05
+    pd_ratio_min: ClassVar[float] = 0.5
+    pd_ratio_max: ClassVar[float] = 1.4
+
     def __post_init__(self):
         super().__post_init__()
 
-        self.kt = self._calc_kt_pol()
-        self.kq = self._calc_kq_pol()
+        # self.kt = self._calc_kt_pol()
+        # self.kq = self._calc_kq_pol()
         kt_root = roots(self.kt.coef[::-1])
         kt_root = kt_root[(kt_root > 0) & (kt_root < 1.6)]
         kt_root = min(kt_root)
         assert isreal(kt_root)
         self._j_max = kt_root
-        self.kt = self.kt.convert(domain=[0, self.j_max], window=[0, self.j_max])
-        self.kq = self.kq.convert(domain=[0, self.j_max], window=[0, self.j_max])
+        # self.kt = self.kt.convert(domain=[0, self.j_max], window=[0, self.j_max])
+        # self.kq = self.kq.convert(domain=[0, self.j_max], window=[0, self.j_max])
 
-    def _calc_kq_pol(self):
+    @cached_property
+    def kq(self):
         return Polynomial(symbol='J', coef=[
               0.0037936800 * self.pd_ratio**0 * self.area_ratio**0 * self.blades**0 +
               0.0158960000 * self.pd_ratio**0 * self.area_ratio**2 * self.blades**0 +
@@ -93,8 +104,8 @@ class WageningenBPropeller(Propeller):
             - 0.0000297228 * self.pd_ratio**6 * self.area_ratio**0 * self.blades**2
         ])
 
-
-    def _calc_kt_pol(self):
+    @cached_property
+    def kt(self):
         return Polynomial(symbol='J', coef=[
               0.008804960 * self.pd_ratio**0 * self.area_ratio**0 * self.blades**0 +
               0.014404300 * self.pd_ratio**0 * self.area_ratio**0 * self.blades**1 +
@@ -138,38 +149,8 @@ class WageningenBPropeller(Propeller):
         ])
 
     @property
-    def blades_min(self):
-        return 2
-
-    @property
-    def blades_max(self):
-        return 7
-
-    @property
-    def area_ratio_min(self):
-        return 0.3
-
-    @property
-    def area_ratio_max(self):
-        return 1.05
-
-    @property
-    def pd_ratio_min(self):
-        return 0.5
-
-    @property
-    def pd_ratio_max(self):
-        return 1.4
-
-    @property
     def j_max(self):
         return self._j_max
-
-    def kt(self, j):
-        pass
-
-    def kq(self, j):
-        pass
 
     def _find_j_for_ktj2(self, ktj2):
         # Define a new polynomial: kt(j) - kt/j^2 * j^2

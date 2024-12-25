@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
+from functools import cache
+from typing import ClassVar
 
 from numpy import pi, ndarray, array, inf
 from scipy.optimize import root_scalar, minimize
+
 
 
 @dataclass
@@ -24,6 +27,13 @@ class Propeller(ABC):
     diameter:   float = 1.0
     area_ratio: float = 0.5
     pd_ratio:   float = 0.8
+
+    blades_min:     ClassVar[int] = -1
+    blades_max:     ClassVar[int] = -1
+    area_ratio_min: ClassVar[float] = float('NaN')
+    area_ratio_max: ClassVar[float] = float('NaN')
+    pd_ratio_min:   ClassVar[float] = float('NaN')
+    pd_ratio_max:   ClassVar[float] = float('NaN')
 
     def eta(self, j):
         """
@@ -143,27 +153,27 @@ class Propeller(ABC):
             A new propeller with optimum diameter, area_ratio and pd_ratio
         """
         def losses(x):
-            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             ktj2 = thrust / rho / velocity ** 2 / p.diameter**2
             return 1 - p.eta(p._find_j_for_ktj2(ktj2))
 
         def cavitation_margin(x):
-            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             min_ear = p.minimum_area_ratio(thrust, immersion, single_screw=single_screw, rho=rho)
             return x[1] - min_ear
 
         def n_margin(x):
-            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             _, n, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
             return n_max - n
 
         def q_margin(x):
-            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             q, _, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
             return q_max - q
 
         def tip_speed(x):
-            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             _, n, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
             return tip_speed_max - p.diameter * n * pi
 
@@ -200,35 +210,36 @@ class Propeller(ABC):
             constraints=constraints
         )
 
-        prop = replace(self, diameter=float(opt_res.x[0]), area_ratio=float(opt_res.x[1]), pd_ratio=float(opt_res.x[2]))
+        if not opt_res.success:
+            print(f'Optimization unsuccessful, reason: {opt_res.message}')
 
-        return prop
+        return self._generate_cached(blades=self.blades, diameter=opt_res.x[0], area_ratio=opt_res.x[1], pd_ratio=opt_res.x[2])
 
 
     def optimize_eff_with_extremes(self, nom_point, constraint_points=(), n_max=None, q_max=None, diameter_max=None,
                                    immersion=None, single_screw=False, tip_speed_max=None, rho=1025):
         def losses(x, thrust, velocity):
-            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             ktj2 = thrust / rho / velocity ** 2 / p.diameter**2
             return 1 - p.eta(p._find_j_for_ktj2(ktj2))
 
         def cavitation_margin(x, thrust, velocity):
-            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             min_ear = p.minimum_area_ratio(thrust, immersion, single_screw=single_screw, rho=rho)
             return x[1] - min_ear
 
         def n_margin(x, thrust, velocity):
-            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             _, n, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
             return n_max - n
 
         def q_margin(x, thrust, velocity):
-            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             q, _, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
             return q_max - q
 
         def tip_speed(x, thrust, velocity):
-            p = replace(self, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
+            p = self._generate_cached(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
             _, n, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
             return tip_speed_max - p.diameter * n * pi
 
@@ -268,21 +279,24 @@ class Propeller(ABC):
             constraints=constraints
         )
 
-        return replace(self, diameter=float(opt_res.x[0]), area_ratio=float(opt_res.x[1]), pd_ratio=float(opt_res.x[2]))
+        if not opt_res.success:
+            print(f'Optimization unsuccessful, reason: {opt_res.message}')
+
+        return self._generate_cached(blades=self.blades, diameter=opt_res.x[0], area_ratio=opt_res.x[1], pd_ratio=opt_res.x[2])
 
 
     def optimize_bollard_thrust_for_q_n(self, q, n, diameter_max=None, immersion=None, single_screw=False, rho=1025):
         def neg_thrust(x):
-            p = replace(self, area_ratio=x[0], pd_ratio=x[1])
+            p = self._generate_cached(blades=self.blades, diameter=self.diameter, area_ratio=x[0], pd_ratio=x[1])
             d = (q / rho / n**2 / p.kq_max) ** (1 / 5)
             t = p.kt_max * rho * n**2 * d**4
             return -t
 
         def cavitation_margin(x):
-            p = replace(self, area_ratio=x[0], pd_ratio=x[1])
+            p = self._generate_cached(blades=self.blades, diameter=self.diameter, area_ratio=x[0], pd_ratio=x[1])
             d = (q / rho / n ** 2 / p.kq_max) ** (1 / 5)
             t = p.kt_max * rho * n ** 2 * d ** 4
-            p = replace(p, diameter=d)
+            p = self._generate_cached(blades=p.blades, diameter=d, area_ratio=p.area_ratio, pd_ratio=p.pd_ratio)
             min_ear = p.minimum_area_ratio(t, immersion, single_screw=single_screw, rho=rho)
             return x[1] - min_ear
 
@@ -295,7 +309,7 @@ class Propeller(ABC):
                 diameter_max = immersion * 2
 
         def diameter_margin(x):
-            p = replace(self, area_ratio=x[0], pd_ratio=x[1])
+            p = self._generate_cached(blades=self.blades, diameter=self.diameter, area_ratio=x[0], pd_ratio=x[1])
             d = (q / rho / n ** 2 / p.kq_max) ** (1 / 5)
             return diameter_max - d
 
@@ -317,13 +331,11 @@ class Propeller(ABC):
         )
 
         if not opt_res.success:
-            print(opt_res)
+            print(f'Optimization unsuccessful, reason: {opt_res.message}')
 
-        prop = replace(self, area_ratio=float(opt_res.x[0]), pd_ratio=float(opt_res.x[1]))
-        diameter = (q / rho / n ** 2 / prop.kq_max) ** (1 / 5)
-        prop = replace(prop, diameter=diameter)
-
-        return prop
+        p = self._generate_cached(blades=self.blades, diameter=self.diameter, area_ratio=opt_res.x[0], pd_ratio=opt_res.x[1])
+        diameter = (q / rho / n ** 2 / p.kq_max) ** (1 / 5)
+        return self._generate_cached(blades=p.blades, diameter=diameter, area_ratio=p.area_ratio, pd_ratio=p.pd_ratio)
 
 
 
@@ -352,8 +364,9 @@ class Propeller(ABC):
         if not (self.pd_ratio <= self.pd_ratio_max):
             raise ValueError(f'Pitch/Diameter ratio (= {self.pd_ratio}) must be <= {self.pd_ratio_max}')
 
+    @property
     @abstractmethod
-    def kt(self, j):
+    def kt(self):
         """
         Thrust coefficient of the propeller
 
@@ -385,8 +398,9 @@ class Propeller(ABC):
         """
         pass
 
+    @property
     @abstractmethod
-    def kq(self, j):
+    def kq(self):
         """
         Torque coefficient of the propeller
 
@@ -571,42 +585,6 @@ class Propeller(ABC):
         pass
 
     @property
-    @abstractmethod
-    def blades_min(self):
-        """The minimum amount of blades of this propeller type"""
-        pass
-
-    @property
-    @abstractmethod
-    def blades_max(self):
-        """The maximum amount of blades of this propeller type"""
-        pass
-
-    @property
-    @abstractmethod
-    def area_ratio_min(self):
-        """The minimum expanded area ratio of this propeller type"""
-        pass
-
-    @property
-    @abstractmethod
-    def area_ratio_max(self):
-        """The maximum expanded area ratio of this propeller type"""
-        pass
-
-    @property
-    @abstractmethod
-    def pd_ratio_min(self):
-        """The minimum pitch/diameter ratio of this propeller type"""
-        pass
-
-    @property
-    @abstractmethod
-    def pd_ratio_max(self):
-        """The maximum pitch/diameter ratio of this propeller type"""
-        pass
-
-    @property
     def kt_max(self):
         return self.kt(0)
 
@@ -628,3 +606,8 @@ class Propeller(ABC):
             bracket=[1e-9, self.j_max],
             x0=0.8*self.j_max
         ).root
+
+    @classmethod
+    @cache
+    def _generate_cached(cls, *args, **kwargs):
+        return cls(*args, **kwargs)
