@@ -23,10 +23,10 @@ license         = {file = "LICENSE"}
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0",
+    "pytest>=6.0",
 ]
 
 [tool.setuptools_scm]
 
 [tool.pytest.ini_options]
-minversion = "8.0"
+minversion = "6.0"
