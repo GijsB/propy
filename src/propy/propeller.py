@@ -452,7 +452,8 @@ class Propeller(ABC):
             return root_scalar(
                 f=lambda j: self.kt(j) - kt,
                 bracket=[0, self.j_max],
-                x0=self.j_max * (kt - self.kt_max) / (self.kt_min - self.kt_max)
+                x0=self.j_max * (kt - self.kt_max) / (self.kt_min - self.kt_max),
+                rtol=1e-15, xtol=1e-15
             ).root
 
     def kq_inv(self, kq):
@@ -480,7 +481,8 @@ class Propeller(ABC):
             return root_scalar(
                 f=lambda j: self.kq(j) - kq,
                 bracket=[0, self.j_max],
-                x0=self.j_max * (kq - self.kq_max) / (self.kq_min - self.kq_max)
+                x0=self.j_max * (kq - self.kq_max) / (self.kq_min - self.kq_max),
+                rtol=1e-15, xtol=1e-15
             ).root
 
     def calculate_operating_point(self, thrust, velocity, rho=1025.0):
