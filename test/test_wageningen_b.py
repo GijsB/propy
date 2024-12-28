@@ -118,10 +118,57 @@ def test_kq_inv():
     (5, 0.90, 1.2, [0.2, 0.4, 0.6, 0.8, 1.0, 1.2], [0.526, 0.444, 0.348, 0.242, 0.136, 0.026]),
     (5, 0.90, 1.4, [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4], [0.62, 0.544, 0.454, 0.352, 0.248, 0.14, 0.032]),
 ])
-def test_kt(blades, area_ratio, pd_ratio, j, kt):
+def test_kt_kuiper(blades, area_ratio, pd_ratio, j, kt):
+    """
+    Compare the calculated kt values with manual chart readings from [1]. This book also mentions that the polynomials
+    published "in other publications" have some small errors. Especially the 2-bladed propellers of the series are a bit
+    special in this regard, only 2 open-water charts are published in [1]. It also looks like the manual readings from
+    these 2 bladed charts do not correspond with the polynomials from [2].
+
+        [1] G. Kuiper, The Wageningen propeller series, MARIN Publication 92-001, 1992
+        [2] M. M. Bernitsas, D. Ray and P. Kinley: Kt, Kq and efficiency curves for the wageningen b-series propellers,
+        Department of Naval Architecture and Marine Engineering, University of Michigan. May 1981.
+    """
     p = WageningenBPropeller(
         blades=blades,
         area_ratio=area_ratio,
         pd_ratio=pd_ratio
     )
     assert_allclose(p.kt(j), kt , atol=4e-3)
+
+
+@mark.parametrize('blades,area_ratio',[
+    (2, 0.3),
+    (2, 0.5),
+    (2, 0.7),
+    (2, 0.9)
+])
+def test_kt_kq_bernitsas(blades, area_ratio):
+    """
+    Compare the calculated kt and kq values with manual chart readings from [2]. This test should protect against
+    typo's in copying the polyniomal. The charts are digitized using the "Engauge digitizer" application, which produces
+    csv-files. These files are parsed and the results are compared with the polynomials.
+
+        [2] M. M. Bernitsas, D. Ray and P. Kinley: Kt, Kq and efficiency curves for the wageningen b-series propellers,
+        Department of Naval Architecture and Marine Engineering, University of Michigan. May 1981.
+    """
+    with open(f'test/data/z{blades}_a{int(area_ratio*10)}.csv') as file:
+        for line in file:
+            if line.startswith('x'):
+                _, pd_ratio = line.split(';')
+                ktype, pd_ratio = pd_ratio.split('_')
+                func = WageningenBPropeller(
+                    blades=blades,
+                    area_ratio=area_ratio,
+                    pd_ratio=float(pd_ratio.strip()[-2:])/10
+                ).__getattribute__(ktype)
+                # print()
+                # print(f'Generating prop: z{blades}, a{int(area_ratio*10)}, p{pd_ratio.strip()[-2:]}, {ktype}')
+            elif len(line.strip()) > 0:
+                j, k = line.strip().split(';')
+                j = float(j.replace(',', '.'))
+                k = float(k.replace(',', '.'))
+                if ktype == 'kq':
+                    k /= 5
+                # print(f'    j{j}, k_file{k}, k_pol{func(j)}')
+                assert_allclose(k, func(j), atol=3e-3)

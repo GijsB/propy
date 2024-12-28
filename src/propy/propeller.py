@@ -123,7 +123,7 @@ class Propeller(ABC):
 
         References
         ----------
-        .. [1] G. Kuiper, The Wageningen propeller series, MARIN Publication 92-001, 1992
+           [1] G. Kuiper, The Wageningen propeller series, MARIN Publication 92-001, 1992
 
         Parameters
         ----------
