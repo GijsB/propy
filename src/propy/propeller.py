@@ -123,7 +123,7 @@ class Propeller(ABC):
 
         References
         ----------
-        .. [1] G. Kuiper, The Wageningen propeller series, MARIN Publication 92-001, 1992
+           [1] G. Kuiper, The Wageningen propeller series, MARIN Publication 92-001, 1992
 
         Parameters
         ----------
@@ -214,7 +214,6 @@ class Propeller(ABC):
 
         return self.new(blades=self.blades, diameter=opt_res.x[0], area_ratio=opt_res.x[1], pd_ratio=opt_res.x[2])
 
-
     def optimize_eff_with_extremes(self, nom_point, constraint_points=(), n_max=None, q_max=None, diameter_max=None,
                                    immersion=None, single_screw=False, tip_speed_max=None, rho=1025):
         def losses(x, thrust, velocity):
@@ -283,7 +282,6 @@ class Propeller(ABC):
 
         return self.new(blades=self.blades, diameter=opt_res.x[0], area_ratio=opt_res.x[1], pd_ratio=opt_res.x[2])
 
-
     def optimize_bollard_thrust_for_q_n(self, q, n, diameter_max=None, immersion=None, single_screw=False, rho=1025):
         def neg_thrust(x):
             p = self.new(blades=self.blades, diameter=self.diameter, area_ratio=x[0], pd_ratio=x[1])
@@ -335,8 +333,6 @@ class Propeller(ABC):
         p = self.new(blades=self.blades, diameter=self.diameter, area_ratio=opt_res.x[0], pd_ratio=opt_res.x[1])
         diameter = (q / rho / n ** 2 / p.kq_max) ** (1 / 5)
         return self.new(blades=p.blades, diameter=diameter, area_ratio=p.area_ratio, pd_ratio=p.pd_ratio)
-
-
 
     def __post_init__(self):
         if not (self.diameter > 0):
@@ -456,7 +452,8 @@ class Propeller(ABC):
             return root_scalar(
                 f=lambda j: self.kt(j) - kt,
                 bracket=[0, self.j_max],
-                x0=self.j_max * (kt - self.kt_max) / (self.kt_min - self.kt_max)
+                x0=self.j_max * (kt - self.kt_max) / (self.kt_min - self.kt_max),
+                rtol=1e-15, xtol=1e-15
             ).root
 
     def kq_inv(self, kq):
@@ -484,7 +481,8 @@ class Propeller(ABC):
             return root_scalar(
                 f=lambda j: self.kq(j) - kq,
                 bracket=[0, self.j_max],
-                x0=self.j_max * (kq - self.kq_max) / (self.kq_min - self.kq_max)
+                x0=self.j_max * (kq - self.kq_max) / (self.kq_min - self.kq_max),
+                rtol=1e-15, xtol=1e-15
             ).root
 
     def calculate_operating_point(self, thrust, velocity, rho=1025.0):
