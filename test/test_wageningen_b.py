@@ -65,18 +65,18 @@ def test_kt_range():
     assert p.kt_min == 0
 
     # Kt should be max at j=0
-    assert_allclose(p.kt_max, p.kt(0), rtol=1e-15)
+    assert_allclose(p.kt_max, p.kt(0), rtol=1e-15, atol=1e-15)
 
 
 def test_j_range():
     # j-max should be calculated such that kt(j_max) is close to 0
-    assert_allclose(0, p.kt(p.j_max), rtol=1e-15)
+    assert_allclose(0, p.kt(p.j_max), rtol=1e-15, atol=1e-15)
 
 
 def test_kq_range():
     # The kq-curve should stop before it's at 0, where kt=0
-    assert_allclose(p.kq_min, p.kq(p.j_max), rtol=1e-15)
-    assert_allclose(p.kq_max, p.kq(0), rtol=1e-15)
+    assert_allclose(p.kq_min, p.kq(p.j_max), rtol=1e-15, atol=1e-15)
+    assert_allclose(p.kq_max, p.kq(0), rtol=1e-15, atol=1e-15)
 
 
 def test_kt_inv():
