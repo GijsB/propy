@@ -11,8 +11,8 @@ name            = "propy"
 description     = "A package for dimensioning and optimizing (marine) propellers"
 dynamic         = ["version"]
 dependencies    = [
-    "numpy>=2.1",
-    "scipy>=1.14",
+    "numpy>=2.0",
+    "scipy>=1.10",
 ]
 authors         = [
     {name = "Gijs Bruining"}
