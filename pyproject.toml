@@ -1,5 +1,5 @@
 [build-system]
-python-requires = ">=3.8"
+python-requires = ">=3.9"
 requires        = [
     "setuptools>=61",
     "setuptools_scm>=8"
