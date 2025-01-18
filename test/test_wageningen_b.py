@@ -1,7 +1,7 @@
 from propy.wageningen_b import WageningenBPropeller
 
 from pytest import raises, mark
-from numpy import linspace
+from numpy import linspace, pi
 from numpy.testing import assert_allclose
 
 p = WageningenBPropeller()
@@ -182,13 +182,172 @@ def test_kt_kq_bernitsas(blades, area_ratio):
                     area_ratio=area_ratio,
                     pd_ratio=float(pd_ratio.strip()[-2:])/10
                 ).__getattribute__(ktype)
-                # print()
-                # print(f'Generating prop: z{blades}, a{int(area_ratio*10)}, p{pd_ratio.strip()[-2:]}, {ktype}')
             elif len(line.strip()) > 0:
                 j, k = line.strip().split(';')
                 j = float(j.replace(',', '.'))
                 k = float(k.replace(',', '.'))
                 if ktype == 'kq':
                     k /= 5
-                # print(f'    j{j}, k_file{k}, k_pol{func(j)}')
                 assert_allclose(k, func(j), atol=3e-3)
+
+
+def test_optimization_max_diameter():
+    """
+    This test compares the result of a propeller optimization with the results from [1] champter 9.3.
+
+        [1] G. Kuiper, The Wageningen propeller series, MARIN Publication 92-001, 1992
+    """
+
+    p = WageningenBPropeller(
+        blades=4
+    ).optimize_efficiency_for_t_v(
+        thrust=1393000,
+        velocity=8.65,
+        diameter_max=7,
+        immersion=3.51
+    )
+    # Immersion is modified to achieve a safety factor for the minimum area_ratio, this is also done in the book by
+    # simply "chosing" a higher area_ratio manually (0.55)
+    min_area_ratio = p.minimum_area_ratio(
+        thrust=1393000,
+        immersion=3.51,
+    )
+    assert (p.area_ratio * (1 + 1e-14)) > min_area_ratio
+
+    assert p.diameter <= 7
+    assert_allclose(p.pd_ratio, 1.0, rtol=6e-3)
+
+    q, n, j, kt, kq, eta= p.calculate_operating_point(
+        thrust=1393000,
+        velocity=8.65,
+    )
+
+    assert_allclose([q,         n,      j,      kt,     kq,         eta],
+                    [1667435,   1.767,  0.699,  0.181,  0.0310,     0.651], rtol=1e-2)
+
+    # The results are a bit different compared to [1], this is because [1] just provides an example of a manual
+    # optimization. We expect our optimizer to perform a bit better.
+    assert eta > 0.651
+
+
+def test_optimization_min_rpm():
+    """
+    This test compares the result of a propeller optimization with the results from [1] chapter 9.4.
+
+        [1] G. Kuiper, The Wageningen propeller series, MARIN Publication 92-001, 1992
+    """
+
+    p = WageningenBPropeller(
+        blades=4
+    ).optimize_efficiency_for_t_v(
+        thrust=1393000,
+        velocity=8.65,
+        q_max=1667435
+    )
+
+    q, n, j, kt, kq, eta= p.calculate_operating_point(
+        thrust=1393000,
+        velocity=8.65,
+    )
+
+    assert_allclose(p.diameter, 7.36, rtol=2e-3)
+    assert_allclose(j, 0.665, rtol=11e-3)
+    assert_allclose(kt, 0.148, rtol=21e-3)
+    assert_allclose(kq, 0.0239, rtol=27e-3)
+
+    # The results are a bit different compared to [1], this is because [1] just provides an example of a manual
+    # optimization. We expect our optimizer to perform a bit better.
+    assert n < 1.767
+    assert q < 1667435
+    assert eta > 0.656
+
+
+def test_torque_limit():
+    p = WageningenBPropeller(
+        blades=3
+    ).optimize_efficiency_for_t_v(
+        thrust=1000,
+        velocity=10,
+        q_max=60
+    )
+
+    q, n, j, kt, kq, eta = p.calculate_operating_point(
+        thrust=1000,
+        velocity=10,
+    )
+
+    assert q < 60*(1+1e-15)
+
+
+def test_rpm_limit():
+    p = WageningenBPropeller(
+        blades=3
+    ).optimize_efficiency_for_t_v(
+        thrust=1000,
+        velocity=10,
+        n_max=20
+    )
+
+    q, n, j, kt, kq, eta = p.calculate_operating_point(
+        thrust=1000,
+        velocity=10,
+    )
+
+    assert n < 20*(1+1e-15)
+
+
+def test_diameter_limit():
+    p = WageningenBPropeller(
+        blades=3
+    ).optimize_efficiency_for_t_v(
+        thrust=1000,
+        velocity=10,
+        diameter_max=0.2
+    )
+
+    assert p.diameter < 0.2*(1+1e-15)
+
+
+def test_area_ratio_limit():
+    p = WageningenBPropeller(
+        blades=3
+    ).optimize_efficiency_for_t_v(
+        thrust=1000,
+        velocity=20,
+        immersion=1
+    )
+
+    # That's not really close.. weird
+    assert p.minimum_area_ratio(thrust=1000, immersion=1) < p.area_ratio*(1+1e-5)
+
+
+def test_tip_speed_limit():
+    p = WageningenBPropeller(
+        blades=3
+    ).optimize_efficiency_for_t_v(
+        thrust=1000,
+        velocity=10,
+        tip_speed_max=24
+    )
+
+    q, n, j, kt, kq, eta = p.calculate_operating_point(
+        thrust=1000,
+        velocity=10,
+    )
+
+    # That's not really close.. weird
+    assert n * pi * p.diameter < 24 * (1 + 1e-9)
+
+# def test_optimization_bollard_pull():
+#     """
+#     This test compares the result of a propeller optimization with the results from [1] chapter 9.5.
+#
+#         [1] G. Kuiper, The Wageningen propeller series, MARIN Publication 92-001, 1992
+#     """
+#     p = WageningenBPropeller(
+#         blades=5
+#     ).optimize_bollard_thrust_for_q_n(
+#         q = 800e3 / 3 / 2 / pi,
+#         n = 3,
+#         diameter_max=2.9
+#     )
