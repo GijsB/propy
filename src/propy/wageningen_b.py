@@ -143,7 +143,7 @@ class WageningenBPropeller(Propeller):
         assert isreal(kt_root)
         return kt_root
 
-    def _find_j_for_ktj2(self, ktj2):
+    def find_j_for_ktj2(self, ktj2: float) -> float:
         # Define a new polynomial: kt(j) - kt/j^2 * j^2
         p = self.kt.coef.copy()
         p[2] -= ktj2
@@ -155,4 +155,4 @@ class WageningenBPropeller(Propeller):
         # At this point, there should be exactly 1 real root
         assert len(r) == 1
         assert isreal(r[0])
-        return r[0]
+        return float(r[0])
