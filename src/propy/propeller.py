@@ -2,14 +2,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable, Callable
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import ClassVar
-
-try:
-    from typing import Self
-except ImportError:
-    from typing_extensions import Self
-
-from numpy import pi, array, inf
+from typing import ClassVar, Self
+from numpy import pi, array
 from scipy.optimize import root_scalar, minimize
 
 
