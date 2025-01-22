@@ -5,7 +5,8 @@ from functools import cached_property
 from typing import ClassVar
 
 from numpy.polynomial.polynomial import Polynomial
-from numpy import roots, isreal
+from numpy import roots, isreal, zeros_like
+from numpy.typing import ArrayLike
 
 
 @dataclass(frozen=True)
@@ -143,16 +144,37 @@ class WageningenBPropeller(Propeller):
         assert isreal(kt_root)
         return kt_root
 
-    def find_j_for_ktj2(self, ktj2: float) -> float:
-        # Define a new polynomial: kt(j) - kt/j^2 * j^2
-        p = self.kt.coef.copy()
-        p[2] -= ktj2
+    def find_j_for_ktj2(self, ktj2: float | ArrayLike) -> float | ArrayLike:
+        try:
+            # Assume ktj2s is a single float
+            # Define a new polynomial: kt(j) - kt/j^2 * j^2
+            p = self.kt.coef.copy()
+            p[2] -= ktj2
 
-        # Find the root of this polynomial between 0 < j < j_max
-        r = roots(p[::-1])
-        r = r[(0 < r) & (r < self.j_max)]
+            # Find the root of this polynomial between 0 < j < j_max
+            r = roots(p[::-1])
+            r = r[(0 < r) & (r < self.j_max)]
 
-        # At this point, there should be exactly 1 real root
-        assert len(r) == 1
-        assert isreal(r[0])
-        return float(r[0])
+            # At this point, there should be exactly 1 real root
+            assert len(r) == 1
+            assert isreal(r[0])
+            return float(r[0])
+
+        except ValueError:
+            # Apperently ktj2 is an array
+            ktj2s = ktj2
+            res = zeros_like(ktj2s)
+            for i, ktj2 in enumerate(ktj2s):
+                # Define a new polynomial: kt(j) - kt/j^2 * j^2
+                p = self.kt.coef.copy()
+                p[2] -= ktj2
+
+                # Find the root of this polynomial between 0 < j < j_max
+                r = roots(p[::-1])
+                r = r[(0 < r) & (r < self.j_max)]
+
+                # At this point, there should be exactly 1 real root
+                assert len(r) == 1
+                assert isreal(r[0])
+                res[i] = r[0]
+            return res

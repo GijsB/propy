@@ -32,7 +32,7 @@ def test_optimization_max_diameter():
         blades=4,
         diameter_max=7,
     ).optimize(
-        fun = lambda p: p.losses(wp),
+        objective = lambda p: p.losses(wp),
         constraints = [
             lambda p: p.cavitation_margin(wp)
         ]
@@ -69,7 +69,7 @@ def test_optimization_min_rotation_speed():
     prop = WageningenBPropeller(
         blades=4
     ).optimize(
-        fun=lambda p: p.losses(wp),
+        objective=lambda p: p.losses(wp),
         constraints=[
             lambda p: p.torque_margin(wp, 1667435)
         ]
@@ -98,7 +98,7 @@ def test_torque_limit():
     prop = WageningenBPropeller(
         blades=3,
     ).optimize(
-        fun = lambda p: p.losses(wp),
+        objective = lambda p: p.losses(wp),
         constraints = [
             lambda p: p.torque_margin(wp, 60)
         ]
@@ -119,7 +119,7 @@ def test_rpm_limit():
     prop = WageningenBPropeller(
         blades = 3
     ).optimize(
-        fun = lambda p: p.losses(wp),
+        objective = lambda p: p.losses(wp),
         constraints = [
             lambda p: p.rotation_speed_margin(wp, 20)
         ]
@@ -141,7 +141,7 @@ def test_diameter_limit():
         blades=3,
         diameter_max=0.2
     ).optimize(
-        fun=lambda p: p.losses(wp)
+        objective=lambda p: p.losses(wp)
     )
 
     assert prop.diameter < 0.2*(1+1e-15)
@@ -157,7 +157,7 @@ def test_area_ratio_limit():
     prop = WageningenBPropeller(
         blades=3
     ).optimize(
-        fun=lambda p: p.losses(wp),
+        objective=lambda p: p.losses(wp),
         constraints=[
             lambda p: p.cavitation_margin(wp)
         ]
@@ -176,7 +176,7 @@ def test_tip_speed_limit():
     prop = WageningenBPropeller(
         blades=3
     ).optimize(
-        fun=lambda p: p.losses(wp),
+        objective=lambda p: p.losses(wp),
         constraints=[
             lambda p: p.tip_speed_margin(wp, 24)
         ]
