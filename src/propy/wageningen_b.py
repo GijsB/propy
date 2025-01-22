@@ -17,7 +17,7 @@ class WageningenBPropeller(Propeller):
 
     References
     ----------
-        [1] M. M. Bernitsas, D. Ray and P. Kinley: Kt, Kq and efficiency curves for the wageningen b-series propellers,
+        [1] M. M. Bernitsas, D. Ray and P. Kinley: Kt, Kq and eta curves for the wageningen b-series propellers,
         Department of Naval Architecture and Marine Engineering, University of Michigan. May 1981.
 
     Fields
@@ -144,9 +144,25 @@ class WageningenBPropeller(Propeller):
         assert isreal(kt_root)
         return kt_root
 
-    def find_j_for_ktj2(self, ktj2: float | ArrayLike) -> float | ArrayLike:
-        try:
-            # Assume ktj2s is a single float
+    def _find_j_for_ktj2(self, ktj2: float) -> float:
+        """ This may be a faster/more accurate alternative to the default. """
+        # Define a new polynomial: kt(j) - kt/j^2 * j^2
+        p = self.kt.coef.copy()
+        p[2] -= ktj2
+
+        # Find the root of this polynomial between 0 < j < j_max
+        r = roots(p[::-1])
+        r = r[(0 < r) & (r < self.j_max)]
+
+        # At this point, there should be exactly 1 real root
+        assert len(r) == 1
+        assert isreal(r[0])
+        return float(r[0])
+
+    def _find_j_for_ktj2s(self, ktj2s: ArrayLike) -> ArrayLike:
+        """ This may be a faster/more accurate alternative to the default. """
+        res = zeros_like(ktj2s)
+        for i, ktj2 in enumerate(ktj2s):
             # Define a new polynomial: kt(j) - kt/j^2 * j^2
             p = self.kt.coef.copy()
             p[2] -= ktj2
@@ -158,23 +174,5 @@ class WageningenBPropeller(Propeller):
             # At this point, there should be exactly 1 real root
             assert len(r) == 1
             assert isreal(r[0])
-            return float(r[0])
-
-        except ValueError:
-            # Apperently ktj2 is an array
-            ktj2s = ktj2
-            res = zeros_like(ktj2s)
-            for i, ktj2 in enumerate(ktj2s):
-                # Define a new polynomial: kt(j) - kt/j^2 * j^2
-                p = self.kt.coef.copy()
-                p[2] -= ktj2
-
-                # Find the root of this polynomial between 0 < j < j_max
-                r = roots(p[::-1])
-                r = r[(0 < r) & (r < self.j_max)]
-
-                # At this point, there should be exactly 1 real root
-                assert len(r) == 1
-                assert isreal(r[0])
-                res[i] = r[0]
-            return res
+            res[i] = r[0]
+        return res

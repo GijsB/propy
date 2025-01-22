@@ -30,12 +30,12 @@ def test_optimization_max_diameter():
 
     prop = WageningenBPropeller(
         blades=4,
-        diameter_max=7,
     ).optimize(
         objective = lambda p: p.losses(wp),
         constraints = [
             lambda p: p.cavitation_margin(wp)
-        ]
+        ],
+        diameter_max=7,
     )
 
     # Immersion is modified to achieve a safety factor for the minimum area_ratio, this is also done in the book by
@@ -45,14 +45,14 @@ def test_optimization_max_diameter():
     assert prop.diameter <= 7
     assert_allclose(prop.pd_ratio, 1.0, rtol=6e-3)
 
-    pp = prop.calculate_performance_for_working_point(wp)
+    pp = prop.find_performance(wp)
 
-    assert_allclose([pp.torque, pp.rotation_speed,  pp.advance_ratio, pp.thrust_coefficient, pp.torque_coefficient, pp.efficiency],
+    assert_allclose([pp.torque, pp.rotation_speed, pp.j, pp.kt, pp.kq, pp.eta],
                     [1667435, 1.767, 0.699, 0.181, 0.0310, 0.651], rtol=1e-2)
 
     # The results are a bit different compared to [1], this is because [1] just provides an example of a manual
     # optimization. We expect our optimizer to perform a bit better.
-    assert pp.efficiency > 0.651
+    assert pp.eta > 0.651
 
 
 def test_optimization_min_rotation_speed():
@@ -75,18 +75,18 @@ def test_optimization_min_rotation_speed():
         ]
     )
 
-    pp = prop.calculate_performance_for_working_point(wp)
+    pp = prop.find_performance(wp)
 
     assert_allclose(prop.diameter, 7.36, rtol=2e-3)
-    assert_allclose(pp.advance_ratio, 0.665, rtol=11e-3)
-    assert_allclose(pp.thrust_coefficient, 0.148, rtol=21e-3)
-    assert_allclose(pp.torque_coefficient, 0.0239, rtol=27e-3)
+    assert_allclose(pp.j, 0.665, rtol=11e-3)
+    assert_allclose(pp.kt, 0.148, rtol=21e-3)
+    assert_allclose(pp.kq, 0.0239, rtol=27e-3)
 
     # The results are a bit different compared to [1], this is because [1] just provides an example of a manual
     # optimization. We expect our optimizer to perform a bit better.
     assert pp.rotation_speed < 1.767 * (1 + 1e-10)
     assert pp.torque < 1667435 * (1 + 1e-10)
-    assert pp.efficiency > 0.656
+    assert pp.eta > 0.656
 
 
 def test_torque_limit():
@@ -104,16 +104,16 @@ def test_torque_limit():
         ]
     )
 
-    pp  = prop.calculate_performance_for_working_point(wp)
+    pp  = prop.find_performance(wp)
 
     assert prop.torque_margin(wp, 60) > -5e-8
-    assert pp.torque < 60*(1+5e-8)
+    assert pp.torque < 60 * (1 + 5e-8)
 
 
 def test_rpm_limit():
     wp = WorkingPoint(
-        thrust = 1000,
-        speed = 10,
+        thrust= 1000,
+        speed= 10,
     )
 
     prop = WageningenBPropeller(
@@ -125,10 +125,10 @@ def test_rpm_limit():
         ]
     )
 
-    pp = prop.calculate_performance_for_working_point(wp)
+    pp = prop.find_performance(wp)
 
     assert prop.rotation_speed_margin(wp, 20) > -1-15
-    assert pp.rotation_speed < 20*(1+1e-15)
+    assert pp.rotation_speed < 20 * (1 + 1e-15)
 
 
 def test_diameter_limit():
@@ -139,9 +139,9 @@ def test_diameter_limit():
 
     prop = WageningenBPropeller(
         blades=3,
-        diameter_max=0.2
     ).optimize(
-        objective=lambda p: p.losses(wp)
+        objective=lambda p: p.losses(wp),
+        diameter_max=0.2
     )
 
     assert prop.diameter < 0.2*(1+1e-15)
@@ -182,7 +182,7 @@ def test_tip_speed_limit():
         ]
     )
 
-    pp = prop.calculate_performance_for_working_point(wp)
+    pp = prop.find_performance(wp)
 
     # That's not really close.. weird
     assert prop.tip_speed_margin(wp, 24) > -1e-6

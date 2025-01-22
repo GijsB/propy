@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Callable
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass
 from functools import lru_cache
 from typing import ClassVar, Self
 from numpy import pi, array
@@ -17,18 +17,14 @@ class WorkingPoint:
     single_screw:   bool    = False
 
 
-    # def workingpoint_list_from_arrays(self, thrusts: ArrayLike, speeds: ArrayLike):
-    #     return tuple(replace(self, thrust=t, speed=v) for t, v in zip(thrusts, speeds))
-
-
 @dataclass(frozen=True)
 class PerformancePoint:
-    torque:             float | ArrayLike
-    rotation_speed:     float | ArrayLike
-    advance_ratio:      float | ArrayLike
-    thrust_coefficient: float | ArrayLike
-    torque_coefficient: float | ArrayLike
-    efficiency:         float | ArrayLike
+    torque:         float | ArrayLike
+    rotation_speed: float | ArrayLike
+    j:              float | ArrayLike
+    kt:             float | ArrayLike
+    kq:             float | ArrayLike
+    eta:            float | ArrayLike
 
 
 @dataclass(frozen=True)
@@ -53,52 +49,54 @@ class Propeller(ABC):
 
     blades_min:     ClassVar[int] = -1
     blades_max:     ClassVar[int] = -1
-    diameter_min:   float = field(default=1e-3, repr=False, compare=False)
-    diameter_max:   float = field(default=float('inf'), repr=False, compare=False)
     area_ratio_min: ClassVar[float] = float('NaN')
     area_ratio_max: ClassVar[float] = float('NaN')
     pd_ratio_min:   ClassVar[float] = float('NaN')
     pd_ratio_max:   ClassVar[float] = float('NaN')
 
-    def calculate_performance_for_working_point(self, wp: WorkingPoint) -> PerformancePoint:
-        ktj2 = wp.thrust / wp.rho / wp.speed ** 2 / self.diameter ** 2
-        j = self.find_j_for_ktj2(ktj2)
-        kt = ktj2 * j**2
+    def find_performance(self, wp: WorkingPoint) -> PerformancePoint:
+        j = self.find_j(wp)
+        kt = self.kt(j)
         kq = self.kq(j)
         n = wp.speed / j / self.diameter
 
         return PerformancePoint(
-            advance_ratio       = j,
-            thrust_coefficient  = kt,
-            torque_coefficient  = kq,
-            efficiency          = kt * j / 2 / pi / kq,
-            torque              = kq * wp.rho * n**2 * self.diameter**5,
-            rotation_speed      = n,
+            j= j,
+            kt= kt,
+            kq= kq,
+            eta=kt * j / 2 / pi / kq,
+            torque=kq * wp.rho * n ** 2 * self.diameter ** 5,
+            rotation_speed= n,
         )
 
-    def find_j_for_ktj2(self, ktj2: float | ArrayLike) -> float | ArrayLike:
+    def find_j(self, wp: WorkingPoint):
+        ktj2 = wp.thrust / wp.rho / wp.speed ** 2 / self.diameter ** 2
         try:
-            # Assume ktj2s is a single float
-            return float(root_scalar(
-                f=lambda j: self.kt(j) / j ** 2 - ktj2,
-                bracket=[1e-9, self.j_max],
-                x0=0.8 * self.j_max
-            ).root)
+            return self._find_j_for_ktj2(ktj2)
+        except (TypeError, ValueError):
+            return self._find_j_for_ktj2s(ktj2)
 
-        except TypeError:
-            # ktj2s is Iterable
-            ktj2s = ktj2
-            return array([root_scalar(
-                f=lambda j: self.kt(j) / j ** 2 - ktj2,
-                bracket=[1e-9, self.j_max],
-                x0=0.8 * self.j_max
-            ) for ktj2 in ktj2s])
+    def _find_j_for_ktj2(self, ktj2: float) -> float:
+        return float(root_scalar(
+            f=lambda j: self.kt(j) / j ** 2 - ktj2,
+            bracket=[1e-9, self.j_max],
+            x0=0.8 * self.j_max
+        ).root)
 
+    def _find_j_for_ktj2s(self, ktj2s: ArrayLike) -> ArrayLike:
+        return array([root_scalar(
+            f=lambda j: self.kt(j) / j ** 2 - ktj2,
+            bracket=[1e-9, self.j_max],
+            x0=0.8 * self.j_max
+        ).root for ktj2 in ktj2s])
 
     def optimize(self,
                  objective: Callable[[Self], float],
                  constraints: Iterable[Callable[[Self], float]] = (),
-                 optimizer: Callable = minimize) -> Self:
+                 optimizer: Callable = minimize,
+                 diameter_min : float = 1e-3,
+                 diameter_max : float = float('inf'),
+                 verbose: bool = True,) -> Self:
 
         @dataclass(frozen=True)
         class ConstraintFunction:
@@ -116,14 +114,16 @@ class Propeller(ABC):
                 self.pd_ratio]
             ),
             bounds=[
-                (self.diameter_min, self.diameter_max),
+                (diameter_min, diameter_max),
                 (self.area_ratio_min, self.area_ratio_max),
                 (self.pd_ratio_min, self.pd_ratio_max)
             ],
             constraints=[{'type': 'ineq',
                           'fun': ConstraintFunction(self, cfun)} for cfun in constraints]
         )
-        print(opt_res)
+
+        if verbose:
+            print(opt_res)
 
         return self.new(self.blades, *opt_res.x)
 
@@ -133,8 +133,8 @@ class Propeller(ABC):
         return cls(*args, **kwargs)
 
     def losses(self, wp: WorkingPoint) -> float:
-        pp = self.calculate_performance_for_working_point(wp)
-        return 1 - pp.efficiency
+        pp = self.find_performance(wp)
+        return 1 - pp.eta
 
     def cavitation_margin(self, wp: WorkingPoint) -> float:
         min_area_ratio = ((1.3 + 0.3 * self.blades) * wp.thrust / self.diameter ** 2 /
@@ -144,15 +144,15 @@ class Propeller(ABC):
         return (self.area_ratio - min_area_ratio) / self.area_ratio_max
 
     def rotation_speed_margin(self, wp: WorkingPoint, rotation_speed_max: float) -> float:
-        pp = self.calculate_performance_for_working_point(wp)
+        pp = self.find_performance(wp)
         return (rotation_speed_max - pp.rotation_speed) / rotation_speed_max
 
     def torque_margin(self, wp: WorkingPoint, torque_max: float) -> float:
-        pp = self.calculate_performance_for_working_point(wp)
+        pp = self.find_performance(wp)
         return (torque_max - pp.torque) / torque_max
 
     def tip_speed_margin(self, wp: WorkingPoint, tip_speed_max: float) -> float:
-        pp = self.calculate_performance_for_working_point(wp)
+        pp = self.find_performance(wp)
         return (tip_speed_max - self.diameter * pi * pp.rotation_speed) / tip_speed_max
 
     def __post_init__(self):
@@ -190,16 +190,16 @@ class Propeller(ABC):
         the advance ratio. The advance ratio can be defined as a single point or an array of points.
 
         The advance ratio is defined as:
-            j = v / n / d
+            j = speed / rotation_speed / d
 
         The thrust coefficient is defined as:
-            kt = t / rho / n^2 / d^4
+            kt = thrust / rho / rotation_speed^2 / d^4
 
         Where:
-            - v: speed of the vessel [m/s]
-            - n: rotation speed [1/s] or [Hz]
+            - speed: speed of the vessel [m/s]
+            - rotation_speed: rotation speed [1/s] or [Hz]
             - d: diameter of the propeller [m]
-            - t: thrust of the propeller [N]
+            - thrust: thrust of the propeller [N]
             - rho: density of the fluid [kg/m^3]
 
         Parameters
@@ -224,16 +224,16 @@ class Propeller(ABC):
         the advance ratio. The advance ratio can be defined as a single point or an array of points.
 
         The advance ratio is defined as:
-            j = v / n / d
+            j = speed / rotation_speed / d
 
         The thrust coefficient is defined as:
-            kq = q / rho / n^2 / d^5
+            kq = torque / rho / rotation_speed^2 / d^5
 
         Where:
-            - v: speed of the vessel [m/s]
-            - n: rotation speed [1/s] or [Hz]
+            - speed: speed of the vessel [m/s]
+            - rotation_speed: rotation speed [1/s] or [Hz]
             - d: diameter of the propeller [m]
-            - q: torque of the propeller [Nm]
+            - torque: torque of the propeller [Nm]
             - rho: density of the fluid [kg/m^3]
 
         Parameters
