@@ -1,10 +1,30 @@
 from abc import ABC, abstractmethod
+from collections.abc import Iterable, Callable
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import ClassVar
-
-from numpy import pi, ndarray, array, inf
+from typing import ClassVar, Self
+from numpy import pi, array
+from numpy.typing import ArrayLike
 from scipy.optimize import root_scalar, minimize
+
+
+@dataclass(frozen=True)
+class WorkingPoint:
+    thrust:         float | ArrayLike   = 0
+    speed:          float | ArrayLike   = 0
+    immersion:      float   = float('inf')
+    rho:            float   = 1025
+    single_screw:   bool    = False
+
+
+@dataclass(frozen=True)
+class PerformancePoint:
+    torque:         float | ArrayLike
+    rotation_speed: float | ArrayLike
+    j:              float | ArrayLike
+    kt:             float | ArrayLike
+    kq:             float | ArrayLike
+    eta:            float | ArrayLike
 
 
 @dataclass(frozen=True)
@@ -34,305 +54,106 @@ class Propeller(ABC):
     pd_ratio_min:   ClassVar[float] = float('NaN')
     pd_ratio_max:   ClassVar[float] = float('NaN')
 
-    def eta(self, j):
-        """
-        Efficiency curve of this propeller
-
-        This function calculates the efficiency curve of this propeller as a function of the advance ratio. The advance
-        ratio can be defined as a single point or an array of points. When the advance ratio is outside the valid
-        range of this propeller (kt < 0), a NaN is returned.
-
-        The advance ratio is defined as:
-            j = v / n / d
-
-        The efficiency is defined as:
-            eta = t * v / 2 / pi / q / n
-
-        Where:
-            - v: speed of the vessel [m/s]
-            - n: rotation speed [1/s] or [Hz]
-            - d: diameter of the propeller [m]
-            - t: thrust of the propeller [N]
-            - q: torque of the motor [Nm]
-
-        Parameters
-        ----------
-        j : float or array-like
-            The advance-ratio's where the efficiency should be calculated
-
-        Returns
-        -------
-        float or array-like
-            The efficiency of the propeller
-        """
+    def find_performance(self, wp: WorkingPoint) -> PerformancePoint:
+        j = self.find_j(wp)
         kt = self.kt(j)
         kq = self.kq(j)
-        res = j * float('NaN')
+        n = wp.speed / j / self.diameter
 
-        eta_valid = j < self.j_max
-        if isinstance(j, ndarray):
-            res[eta_valid] = kt[eta_valid] * j[eta_valid] / 2 / pi / kq[eta_valid]
-        elif eta_valid:
-            res = kt * j / 2 / pi / kq
+        return PerformancePoint(
+            j= j,
+            kt= kt,
+            kq= kq,
+            eta=kt * j / 2 / pi / kq,
+            torque=kq * wp.rho * n ** 2 * self.diameter ** 5,
+            rotation_speed= n,
+        )
 
-        return res
+    def find_j(self, wp: WorkingPoint):
+        ktj2 = wp.thrust / wp.rho / wp.speed ** 2 / self.diameter ** 2
+        try:
+            return self._find_j_for_ktj2(ktj2)
+        except (TypeError, ValueError):
+            return self._find_j_for_ktj2s(ktj2)
 
-    def minimum_area_ratio(self, thrust, immersion, single_screw=False, rho=1025):
-        """
-        Calculate the minimum required expanded area ratio to prevent cavitation
+    def _find_j_for_ktj2(self, ktj2: float) -> float:
+        return float(root_scalar(
+            f=lambda j: self.kt(j) / j ** 2 - ktj2,
+            bracket=[1e-9, self.j_max],
+            x0=0.8 * self.j_max
+        ).root)
 
-        In general, a lower expanded area ratio will lead to a more efficient propeller. Unfortunately there's a limit
-        where the propeller will start cavitating. This limit is roughly approximated by Keller's formula [1].
+    def _find_j_for_ktj2s(self, ktj2s: ArrayLike) -> ArrayLike:
+        return array([root_scalar(
+            f=lambda j: self.kt(j) / j ** 2 - ktj2,
+            bracket=[1e-9, self.j_max],
+            x0=0.8 * self.j_max
+        ).root for ktj2 in ktj2s])
 
-        References
-        ----------
-            [1] J. auf dem Keller, Enige Aspecten bij het ontwerpen van Scheepsschroeven, Schip en werf, 1966
+    def optimize(self,
+                 objective: Callable[[Self], float],
+                 constraints: Iterable[Callable[[Self], float]] = (),
+                 optimizer: Callable = minimize,
+                 diameter_min : float = 1e-3,
+                 diameter_max : float = float('inf'),
+                 verbose: bool = True,) -> Self:
 
-        Parameters
-        ----------
-        thrust: float
-            The maximum expected thrust [N].
-        immersion: float
-            The minimum expected immersion below the waterline [m].
-        single_screw: bool
-            True when the ship has a single screw and this has a non-smooth wake.
-        rho: float
-            The density of the fluid [kg/m^3].
+        @dataclass(frozen=True)
+        class ConstraintFunction:
+            base: Propeller
+            func: Callable
 
-        Returns
-        -------
-        float
-            An estimation of the minimum expanded area ratio of the propeller to prevent cavitation.
-        """
-        min_area_ratio = (1.3 + 0.3 * self.blades) * thrust / self.diameter**2 / (1e5 + rho * 9.81 * immersion - 1700)
-        if single_screw:
+            def __call__(self, x):
+                return self.func(self.base.new(self.base.blades, *x))
+
+        opt_res = optimizer(
+            fun = lambda x: objective(self.new(self.blades, *x)),
+            x0 = array([
+                self.diameter,
+                self.area_ratio,
+                self.pd_ratio]
+            ),
+            bounds=[
+                (diameter_min, diameter_max),
+                (self.area_ratio_min, self.area_ratio_max),
+                (self.pd_ratio_min, self.pd_ratio_max)
+            ],
+            constraints=[{'type': 'ineq',
+                          'fun': ConstraintFunction(self, cfun)} for cfun in constraints]
+        )
+
+        if verbose:
+            print(opt_res)
+
+        return self.new(self.blades, *opt_res.x)
+
+    @classmethod
+    @lru_cache
+    def new(cls, *args, **kwargs):
+        return cls(*args, **kwargs)
+
+    def losses(self, wp: WorkingPoint) -> float:
+        pp = self.find_performance(wp)
+        return 1 - pp.eta
+
+    def cavitation_margin(self, wp: WorkingPoint) -> float:
+        min_area_ratio = ((1.3 + 0.3 * self.blades) * wp.thrust / self.diameter ** 2 /
+                          (1e5 + wp.rho * 9.81 * wp.immersion - 1700))
+        if wp.single_screw:
             min_area_ratio += 0.2
-        return min_area_ratio
+        return (self.area_ratio - min_area_ratio) / self.area_ratio_max
 
-    def optimize_efficiency_for_t_v(self, thrust, velocity, n_max=None, q_max=None, diameter_max=None, immersion=None,
-                                    single_screw=False, tip_speed_max=None, rho=1025):
-        """
-        Optimize the efficiency of a propeller for a given thrust and velocity
+    def rotation_speed_margin(self, wp: WorkingPoint, rotation_speed_max: float) -> float:
+        pp = self.find_performance(wp)
+        return (rotation_speed_max - pp.rotation_speed) / rotation_speed_max
 
-        This propeller will be optimized for a given amount of thrust and velocity. The result will be returned in the
-        form of a new propeller of the same type, but with the following fields optimized:
-         - diameter: The total diameter of the propeller
-         - area_ratio: The expanded area ratio
-         - pd_ratio: The pitch/diameter ratio
-        The optimization is inspired by [1].
+    def torque_margin(self, wp: WorkingPoint, torque_max: float) -> float:
+        pp = self.find_performance(wp)
+        return (torque_max - pp.torque) / torque_max
 
-        References
-        ----------
-           [1] G. Kuiper, The Wageningen propeller series, MARIN Publication 92-001, 1992
-
-        Parameters
-        ----------
-        thrust: float
-            The required thrust for this working point [N]
-        velocity: float
-            The velocity of the propeller [m/s]
-        n_max: float
-            The maximum rotational speed [1/s] or [Hz]
-        q_max: float
-            The maximum required torque [Nm]
-        diameter_max: float
-            The maximum allowed diameter [m]
-        immersion: float
-            The minimum expected immersion below the waterline [m].
-        single_screw: bool
-            True when the ship has a single screw and this has a non-smooth wake.
-        tip_speed_max: float
-            The maximum allowed tip speed [m/s]
-        rho: float
-            The density of the fluid [kg/m^3].
-
-        Returns
-        -------
-        Propeller
-            A new propeller with optimum diameter, area_ratio and pd_ratio
-        """
-        def losses(x):
-            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
-            ktj2 = thrust / rho / velocity ** 2 / p.diameter**2
-            return 1 - p.eta(p._find_j_for_ktj2(ktj2))
-
-        def cavitation_margin(x):
-            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
-            min_ear = p.minimum_area_ratio(thrust, immersion, single_screw=single_screw, rho=rho)
-            return x[1] - min_ear
-
-        def n_margin(x):
-            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
-            _, n, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
-            return n_max - n
-
-        def q_margin(x):
-            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
-            q, _, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
-            return q_max - q
-
-        def tip_speed(x):
-            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
-            _, n, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
-            return tip_speed_max - p.diameter * n * pi
-
-        constraints = []
-        if immersion:
-            constraints.append({'type': 'ineq', 'fun': cavitation_margin})
-            if diameter_max:
-                diameter_max = min(diameter_max, immersion*2)
-            else:
-                diameter_max = immersion*2
-        else:
-            if diameter_max is None:
-                diameter_max = inf
-        if n_max:
-            constraints.append({'type': 'ineq', 'fun': n_margin})
-        if q_max:
-            constraints.append({'type': 'ineq', 'fun': q_margin})
-        if tip_speed_max:
-            constraints.append({'type': 'ineq', 'fun': tip_speed})
-
-        # noinspection PyTypeChecker
-        opt_res = minimize(
-            fun=losses,
-            x0=array([
-                self.diameter,
-                self.area_ratio,
-                self.pd_ratio]
-            ),
-            bounds=[
-                (1e-3, diameter_max),
-                (self.area_ratio_min, self.area_ratio_max),
-                (self.pd_ratio_min, self.pd_ratio_max)
-            ],
-            constraints=constraints
-        )
-
-        if not opt_res.success:
-            print(f'Optimization unsuccessful, reason: {opt_res.message}')
-
-        return self.new(blades=self.blades, diameter=opt_res.x[0], area_ratio=opt_res.x[1], pd_ratio=opt_res.x[2])
-
-    def optimize_eff_with_extremes(self, nom_point, constraint_points=(), n_max=None, q_max=None, diameter_max=None,
-                                   immersion=None, single_screw=False, tip_speed_max=None, rho=1025):
-        def losses(x, thrust, velocity):
-            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
-            ktj2 = thrust / rho / velocity ** 2 / p.diameter**2
-            return 1 - p.eta(p._find_j_for_ktj2(ktj2))
-
-        def cavitation_margin(x, thrust, velocity):
-            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
-            min_ear = p.minimum_area_ratio(thrust, immersion, single_screw=single_screw, rho=rho)
-            return x[1] - min_ear
-
-        def n_margin(x, thrust, velocity):
-            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
-            _, n, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
-            return n_max - n
-
-        def q_margin(x, thrust, velocity):
-            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
-            q, _, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
-            return q_max - q
-
-        def tip_speed(x, thrust, velocity):
-            p = self.new(blades=self.blades, diameter=x[0], area_ratio=x[1], pd_ratio=x[2])
-            _, n, _, _, _, _ = p.calculate_operating_point(thrust, velocity, rho=rho)
-            return tip_speed_max - p.diameter * n * pi
-
-        constraint_points = [nom_point] + list(constraint_points)
-
-        constraints = []
-        for constraint_point in constraint_points:
-            if immersion:
-                constraints.append({'type': 'ineq', 'fun': cavitation_margin, 'args': constraint_point})
-                if diameter_max:
-                    diameter_max = min(diameter_max, immersion * 2)
-                else:
-                    diameter_max = immersion * 2
-            else:
-                if diameter_max is None:
-                    diameter_max = inf
-            if n_max:
-                constraints.append({'type': 'ineq', 'fun': n_margin, 'args': constraint_point})
-            if q_max:
-                constraints.append({'type': 'ineq', 'fun': q_margin, 'args': constraint_point})
-            if tip_speed_max:
-                constraints.append({'type': 'ineq', 'fun': tip_speed, 'args': constraint_point})
-
-        # noinspection PyTypeChecker
-        opt_res = minimize(
-            fun=lambda x: losses(x, nom_point[0], nom_point[1]),
-            x0=array([
-                self.diameter,
-                self.area_ratio,
-                self.pd_ratio]
-            ),
-            bounds=[
-                (1e-3, diameter_max),
-                (self.area_ratio_min, self.area_ratio_max),
-                (self.pd_ratio_min, self.pd_ratio_max)
-            ],
-            constraints=constraints
-        )
-
-        if not opt_res.success:
-            print(f'Optimization unsuccessful, reason: {opt_res.message}')
-
-        return self.new(blades=self.blades, diameter=opt_res.x[0], area_ratio=opt_res.x[1], pd_ratio=opt_res.x[2])
-
-    def optimize_bollard_thrust_for_q_n(self, q, n, diameter_max=None, immersion=None, single_screw=False, rho=1025):
-        def neg_thrust(x):
-            p = self.new(blades=self.blades, diameter=self.diameter, area_ratio=x[0], pd_ratio=x[1])
-            d = (q / rho / n**2 / p.kq_max) ** (1 / 5)
-            t = p.kt_max * rho * n**2 * d**4
-            return -t
-
-        def cavitation_margin(x):
-            p = self.new(blades=self.blades, diameter=self.diameter, area_ratio=x[0], pd_ratio=x[1])
-            d = (q / rho / n ** 2 / p.kq_max) ** (1 / 5)
-            t = p.kt_max * rho * n ** 2 * d ** 4
-            p = self.new(blades=p.blades, diameter=d, area_ratio=p.area_ratio, pd_ratio=p.pd_ratio)
-            min_ear = p.minimum_area_ratio(t, immersion, single_screw=single_screw, rho=rho)
-            return x[1] - min_ear
-
-        constraints = []
-        if immersion:
-            constraints.append({'type': 'ineq', 'fun': cavitation_margin})
-            if diameter_max:
-                diameter_max = min(diameter_max, immersion * 2)
-            else:
-                diameter_max = immersion * 2
-
-        def diameter_margin(x):
-            p = self.new(blades=self.blades, diameter=self.diameter, area_ratio=x[0], pd_ratio=x[1])
-            d = (q / rho / n ** 2 / p.kq_max) ** (1 / 5)
-            return diameter_max - d
-
-        if diameter_max:
-            constraints.append({'type': 'ineq', 'fun': diameter_margin})
-
-        # noinspection PyTypeChecker
-        opt_res = minimize(
-            fun=neg_thrust,
-            x0=array([
-                self.area_ratio,
-                self.pd_ratio]
-            ),
-            bounds=[
-                (self.area_ratio_min, self.area_ratio_max),
-                (self.pd_ratio_min, self.pd_ratio_max)
-            ],
-            constraints=constraints
-        )
-
-        if not opt_res.success:
-            print(f'Optimization unsuccessful, reason: {opt_res.message}')
-
-        p = self.new(blades=self.blades, diameter=self.diameter, area_ratio=opt_res.x[0], pd_ratio=opt_res.x[1])
-        diameter = (q / rho / n ** 2 / p.kq_max) ** (1 / 5)
-        return self.new(blades=p.blades, diameter=diameter, area_ratio=p.area_ratio, pd_ratio=p.pd_ratio)
+    def tip_speed_margin(self, wp: WorkingPoint, tip_speed_max: float) -> float:
+        pp = self.find_performance(wp)
+        return (tip_speed_max - self.diameter * pi * pp.rotation_speed) / tip_speed_max
 
     def __post_init__(self):
         if not (self.diameter > 0):
@@ -369,16 +190,16 @@ class Propeller(ABC):
         the advance ratio. The advance ratio can be defined as a single point or an array of points.
 
         The advance ratio is defined as:
-            j = v / n / d
+            j = speed / rotation_speed / d
 
         The thrust coefficient is defined as:
-            kt = t / rho / n^2 / d^4
+            kt = thrust / rho / rotation_speed^2 / d^4
 
         Where:
-            - v: speed of the vessel [m/s]
-            - n: rotation speed [1/s] or [Hz]
+            - speed: speed of the vessel [m/s]
+            - rotation_speed: rotation speed [1/s] or [Hz]
             - d: diameter of the propeller [m]
-            - t: thrust of the propeller [N]
+            - thrust: thrust of the propeller [N]
             - rho: density of the fluid [kg/m^3]
 
         Parameters
@@ -403,16 +224,16 @@ class Propeller(ABC):
         the advance ratio. The advance ratio can be defined as a single point or an array of points.
 
         The advance ratio is defined as:
-            j = v / n / d
+            j = speed / rotation_speed / d
 
         The thrust coefficient is defined as:
-            kq = q / rho / n^2 / d^5
+            kq = torque / rho / rotation_speed^2 / d^5
 
         Where:
-            - v: speed of the vessel [m/s]
-            - n: rotation speed [1/s] or [Hz]
+            - speed: speed of the vessel [m/s]
+            - rotation_speed: rotation speed [1/s] or [Hz]
             - d: diameter of the propeller [m]
-            - q: torque of the propeller [Nm]
+            - torque: torque of the propeller [Nm]
             - rho: density of the fluid [kg/m^3]
 
         Parameters
@@ -426,6 +247,9 @@ class Propeller(ABC):
             The torque coefficients of the propeller
         """
         pass
+
+    def eta(self, j):
+        return self.kt(j) * j / 2 / pi / self.kq(j)
 
     def kt_inv(self, kt):
         """
@@ -485,96 +309,6 @@ class Propeller(ABC):
                 rtol=1e-15, xtol=1e-15
             ).root
 
-    def calculate_operating_point(self, thrust, velocity, rho=1025.0):
-        """
-        Calculate an operating point for this propeller.
-
-        Parameters
-        ----------
-        thrust: float
-            The required thrust [N]
-
-        velocity: float
-            The velocity of the incomming flow [m/s]
-
-        rho: float (optional)
-            The density of the fluid [kg/m^3]
-
-        Returns
-        -------
-        torque: float
-            The required torque on the shaft [Nm]
-
-        n: float
-            The required rotational speed of the propeller [Hz]
-
-        j: float
-            The advance ratio of this working point [-]
-
-        kt: float
-            The thrust coefficient of this working point [-]
-
-        kq: float
-            The torque coefficient of this working point [-]
-
-        eta: float
-            The efficiency of the propeller at this working point [-]
-        """
-        ktj2 = thrust / rho / velocity**2 / self.diameter**2
-        j = self._find_j_for_ktj2(ktj2)
-        kt = ktj2 * j**2
-        kq = self.kq(j)
-        eta = kt * j / 2 / pi / kq
-        n = velocity / j / self.diameter
-        torque = kq * rho * n**2 * self.diameter**5
-        return torque, n, j, kt, kq, eta
-
-    def calculate_operating_points(self, thrusts, velocities, rho=1025.0):
-        """
-        Calculate an operating points for this propeller.
-
-        This is a vectorized version of the calculate_operating_point function.
-
-        Parameters
-        ----------
-        thrusts: array-like
-            The required thrusts [N]
-
-        velocities: array-like
-            The velocities of the incomming flow [m/s]
-
-        rho: float (optional)
-            The density of the fluid [kg/m^3]
-
-        Returns
-        -------
-        torques: array-like
-            The required torques on the shaft [Nm]
-
-        ns: array-like
-            The required rotational speed of the propeller [Hz]
-
-        js: array-like
-            The advance ratios of these working points [-]
-
-        kts: array-like
-            The thrust coefficients of these working points [-]
-
-        kqs: array-like
-            The torque coefficients of these workings point [-]
-
-        etas: float
-            The efficiencies of the propeller at these working points [-]
-        """
-        ktj2s = thrusts / rho / velocities**2 / self.diameter**2
-        js = array([self._find_j_for_ktj2(ktj2) for ktj2 in ktj2s])
-        kts = ktj2s * js**2
-        kqs = self.kq(js)
-        etas = kts * js / 2 / pi / kqs
-        ns = velocities / js / self.diameter
-        torques = kqs * rho * ns**2 * self.diameter**5
-        return torques, ns, js, kts, kqs, etas
-
     @property
     @abstractmethod
     def j_max(self):
@@ -596,15 +330,3 @@ class Propeller(ABC):
     @property
     def kq_min(self):
         return self.kq(self.j_max)
-
-    def _find_j_for_ktj2(self, ktj2):
-        return root_scalar(
-            f=lambda j: self.kt(j)/j**2 - ktj2,
-            bracket=[1e-9, self.j_max],
-            x0=0.8*self.j_max
-        ).root
-
-    @classmethod
-    @lru_cache
-    def new(cls, *args, **kwargs):
-        return cls(*args, **kwargs)
