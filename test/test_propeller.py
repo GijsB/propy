@@ -18,7 +18,7 @@ def test_new():
 
 def test_optimization_max_diameter():
     """
-    This test compares the result of a propeller optimization with the results from [1] champter 9.3.
+    This test compares the result of a propeller optimization with the results from [1] chapter 9.3.
 
         [1] G. Kuiper, The Wageningen propeller series, MARIN Publication 92-001, 1992
     """
@@ -39,7 +39,7 @@ def test_optimization_max_diameter():
     )
 
     # Immersion is modified to achieve a safety factor for the minimum area_ratio, this is also done in the book by
-    # simply "chosing" a higher area_ratio manually (0.55)
+    # simply "choosing" a higher area_ratio manually (0.55)
     assert prop.cavitation_margin(wp) > -1e-15
 
     assert prop.diameter <= 7
@@ -163,7 +163,7 @@ def test_area_ratio_limit():
         ]
     )
 
-    # That's not really close.. weird
+    # That's not really close, weird
     assert prop.cavitation_margin(wp) > -1e-6
 
 
@@ -184,6 +184,6 @@ def test_tip_speed_limit():
 
     pp = prop.find_performance(wp)
 
-    # That's not really close.. weird
+    # That's not really close, weird
     assert prop.tip_speed_margin(wp, 24) > -1e-6
     assert pp.rotation_speed * pi * prop.diameter < 24 * (1 + 1e-6)
