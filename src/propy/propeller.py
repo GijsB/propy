@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Callable
 from dataclasses import dataclass
-from functools import lru_cache
+from functools import lru_cache, cached_property
 from typing import ClassVar, Self
-from numpy import pi, array
+from numpy import pi, array, atan2, cos, sin, sqrt
+from numpy.linalg import solve
 from numpy.typing import ArrayLike
 from scipy.optimize import root_scalar, minimize
 
@@ -308,6 +309,86 @@ class Propeller(ABC):
                 x0=self.j_max * (kq - self.kq_max) / (self.kq_min - self.kq_max),
                 rtol=1e-15, xtol=1e-15
             ).root
+
+    @dataclass(frozen=True)
+    class FourQuadrantFunction:
+        amplitude: float
+        phase: float
+
+        def __call__(self, beta: float | ArrayLike) -> float | ArrayLike:
+            return self.amplitude * sin(beta + self.phase)
+
+    @cached_property
+    def ct(self) -> FourQuadrantFunction:
+        """Fit the 1-quadrant behaviour the propeller onto a  4-quadrant function and return the resulting function.
+
+        With the 4-quadrant behaviour of a propeller, the thrust and torque can be calculated for every load angle. This
+        means the propeller can also be used for generating and reversing cases. The result of this function is a very
+        rough approximation of the actual behaviour, which cannot be determined from the 1-quadrant data exclusively. It
+        should therefore not be relied upon for accuracy.
+
+        Returns
+        -------
+        FourQuadrantFunction(beta)
+            A function that returns the thrust coefficient of the propeller as a function the load angle beta
+        """
+
+        # The load angle at the maximum J (where kt=0)
+        beta_max = atan2(self.j_max, 0.7 * pi)
+        ct_min = self.kt_min * 8 / pi / (self.j_max**2 + 0.7**2 * pi**2)
+
+        # The thrust coefficient at J=0 (and thus beta=0)
+        beta_min = 0
+        ct_max = self.kt_max * 8 / pi / (0.7**2 * pi**2)
+
+        # Linearly fit the ct(beta) function on these two points
+        (a_c, ), (a_s, ) = solve(
+            [[cos(beta_min), sin(beta_min)],
+             [cos(beta_max), sin(beta_max)]],
+            [[ct_max],
+             [ct_min]]
+        )
+
+        return Propeller.FourQuadrantFunction(
+            amplitude=float(sqrt(a_c**2 + a_s**2)),
+            phase=float(atan2(a_c, a_s))
+        )
+
+    @cached_property
+    def cq(self) -> FourQuadrantFunction:
+        """Fit the 1-quadrant behaviour the propeller onto a  4-quadrant function and return the resulting function.
+
+        With the 4-quadrant behaviour of a propeller, the thrust and torque can be calculated for every load angle. This
+        means the propeller can also be used for generating and reversing cases. The result of this function is a very
+        rough approximation of the actual behaviour, which cannot be determined from the 1-quadrant data exclusively. It
+        should therefore not be relied upon for accuracy.
+
+        Returns
+        -------
+        FourQuadrantFunction(beta)
+            A function that returns the torque coefficient of the propeller as a function the load angle beta
+        """
+
+        # The load angle at the maximum J (where kq != 0)
+        beta_max = atan2(self.j_max, 0.7 * pi)
+        cq_min = self.kq_min * 8 / pi / (self.j_max**2 + 0.7**2 * pi**2)
+
+        # The torque coefficient at J=0 (and thus beta=0)
+        beta_min = 0
+        cq_max = self.kq_max * 8 / pi / (0.7 ** 2 * pi ** 2)
+
+        # Linearly fit the ct(beta) function on these two points
+        (a_c,), (a_s,) = solve(
+            [[cos(beta_min), sin(beta_min)],
+             [cos(beta_max), sin(beta_max)]],
+            [[cq_max],
+             [cq_min]]
+        )
+
+        return Propeller.FourQuadrantFunction(
+            amplitude=float(sqrt(a_c ** 2 + a_s ** 2)),
+            phase=float(atan2(a_c, a_s))
+        )
 
     @property
     @abstractmethod
