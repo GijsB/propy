@@ -317,6 +317,23 @@ class Propeller(ABC):
         rough approximation of the actual behaviour, which cannot be determined from the 1-quadrant data exclusively. It
         should therefore not be relied upon for accuracy.
 
+        The load angle is defined as:
+            beta = atan(speed / 0.7 / pi / rotation_speed / diameter)
+            beta = atan(j / 0.7 / pi)
+
+        The 4-quadrant thrust coefficient is defined as:
+            ct = 8 * thrust / (speed^2 + (0.7 * pi * rotation_speed * diameter)^2) / pi / rho / diameter^2
+            ct = 8 * kt / pi / (j^2 + 0.7^2 * pi^2)
+
+        Where:
+            - j: is the advance ratio (speed / rotation_speed / diameter)
+            - kt: is the 1-quadrant thrust coefficient
+            - speed: speed of the vessel [m/s]
+            - rotation_speed: rotation speed [1/s] or [Hz]
+            - d: diameter of the propeller [m]
+            - thrust: thrust of the propeller [N]
+            - rho: density of the fluid [kg/m^3]
+
         Returns
         -------
         FourQuadrantFunction(beta)
@@ -352,6 +369,23 @@ class Propeller(ABC):
         means the propeller can also be used for generating and reversing cases. The result of this function is a very
         rough approximation of the actual behaviour, which cannot be determined from the 1-quadrant data exclusively. It
         should therefore not be relied upon for accuracy.
+
+        The load angle is defined as:
+            beta = atan(speed / 0.7 / pi / rotation_speed / diameter)
+            beta = atan(j / 0.7 / pi)
+
+        The 4-quadrant torque coefficient is defined as:
+            cq = 8 * torque / (speed^2 + (0.7 * pi * rotation_speed * diameter)^2) / pi / rho / diameter^3
+            cq = 8 * kq / pi / (j^2 + 0.7^2 * pi^2)
+
+        Where:
+            - j: is the advance ratio (speed / rotation_speed / diameter)
+            - kq: is the 1-quadrant torque coefficient
+            - speed: speed of the vessel [m/s]
+            - rotation_speed: rotation speed [1/s] or [Hz]
+            - d: diameter of the propeller [m]
+            - thrust: thrust of the propeller [N]
+            - rho: density of the fluid [kg/m^3]
 
         Returns
         -------
