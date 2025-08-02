@@ -183,7 +183,7 @@ class Propeller(ABC):
 
     @property
     @abstractmethod
-    def kt(self):
+    def kt(self) -> Callable[[float | ArrayLike], float | ArrayLike]:
         """
         Thrust coefficient of the propeller
 
@@ -203,21 +203,16 @@ class Propeller(ABC):
             - thrust: thrust of the propeller [N]
             - rho: density of the fluid [kg/m^3]
 
-        Parameters
-        ----------
-        j : float or array-like
-            The advance-ratio's where the thrust coefficient should be calculated
-
         Returns
         -------
-        float or array-like
-            The thrust coefficients of the propeller
+        Function(j)
+            A callable that calculates the thrust coefficient of the propeller as a function of the advance ratio.
         """
         pass
 
     @property
     @abstractmethod
-    def kq(self):
+    def kq(self) -> Callable[[float | ArrayLike], float | ArrayLike]:
         """
         Torque coefficient of the propeller
 
@@ -227,7 +222,7 @@ class Propeller(ABC):
         The advance ratio is defined as:
             j = speed / rotation_speed / d
 
-        The thrust coefficient is defined as:
+        The torque coefficient is defined as:
             kq = torque / rho / rotation_speed^2 / d^5
 
         Where:
@@ -237,15 +232,10 @@ class Propeller(ABC):
             - torque: torque of the propeller [Nm]
             - rho: density of the fluid [kg/m^3]
 
-        Parameters
-        ----------
-        j : float or array-like
-            The advance-ratio's where the thrust coefficient should be calculated
-
         Returns
         -------
-        float or array-like
-            The torque coefficients of the propeller
+        Function(j)
+            A callable that calculates the torque coefficient of the propeller as a function of the advance ratio.
         """
         pass
 

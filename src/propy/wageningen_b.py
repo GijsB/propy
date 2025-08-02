@@ -41,7 +41,7 @@ class WageningenBPropeller(Propeller):
     pd_ratio_max: ClassVar[float] = 1.4
 
     @cached_property
-    def kq(self):
+    def kq(self) -> Polynomial:
         return Polynomial(symbol='J', coef=[
               0.0037936800 * self.pd_ratio**0 * self.area_ratio**0 * self.blades**0 +
               0.0158960000 * self.pd_ratio**0 * self.area_ratio**2 * self.blades**0 +
@@ -93,7 +93,7 @@ class WageningenBPropeller(Propeller):
         ])
 
     @cached_property
-    def kt(self):
+    def kt(self) -> Polynomial:
         return Polynomial(symbol='J', coef=[
               0.008804960 * self.pd_ratio**0 * self.area_ratio**0 * self.blades**0 +
               0.014404300 * self.pd_ratio**0 * self.area_ratio**0 * self.blades**1 +
