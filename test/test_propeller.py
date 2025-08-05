@@ -1,7 +1,9 @@
+from math import atan2
+
 from propy.propeller import Propeller, WorkingPoint
 from propy.wageningen_b import WageningenBPropeller
 
-from pytest import raises
+from pytest import raises, approx
 from numpy import pi
 from numpy.testing import assert_allclose
 
@@ -187,3 +189,15 @@ def test_tip_speed_limit():
     # That's not really close, weird
     assert prop.tip_speed_margin(wp, 24) > -1e-6
     assert pp.rotation_speed * pi * prop.diameter < 24 * (1 + 1e-6)
+
+
+def test_4q_prop():
+    prop = WageningenBPropeller()
+
+    assert prop.ct(0) == approx(8 * prop.kt(0) / pi / (0.7**2 * pi**2))
+    assert prop.cq(0) == approx(8 * prop.kq(0) / pi / (0.7**2 * pi**2))
+
+    beta_max = atan2(prop.j_max, 0.7 * pi)
+
+    assert prop.ct(beta_max) == approx(8 * prop.kt_min / pi / (prop.j_max**2 + 0.7**2 * pi**2))
+    assert prop.cq(beta_max) == approx(8 * prop.kq_min / pi / (prop.j_max**2 + 0.7**2 * pi**2))

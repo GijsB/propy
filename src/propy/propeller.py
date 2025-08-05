@@ -97,7 +97,7 @@ class Propeller(ABC):
                  optimizer: Callable = minimize,
                  diameter_min : float = 1e-3,
                  diameter_max : float = float('inf'),
-                 verbose: bool = True,) -> Self:
+                 verbose: bool = False,) -> Self:
 
         @dataclass(frozen=True)
         class ConstraintFunction:
