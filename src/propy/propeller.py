@@ -29,6 +29,23 @@ class PerformancePoint:
 
 
 @dataclass(frozen=True)
+class WorkingPoint4Q:
+    rotation_speed: float | ArrayLike   = 0
+    speed:          float | ArrayLike   = 0
+    rho:            float   = 1025
+
+
+@dataclass(frozen=True)
+class PerformancePoint4Q:
+    torque:         float | ArrayLike
+    thrust:         float | ArrayLike
+    beta:           float | ArrayLike
+    ct:             float | ArrayLike
+    cq:             float | ArrayLike
+    eta:            float | ArrayLike
+
+
+@dataclass(frozen=True)
 class Propeller(ABC):
     """
     Fields
@@ -412,6 +429,35 @@ class Propeller(ABC):
         return Propeller.FourQuadrantFunction(
             amplitude=float(sqrt(a_c ** 2 + a_s ** 2)),
             phase=float(atan2(a_c, a_s))
+        )
+
+    def find_performace_4q(self, wp: WorkingPoint4Q) -> PerformancePoint4Q:
+        # Assume 4-quadrant working point at first
+        beta = atan2(wp.speed, 0.7 * pi * wp.rotation_speed * self.diameter)
+        ct = self.ct(beta)
+        cq = self.cq(beta)
+        thrust = (ct * (wp.speed**2 + (0.7 * pi * wp.rotation_speed * self.diameter)**2) * pi * wp.rho *
+                  self.diameter**2 / 8)
+        torque = (cq * (wp.speed**2 + (0.7 * pi * wp.rotation_speed * self.diameter)**2) * pi * wp.rho *
+                  self.diameter**3 / 8)
+
+        # Substitute more accurate 1-quadrant data if it's available
+        j = wp.speed / wp.rotation_speed / self.diameter
+        is_1q = (j > 0) and (j < self.j_max) and (wp.speed > 0)
+        kt = self.kt(j[is_1q])
+        kq = self.kq(j[is_1q])
+        thrust[is_1q] = kt * wp.rho * wp.rotation_speed[is_1q]**2 * self.diameter**4
+        torque[is_1q] = kq * wp.rho * wp.rotation_speed[is_1q]**2 * self.diameter**5
+
+        eta = (wp.rotation_speed * torque) / (wp.speed * thrust)
+
+        return PerformancePoint4Q(
+            beta=beta,
+            ct=ct,
+            cq=cq,
+            thrust=thrust,
+            torque=torque,
+            eta=eta
         )
 
     @property
