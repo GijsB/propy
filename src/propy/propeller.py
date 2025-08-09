@@ -3,7 +3,7 @@ from collections.abc import Iterable, Callable
 from dataclasses import dataclass
 from functools import lru_cache, cached_property
 from typing import ClassVar, Self
-from numpy import pi, array, atan2, cos, sin, sqrt
+from numpy import pi, array, atan2, cos, sin, sqrt, logical_and, broadcast_arrays, atleast_1d
 from numpy.linalg import solve
 from numpy.typing import ArrayLike
 from scipy.optimize import root_scalar, minimize
@@ -37,12 +37,11 @@ class WorkingPoint4Q:
 
 @dataclass(frozen=True)
 class PerformancePoint4Q:
-    torque:         float | ArrayLike
-    thrust:         float | ArrayLike
-    beta:           float | ArrayLike
-    ct:             float | ArrayLike
-    cq:             float | ArrayLike
-    eta:            float | ArrayLike
+    torque:         ArrayLike
+    thrust:         ArrayLike
+    beta:           ArrayLike
+    ct:             ArrayLike
+    cq:             ArrayLike
 
 
 @dataclass(frozen=True)
@@ -432,32 +431,30 @@ class Propeller(ABC):
         )
 
     def find_performace_4q(self, wp: WorkingPoint4Q) -> PerformancePoint4Q:
+        # Cast working point data to arrays
+        rotation_speed, speed = broadcast_arrays(*atleast_1d(wp.rotation_speed, wp.speed))
+
         # Assume 4-quadrant working point at first
-        beta = atan2(wp.speed, 0.7 * pi * wp.rotation_speed * self.diameter)
-        ct = self.ct(beta)
-        cq = self.cq(beta)
-        thrust = (ct * (wp.speed**2 + (0.7 * pi * wp.rotation_speed * self.diameter)**2) * pi * wp.rho *
+        beta = atan2(speed, 0.7 * pi * rotation_speed * self.diameter)
+        ct, cq = self.ct(beta), self.cq(beta)
+        thrust = (ct * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * wp.rho *
                   self.diameter**2 / 8)
-        torque = (cq * (wp.speed**2 + (0.7 * pi * wp.rotation_speed * self.diameter)**2) * pi * wp.rho *
+        torque = (cq * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * wp.rho *
                   self.diameter**3 / 8)
 
         # Substitute more accurate 1-quadrant data if it's available
-        j = wp.speed / wp.rotation_speed / self.diameter
-        is_1q = (j > 0) and (j < self.j_max) and (wp.speed > 0)
-        kt = self.kt(j[is_1q])
-        kq = self.kq(j[is_1q])
-        thrust[is_1q] = kt * wp.rho * wp.rotation_speed[is_1q]**2 * self.diameter**4
-        torque[is_1q] = kq * wp.rho * wp.rotation_speed[is_1q]**2 * self.diameter**5
-
-        eta = (wp.rotation_speed * torque) / (wp.speed * thrust)
+        is_in_first_quadrant = logical_and(speed > 0, speed < (self.j_max * rotation_speed * self.diameter))
+        j = speed[is_in_first_quadrant] / rotation_speed[is_in_first_quadrant] / self.diameter
+        kt, kq = self.kt(j), self.kq(j)
+        thrust[is_in_first_quadrant] = kt * wp.rho * rotation_speed[is_in_first_quadrant]**2 * self.diameter**4
+        torque[is_in_first_quadrant] = kq * wp.rho * rotation_speed[is_in_first_quadrant]**2 * self.diameter**5
 
         return PerformancePoint4Q(
             beta=beta,
             ct=ct,
             cq=cq,
             thrust=thrust,
-            torque=torque,
-            eta=eta
+            torque=torque
         )
 
     @property
