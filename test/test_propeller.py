@@ -6,7 +6,7 @@ from propy.propeller import Propeller, WorkingPoint, WorkingPoint4Q
 from propy.wageningen_b import WageningenBPropeller
 
 from pytest import raises, approx
-from numpy import pi, cos, sin, linspace
+from numpy import pi, linspace
 from numpy.testing import assert_allclose
 
 def test_instantiation():
@@ -225,3 +225,37 @@ def test_4q_1q_compare_performance():
     assert np.allclose(pp1q.torque, pp4q.torque)
     assert np.allclose(wp1q.thrust, pp4q.thrust)
     assert np.allclose(pp1q.rotation_speed, wp4q.rotation_speed)
+
+
+def test_4q_performance_robustness():
+    prop = WageningenBPropeller()
+
+    wp = WorkingPoint4Q(
+        rotation_speed=[0, 0, 0, 1, 1, 1, -1, -1, -1],
+        speed=[0, 1, -1, 0, 1, -1, 0, 1, -1],
+    )
+    pp = prop.find_performance_4q(wp)
+    assert pp is not None
+
+    wp = WorkingPoint4Q(
+        rotation_speed=1,
+        speed=1,
+    )
+
+    assert prop.find_performance_4q(wp) == prop.find_performance_4q(
+        WorkingPoint4Q(
+            rotation_speed=[wp.rotation_speed],
+            speed=wp.speed,
+        ))
+
+    assert prop.find_performance_4q(wp) == prop.find_performance_4q(
+        WorkingPoint4Q(
+            rotation_speed=[wp.rotation_speed],
+            speed=[wp.speed],
+        ))
+
+    assert prop.find_performance_4q(wp) == prop.find_performance_4q(
+        WorkingPoint4Q(
+            rotation_speed=wp.rotation_speed,
+            speed=[wp.speed],
+        ))
