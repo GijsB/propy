@@ -1,15 +1,18 @@
 from math import atan2
 
-from propy.propeller import Propeller, WorkingPoint
+import numpy as np
+
+from propy.propeller import Propeller, WorkingPoint, WorkingPoint4Q
 from propy.wageningen_b import WageningenBPropeller
 
 from pytest import raises, approx
-from numpy import pi
+from numpy import pi, cos, sin, linspace
 from numpy.testing import assert_allclose
 
 def test_instantiation():
     """Check whether instantiation of an abstract Propeller raises a TypeError"""
     with raises(TypeError):
+        # noinspection PyAbstractClass
         Propeller()
 
 def test_new():
@@ -201,3 +204,24 @@ def test_4q_prop():
 
     assert prop.ct(beta_max) == approx(8 * prop.kt_min / pi / (prop.j_max**2 + 0.7**2 * pi**2))
     assert prop.cq(beta_max) == approx(8 * prop.kq_min / pi / (prop.j_max**2 + 0.7**2 * pi**2))
+
+
+def test_4q_1q_compare_performance():
+    prop = WageningenBPropeller(blades=4, area_ratio=0.7, pd_ratio=1.4)
+
+    wp1q = WorkingPoint(
+        thrust=1000,
+        speed=linspace(1, 10, 1000),
+    )
+    pp1q = prop.find_performance(wp1q)
+
+    wp4q = WorkingPoint4Q(
+        rotation_speed=pp1q.rotation_speed,
+        speed=wp1q.speed,
+        rho=wp1q.rho,
+    )
+    pp4q = prop.find_performance_4q(wp4q)
+
+    assert np.allclose(pp1q.torque, pp4q.torque)
+    assert np.allclose(wp1q.thrust, pp4q.thrust)
+    assert np.allclose(pp1q.rotation_speed, wp4q.rotation_speed)
