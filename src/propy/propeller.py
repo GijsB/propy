@@ -430,17 +430,15 @@ class Propeller(ABC):
             phase=float(atan2(a_c, a_s))
         )
 
-    def find_performace_4q(self, wp: WorkingPoint4Q) -> PerformancePoint4Q:
+    def find_performance_4q(self, wp: WorkingPoint4Q) -> PerformancePoint4Q:
         # Cast working point data to arrays
         rotation_speed, speed = broadcast_arrays(*atleast_1d(wp.rotation_speed, wp.speed))
 
         # Assume 4-quadrant working point at first
         beta = atan2(speed, 0.7 * pi * rotation_speed * self.diameter)
         ct, cq = self.ct(beta), self.cq(beta)
-        thrust = (ct * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * wp.rho *
-                  self.diameter**2 / 8)
-        torque = (cq * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * wp.rho *
-                  self.diameter**3 / 8)
+        thrust = ct * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * wp.rho * self.diameter**2 / 8
+        torque = cq * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * wp.rho * self.diameter**3 / 8
 
         # Substitute more accurate 1-quadrant data if it's available
         is_in_first_quadrant = logical_and(speed > 0, speed < (self.j_max * rotation_speed * self.diameter))
