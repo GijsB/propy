@@ -25,9 +25,15 @@ license         = {file = "LICENSE"}
 dev = [
     "pytest>=6.0",
     "flake8>=7.0",
+    "mypy>=1.12",
 ]
 
 [tool.setuptools_scm]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
+
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true
+strict = true

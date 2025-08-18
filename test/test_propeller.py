@@ -10,20 +10,20 @@ from numpy import pi, linspace
 from numpy.testing import assert_allclose
 
 
-def test_instantiation():
+def test_instantiation() -> None:
     """Check whether instantiation of an abstract Propeller raises a TypeError"""
     with raises(TypeError):
         # noinspection PyAbstractClass
         Propeller()
 
 
-def test_new():
+def test_new() -> None:
     """Check whether calling new (on ABC) raises a TypeError"""
     with raises(TypeError):
         Propeller.new()
 
 
-def test_optimization_max_diameter():
+def test_optimization_max_diameter() -> None:
     """
     This test compares the result of a propeller optimization with the results from [1] chapter 9.3.
 
@@ -54,15 +54,19 @@ def test_optimization_max_diameter():
 
     pp = prop.find_performance(wp)
 
-    assert_allclose([pp.torque, pp.rotation_speed, pp.j, pp.kt, pp.kq, pp.eta],
-                    [[1667435], [1.767], [0.699], [0.181], [0.0310], [0.651]], rtol=1e-2)
+    assert pp.torque[0] == approx(1667435, rel=1e-2)
+    assert pp.rotation_speed[0] == approx(1.767, rel=1e-2)
+    assert pp.j[0] == approx(0.699, rel=1e-2)
+    assert pp.kt[0] == approx(0.181, rel=1e-2)
+    assert pp.kq[0] == approx(0.0310, rel=1e-2)
+    assert pp.eta[0] == approx(0.651, rel=1e-2)
 
     # The results are a bit different compared to [1], this is because [1] just provides an example of a manual
     # optimization. We expect our optimizer to perform a bit better.
     assert pp.eta > 0.651
 
 
-def test_optimization_min_rotation_speed():
+def test_optimization_min_rotation_speed() -> None:
     """
     This test compares the result of a propeller optimization with the results from [1] chapter 9.4.
 
@@ -96,7 +100,7 @@ def test_optimization_min_rotation_speed():
     assert pp.eta > 0.656
 
 
-def test_torque_limit():
+def test_torque_limit() -> None:
     wp = WorkingPoint(
         thrust=1000,
         speed=10,
@@ -117,7 +121,7 @@ def test_torque_limit():
     assert pp.torque < 60 * (1 + 5e-8)
 
 
-def test_rpm_limit():
+def test_rpm_limit() -> None:
     wp = WorkingPoint(
         thrust=1000,
         speed=10,
@@ -138,7 +142,7 @@ def test_rpm_limit():
     assert pp.rotation_speed < 20 * (1 + 1e-15)
 
 
-def test_diameter_limit():
+def test_diameter_limit() -> None:
     wp = WorkingPoint(
         thrust=1000,
         speed=10,
@@ -154,7 +158,7 @@ def test_diameter_limit():
     assert prop.diameter < 0.2*(1+1e-15)
 
 
-def test_area_ratio_limit():
+def test_area_ratio_limit() -> None:
     wp = WorkingPoint(
         thrust=1000,
         speed=20,
@@ -174,7 +178,7 @@ def test_area_ratio_limit():
     assert prop.cavitation_margin(wp) > -1e-6
 
 
-def test_tip_speed_limit():
+def test_tip_speed_limit() -> None:
     wp = WorkingPoint(
         thrust=1000,
         speed=10,
@@ -196,7 +200,7 @@ def test_tip_speed_limit():
     assert pp.rotation_speed * pi * prop.diameter < 24 * (1 + 1e-6)
 
 
-def test_4q_prop():
+def test_4q_prop() -> None:
     prop = WageningenBPropeller()
 
     assert prop.ct(0) == approx(8 * prop.kt(0) / pi / (0.7**2 * pi**2))
@@ -208,7 +212,7 @@ def test_4q_prop():
     assert prop.cq(beta_max) == approx(8 * prop.kq_min / pi / (prop.j_max**2 + 0.7**2 * pi**2))
 
 
-def test_4q_1q_compare_performance():
+def test_4q_1q_compare_performance() -> None:
     prop = WageningenBPropeller(blades=4, area_ratio=0.7, pd_ratio=1.4)
 
     wp1q = WorkingPoint(
@@ -229,7 +233,7 @@ def test_4q_1q_compare_performance():
     assert np.allclose(pp1q.rotation_speed, wp4q.rotation_speed)
 
 
-def test_4q_performance_robustness():
+def test_4q_performance_robustness() -> None:
     prop = WageningenBPropeller()
 
     wp = WorkingPoint4Q(
@@ -239,25 +243,28 @@ def test_4q_performance_robustness():
     pp = prop.find_performance_4q(wp)
     assert pp is not None
 
+    rotation_speed = 1
+    speed = 1
+
     wp = WorkingPoint4Q(
-        rotation_speed=1,
-        speed=1,
+        rotation_speed=rotation_speed,
+        speed=speed,
     )
 
     assert prop.find_performance_4q(wp) == prop.find_performance_4q(
         WorkingPoint4Q(
-            rotation_speed=[wp.rotation_speed],
-            speed=wp.speed,
+            rotation_speed=[rotation_speed],
+            speed=speed,
         ))
 
     assert prop.find_performance_4q(wp) == prop.find_performance_4q(
         WorkingPoint4Q(
-            rotation_speed=[wp.rotation_speed],
-            speed=[wp.speed],
+            rotation_speed=[rotation_speed],
+            speed=[speed],
         ))
 
     assert prop.find_performance_4q(wp) == prop.find_performance_4q(
         WorkingPoint4Q(
-            rotation_speed=wp.rotation_speed,
-            speed=[wp.speed],
+            rotation_speed=rotation_speed,
+            speed=[speed],
         ))

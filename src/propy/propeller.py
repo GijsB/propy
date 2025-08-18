@@ -3,9 +3,9 @@ from collections.abc import Iterable, Callable
 from dataclasses import dataclass
 from functools import lru_cache, cached_property
 from typing import ClassVar, Self
-from numpy import pi, array, atan2, cos, sin, sqrt, logical_and, broadcast_arrays, atleast_1d
+from numpy import pi, array, atan2, cos, sin, sqrt, logical_and, broadcast_arrays, atleast_1d, float64
 from numpy.linalg import solve
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 from scipy.optimize import root_scalar, minimize
 
 
@@ -20,12 +20,12 @@ class WorkingPoint:
 
 @dataclass(frozen=True)
 class PerformancePoint:
-    torque:         ArrayLike
-    rotation_speed: ArrayLike
-    j:              ArrayLike
-    kt:             ArrayLike
-    kq:             ArrayLike
-    eta:            ArrayLike
+    torque:         NDArray[float64]
+    rotation_speed: NDArray[float64]
+    j:              NDArray[float64]
+    kt:             NDArray[float64]
+    kq:             NDArray[float64]
+    eta:            NDArray[float64]
 
 
 @dataclass(frozen=True)
@@ -37,11 +37,11 @@ class WorkingPoint4Q:
 
 @dataclass(frozen=True)
 class PerformancePoint4Q:
-    torque:         ArrayLike
-    thrust:         ArrayLike
-    beta:           ArrayLike
-    ct:             ArrayLike
-    cq:             ArrayLike
+    torque:         NDArray[float64]
+    thrust:         NDArray[float64]
+    beta:           NDArray[float64]
+    ct:             NDArray[float64]
+    cq:             NDArray[float64]
 
 
 @dataclass(frozen=True)
@@ -465,22 +465,22 @@ class Propeller(ABC):
 
     @property
     @abstractmethod
-    def j_max(self):
+    def j_max(self) -> float:
         """The maximum valid advance-ratio of this propeller"""
         pass
 
     @property
-    def kt_max(self):
+    def kt_max(self) -> float:
         return self.kt(0)
 
     @property
-    def kt_min(self):
+    def kt_min(self) -> float:
         return 0
 
     @property
-    def kq_max(self):
+    def kq_max(self) -> float:
         return self.kq(0)
 
     @property
-    def kq_min(self):
+    def kq_min(self) -> float:
         return self.kq(self.j_max)
