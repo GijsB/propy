@@ -26,6 +26,7 @@ dev = [
     "pytest>=6.0",
     "flake8>=7.0",
     "mypy>=1.12",
+    "scipy-stubs"
 ]
 
 [tool.setuptools_scm]
@@ -35,5 +36,4 @@ minversion = "6.0"
 
 [tool.mypy]
 python_version = "3.13"
-ignore_missing_imports = true
 strict = true
