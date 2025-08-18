@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Callable
 from dataclasses import dataclass
-from functools import lru_cache
+from functools import lru_cache, cached_property
 from typing import ClassVar, Self
-from numpy import pi, array
+from numpy import pi, array, atan2, cos, sin, sqrt, logical_and, broadcast_arrays, atleast_1d
+from numpy.linalg import solve
 from numpy.typing import ArrayLike
 from scipy.optimize import root_scalar, minimize
 
@@ -19,12 +20,28 @@ class WorkingPoint:
 
 @dataclass(frozen=True)
 class PerformancePoint:
-    torque:         float | ArrayLike
-    rotation_speed: float | ArrayLike
-    j:              float | ArrayLike
-    kt:             float | ArrayLike
-    kq:             float | ArrayLike
-    eta:            float | ArrayLike
+    torque:         ArrayLike
+    rotation_speed: ArrayLike
+    j:              ArrayLike
+    kt:             ArrayLike
+    kq:             ArrayLike
+    eta:            ArrayLike
+
+
+@dataclass(frozen=True)
+class WorkingPoint4Q:
+    rotation_speed: float | ArrayLike   = 0
+    speed:          float | ArrayLike   = 0
+    rho:            float   = 1025
+
+
+@dataclass(frozen=True)
+class PerformancePoint4Q:
+    torque:         ArrayLike
+    thrust:         ArrayLike
+    beta:           ArrayLike
+    ct:             ArrayLike
+    cq:             ArrayLike
 
 
 @dataclass(frozen=True)
@@ -70,11 +87,9 @@ class Propeller(ABC):
         )
 
     def find_j(self, wp: WorkingPoint):
-        ktj2 = wp.thrust / wp.rho / wp.speed ** 2 / self.diameter ** 2
-        try:
-            return self._find_j_for_ktj2(ktj2)
-        except (TypeError, ValueError):
-            return self._find_j_for_ktj2s(ktj2)
+        speed, thrust = broadcast_arrays(*atleast_1d(wp.speed, wp.thrust))
+        ktj2 = thrust / wp.rho / speed ** 2 / self.diameter ** 2
+        return self._find_j_for_ktj2s(ktj2)
 
     def _find_j_for_ktj2(self, ktj2: float) -> float:
         return float(root_scalar(
@@ -84,11 +99,7 @@ class Propeller(ABC):
         ).root)
 
     def _find_j_for_ktj2s(self, ktj2s: ArrayLike) -> ArrayLike:
-        return array([root_scalar(
-            f=lambda j: self.kt(j) / j ** 2 - ktj2,
-            bracket=[1e-9, self.j_max],
-            x0=0.8 * self.j_max
-        ).root for ktj2 in ktj2s])
+        return array([self._find_j_for_ktj2(ktj2) for ktj2 in ktj2s])
 
     def optimize(self,
                  objective: Callable[[Self], float],
@@ -96,7 +107,7 @@ class Propeller(ABC):
                  optimizer: Callable = minimize,
                  diameter_min : float = 1e-3,
                  diameter_max : float = float('inf'),
-                 verbose: bool = True,) -> Self:
+                 verbose: bool = False,) -> Self:
 
         @dataclass(frozen=True)
         class ConstraintFunction:
@@ -182,7 +193,7 @@ class Propeller(ABC):
 
     @property
     @abstractmethod
-    def kt(self):
+    def kt(self) -> Callable[[float | ArrayLike], float | ArrayLike]:
         """
         Thrust coefficient of the propeller
 
@@ -202,21 +213,16 @@ class Propeller(ABC):
             - thrust: thrust of the propeller [N]
             - rho: density of the fluid [kg/m^3]
 
-        Parameters
-        ----------
-        j : float or array-like
-            The advance-ratio's where the thrust coefficient should be calculated
-
         Returns
         -------
-        float or array-like
-            The thrust coefficients of the propeller
+        Function(j)
+            A callable that calculates the thrust coefficient of the propeller as a function of the advance ratio.
         """
         pass
 
     @property
     @abstractmethod
-    def kq(self):
+    def kq(self) -> Callable[[float | ArrayLike], float | ArrayLike]:
         """
         Torque coefficient of the propeller
 
@@ -226,7 +232,7 @@ class Propeller(ABC):
         The advance ratio is defined as:
             j = speed / rotation_speed / d
 
-        The thrust coefficient is defined as:
+        The torque coefficient is defined as:
             kq = torque / rho / rotation_speed^2 / d^5
 
         Where:
@@ -236,15 +242,10 @@ class Propeller(ABC):
             - torque: torque of the propeller [Nm]
             - rho: density of the fluid [kg/m^3]
 
-        Parameters
-        ----------
-        j : float or array-like
-            The advance-ratio's where the thrust coefficient should be calculated
-
         Returns
         -------
-        float or array-like
-            The torque coefficients of the propeller
+        Function(j)
+            A callable that calculates the torque coefficient of the propeller as a function of the advance ratio.
         """
         pass
 
@@ -308,6 +309,159 @@ class Propeller(ABC):
                 x0=self.j_max * (kq - self.kq_max) / (self.kq_min - self.kq_max),
                 rtol=1e-15, xtol=1e-15
             ).root
+
+    @dataclass(frozen=True)
+    class FourQuadrantFunction:
+        amplitude: float
+        phase: float
+
+        def __call__(self, beta: float | ArrayLike) -> float | ArrayLike:
+            return self.amplitude * sin(beta + self.phase)
+
+    @cached_property
+    def ct(self) -> FourQuadrantFunction:
+        """Fit the 1-quadrant behaviour the propeller onto a  4-quadrant function and return the resulting function.
+
+        With the 4-quadrant behaviour of a propeller, the thrust and torque can be calculated for every load angle. This
+        means the propeller can also be used for generating and reversing cases. The result of this function is a very
+        rough approximation of the actual behaviour, which cannot be determined from the 1-quadrant data exclusively. It
+        should therefore not be relied upon for accuracy.
+
+        The load angle is defined as:
+            beta = atan(speed / 0.7 / pi / rotation_speed / diameter)
+            beta = atan(j / 0.7 / pi)
+
+        The 4-quadrant thrust coefficient is defined as:
+            ct = 8 * thrust / (speed^2 + (0.7 * pi * rotation_speed * diameter)^2) / pi / rho / diameter^2
+            ct = 8 * kt / pi / (j^2 + 0.7^2 * pi^2)
+
+        Where:
+            - j: is the advance ratio (speed / rotation_speed / diameter)
+            - kt: is the 1-quadrant thrust coefficient
+            - speed: speed of the vessel [m/s]
+            - rotation_speed: rotation speed [1/s] or [Hz]
+            - d: diameter of the propeller [m]
+            - thrust: thrust of the propeller [N]
+            - rho: density of the fluid [kg/m^3]
+
+        Returns
+        -------
+        FourQuadrantFunction(beta)
+            A function that returns the thrust coefficient of the propeller as a function the load angle beta
+        """
+
+        # The load angle at the maximum J (where kt=0)
+        beta_max = atan2(self.j_max, 0.7 * pi)
+        ct_min = self.kt_min * 8 / pi / (self.j_max**2 + 0.7**2 * pi**2)
+
+        # The thrust coefficient at J=0 (and thus beta=0)
+        beta_min = 0
+        ct_max = self.kt_max * 8 / pi / (0.7**2 * pi**2)
+
+        # Linearly fit the ct(beta) function on these two points
+        (a_c, ), (a_s, ) = solve(
+            [[cos(beta_min), sin(beta_min)],
+             [cos(beta_max), sin(beta_max)]],
+            [[ct_max],
+             [ct_min]]
+        )
+
+        return Propeller.FourQuadrantFunction(
+            amplitude=float(sqrt(a_c**2 + a_s**2)),
+            phase=float(atan2(a_c, a_s))
+        )
+
+    @cached_property
+    def cq(self) -> FourQuadrantFunction:
+        """Fit the 1-quadrant behaviour the propeller onto a  4-quadrant function and return the resulting function.
+
+        With the 4-quadrant behaviour of a propeller, the thrust and torque can be calculated for every load angle. This
+        means the propeller can also be used for generating and reversing cases. The result of this function is a very
+        rough approximation of the actual behaviour, which cannot be determined from the 1-quadrant data exclusively. It
+        should therefore not be relied upon for accuracy.
+
+        The load angle is defined as:
+            beta = atan(speed / 0.7 / pi / rotation_speed / diameter)
+            beta = atan(j / 0.7 / pi)
+
+        The 4-quadrant torque coefficient is defined as:
+            cq = 8 * torque / (speed^2 + (0.7 * pi * rotation_speed * diameter)^2) / pi / rho / diameter^3
+            cq = 8 * kq / pi / (j^2 + 0.7^2 * pi^2)
+
+        Where:
+            - j: is the advance ratio (speed / rotation_speed / diameter)
+            - kq: is the 1-quadrant torque coefficient
+            - speed: speed of the vessel [m/s]
+            - rotation_speed: rotation speed [1/s] or [Hz]
+            - d: diameter of the propeller [m]
+            - thrust: thrust of the propeller [N]
+            - rho: density of the fluid [kg/m^3]
+
+        Returns
+        -------
+        FourQuadrantFunction(beta)
+            A function that returns the torque coefficient of the propeller as a function the load angle beta
+        """
+
+        # The load angle at the maximum J (where kq != 0)
+        beta_max = atan2(self.j_max, 0.7 * pi)
+        cq_min = self.kq_min * 8 / pi / (self.j_max**2 + 0.7**2 * pi**2)
+
+        # The torque coefficient at J=0 (and thus beta=0)
+        beta_min = 0
+        cq_max = self.kq_max * 8 / pi / (0.7 ** 2 * pi ** 2)
+
+        # Linearly fit the ct(beta) function on these two points
+        (a_c,), (a_s,) = solve(
+            [[cos(beta_min), sin(beta_min)],
+             [cos(beta_max), sin(beta_max)]],
+            [[cq_max],
+             [cq_min]]
+        )
+
+        return Propeller.FourQuadrantFunction(
+            amplitude=float(sqrt(a_c ** 2 + a_s ** 2)),
+            phase=float(atan2(a_c, a_s))
+        )
+
+    def find_performance_4q(self, wp: WorkingPoint4Q) -> PerformancePoint4Q:
+        """
+        Calculate the 4-quadrant performance of this propeller at a given speed. When the workingpoint turns out to be
+        in the 1-quadrant area, the more accurate 1-quadrant model is used.
+
+        Parameters
+        ----------
+        wp
+            The 4 quadrant working point defining the (rotation-) speed.
+
+        Returns
+        -------
+            The performance at the given workingpoint.
+        """
+
+        # Cast working point data to arrays
+        rotation_speed, speed = broadcast_arrays(*atleast_1d(wp.rotation_speed, wp.speed))
+
+        # Assume 4-quadrant working point at first
+        beta = atan2(speed, 0.7 * pi * rotation_speed * self.diameter)
+        ct, cq = self.ct(beta), self.cq(beta)
+        thrust = ct * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * wp.rho * self.diameter**2 / 8
+        torque = cq * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * wp.rho * self.diameter**3 / 8
+
+        # Substitute more accurate 1-quadrant data if it's available
+        is_in_first_quadrant = logical_and(speed > 0, speed < (self.j_max * rotation_speed * self.diameter))
+        j = speed[is_in_first_quadrant] / rotation_speed[is_in_first_quadrant] / self.diameter
+        kt, kq = self.kt(j), self.kq(j)
+        thrust[is_in_first_quadrant] = kt * wp.rho * rotation_speed[is_in_first_quadrant]**2 * self.diameter**4
+        torque[is_in_first_quadrant] = kq * wp.rho * rotation_speed[is_in_first_quadrant]**2 * self.diameter**5
+
+        return PerformancePoint4Q(
+            beta=beta,
+            ct=ct,
+            cq=cq,
+            thrust=thrust,
+            torque=torque
+        )
 
     @property
     @abstractmethod

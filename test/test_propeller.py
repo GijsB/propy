@@ -1,13 +1,18 @@
-from propy.propeller import Propeller, WorkingPoint
+from math import atan2
+
+import numpy as np
+
+from propy.propeller import Propeller, WorkingPoint, WorkingPoint4Q
 from propy.wageningen_b import WageningenBPropeller
 
-from pytest import raises
-from numpy import pi
+from pytest import raises, approx
+from numpy import pi, linspace
 from numpy.testing import assert_allclose
 
 def test_instantiation():
     """Check whether instantiation of an abstract Propeller raises a TypeError"""
     with raises(TypeError):
+        # noinspection PyAbstractClass
         Propeller()
 
 def test_new():
@@ -18,7 +23,7 @@ def test_new():
 
 def test_optimization_max_diameter():
     """
-    This test compares the result of a propeller optimization with the results from [1] champter 9.3.
+    This test compares the result of a propeller optimization with the results from [1] chapter 9.3.
 
         [1] G. Kuiper, The Wageningen propeller series, MARIN Publication 92-001, 1992
     """
@@ -39,7 +44,7 @@ def test_optimization_max_diameter():
     )
 
     # Immersion is modified to achieve a safety factor for the minimum area_ratio, this is also done in the book by
-    # simply "chosing" a higher area_ratio manually (0.55)
+    # simply "choosing" a higher area_ratio manually (0.55)
     assert prop.cavitation_margin(wp) > -1e-15
 
     assert prop.diameter <= 7
@@ -48,7 +53,7 @@ def test_optimization_max_diameter():
     pp = prop.find_performance(wp)
 
     assert_allclose([pp.torque, pp.rotation_speed, pp.j, pp.kt, pp.kq, pp.eta],
-                    [1667435, 1.767, 0.699, 0.181, 0.0310, 0.651], rtol=1e-2)
+                    [[1667435], [1.767], [0.699], [0.181], [0.0310], [0.651]], rtol=1e-2)
 
     # The results are a bit different compared to [1], this is because [1] just provides an example of a manual
     # optimization. We expect our optimizer to perform a bit better.
@@ -163,7 +168,7 @@ def test_area_ratio_limit():
         ]
     )
 
-    # That's not really close.. weird
+    # That's not really close, weird
     assert prop.cavitation_margin(wp) > -1e-6
 
 
@@ -184,6 +189,73 @@ def test_tip_speed_limit():
 
     pp = prop.find_performance(wp)
 
-    # That's not really close.. weird
+    # That's not really close, weird
     assert prop.tip_speed_margin(wp, 24) > -1e-6
     assert pp.rotation_speed * pi * prop.diameter < 24 * (1 + 1e-6)
+
+
+def test_4q_prop():
+    prop = WageningenBPropeller()
+
+    assert prop.ct(0) == approx(8 * prop.kt(0) / pi / (0.7**2 * pi**2))
+    assert prop.cq(0) == approx(8 * prop.kq(0) / pi / (0.7**2 * pi**2))
+
+    beta_max = atan2(prop.j_max, 0.7 * pi)
+
+    assert prop.ct(beta_max) == approx(8 * prop.kt_min / pi / (prop.j_max**2 + 0.7**2 * pi**2))
+    assert prop.cq(beta_max) == approx(8 * prop.kq_min / pi / (prop.j_max**2 + 0.7**2 * pi**2))
+
+
+def test_4q_1q_compare_performance():
+    prop = WageningenBPropeller(blades=4, area_ratio=0.7, pd_ratio=1.4)
+
+    wp1q = WorkingPoint(
+        thrust=1000,
+        speed=linspace(1, 10, 1000),
+    )
+    pp1q = prop.find_performance(wp1q)
+
+    wp4q = WorkingPoint4Q(
+        rotation_speed=pp1q.rotation_speed,
+        speed=wp1q.speed,
+        rho=wp1q.rho,
+    )
+    pp4q = prop.find_performance_4q(wp4q)
+
+    assert np.allclose(pp1q.torque, pp4q.torque)
+    assert np.allclose(wp1q.thrust, pp4q.thrust)
+    assert np.allclose(pp1q.rotation_speed, wp4q.rotation_speed)
+
+
+def test_4q_performance_robustness():
+    prop = WageningenBPropeller()
+
+    wp = WorkingPoint4Q(
+        rotation_speed=[0, 0, 0, 1, 1, 1, -1, -1, -1],
+        speed=[0, 1, -1, 0, 1, -1, 0, 1, -1],
+    )
+    pp = prop.find_performance_4q(wp)
+    assert pp is not None
+
+    wp = WorkingPoint4Q(
+        rotation_speed=1,
+        speed=1,
+    )
+
+    assert prop.find_performance_4q(wp) == prop.find_performance_4q(
+        WorkingPoint4Q(
+            rotation_speed=[wp.rotation_speed],
+            speed=wp.speed,
+        ))
+
+    assert prop.find_performance_4q(wp) == prop.find_performance_4q(
+        WorkingPoint4Q(
+            rotation_speed=[wp.rotation_speed],
+            speed=[wp.speed],
+        ))
+
+    assert prop.find_performance_4q(wp) == prop.find_performance_4q(
+        WorkingPoint4Q(
+            rotation_speed=wp.rotation_speed,
+            speed=[wp.speed],
+        ))
