@@ -53,7 +53,7 @@ def test_optimization_max_diameter():
     pp = prop.find_performance(wp)
 
     assert_allclose([pp.torque, pp.rotation_speed, pp.j, pp.kt, pp.kq, pp.eta],
-                    [1667435, 1.767, 0.699, 0.181, 0.0310, 0.651], rtol=1e-2)
+                    [[1667435], [1.767], [0.699], [0.181], [0.0310], [0.651]], rtol=1e-2)
 
     # The results are a bit different compared to [1], this is because [1] just provides an example of a manual
     # optimization. We expect our optimizer to perform a bit better.

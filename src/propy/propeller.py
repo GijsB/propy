@@ -20,12 +20,12 @@ class WorkingPoint:
 
 @dataclass(frozen=True)
 class PerformancePoint:
-    torque:         float | ArrayLike
-    rotation_speed: float | ArrayLike
-    j:              float | ArrayLike
-    kt:             float | ArrayLike
-    kq:             float | ArrayLike
-    eta:            float | ArrayLike
+    torque:         ArrayLike
+    rotation_speed: ArrayLike
+    j:              ArrayLike
+    kt:             ArrayLike
+    kq:             ArrayLike
+    eta:            ArrayLike
 
 
 @dataclass(frozen=True)
@@ -87,11 +87,9 @@ class Propeller(ABC):
         )
 
     def find_j(self, wp: WorkingPoint):
-        ktj2 = wp.thrust / wp.rho / wp.speed ** 2 / self.diameter ** 2
-        try:
-            return self._find_j_for_ktj2(ktj2)
-        except (TypeError, ValueError):
-            return self._find_j_for_ktj2s(ktj2)
+        speed, thrust = broadcast_arrays(*atleast_1d(wp.speed, wp.thrust))
+        ktj2 = thrust / wp.rho / speed ** 2 / self.diameter ** 2
+        return self._find_j_for_ktj2s(ktj2)
 
     def _find_j_for_ktj2(self, ktj2: float) -> float:
         return float(root_scalar(
@@ -101,11 +99,7 @@ class Propeller(ABC):
         ).root)
 
     def _find_j_for_ktj2s(self, ktj2s: ArrayLike) -> ArrayLike:
-        return array([root_scalar(
-            f=lambda j: self.kt(j) / j ** 2 - ktj2,
-            bracket=[1e-9, self.j_max],
-            x0=0.8 * self.j_max
-        ).root for ktj2 in ktj2s])
+        return array([self._find_j_for_ktj2(ktj2) for ktj2 in ktj2s])
 
     def optimize(self,
                  objective: Callable[[Self], float],
@@ -431,6 +425,20 @@ class Propeller(ABC):
         )
 
     def find_performance_4q(self, wp: WorkingPoint4Q) -> PerformancePoint4Q:
+        """
+        Calculate the 4-quadrant performance of this propeller at a given speed. When the workingpoint turns out to be
+        in the 1-quadrant area, the more accurate 1-quadrant model is used.
+
+        Parameters
+        ----------
+        wp
+            The 4 quadrant working point defining the (rotation-) speed.
+
+        Returns
+        -------
+            The performance at the given workingpoint.
+        """
+
         # Cast working point data to arrays
         rotation_speed, speed = broadcast_arrays(*atleast_1d(wp.rotation_speed, wp.speed))
 
