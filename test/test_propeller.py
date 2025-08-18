@@ -9,11 +9,13 @@ from pytest import raises, approx
 from numpy import pi, linspace
 from numpy.testing import assert_allclose
 
+
 def test_instantiation():
     """Check whether instantiation of an abstract Propeller raises a TypeError"""
     with raises(TypeError):
         # noinspection PyAbstractClass
         Propeller()
+
 
 def test_new():
     """Check whether calling new (on ABC) raises a TypeError"""
@@ -36,8 +38,8 @@ def test_optimization_max_diameter():
     prop = WageningenBPropeller(
         blades=4,
     ).optimize(
-        objective = lambda p: p.losses(wp),
-        constraints = [
+        objective=lambda p: p.losses(wp),
+        constraints=[
             lambda p: p.cavitation_margin(wp)
         ],
         diameter_max=7,
@@ -103,13 +105,13 @@ def test_torque_limit():
     prop = WageningenBPropeller(
         blades=3,
     ).optimize(
-        objective = lambda p: p.losses(wp),
-        constraints = [
+        objective=lambda p: p.losses(wp),
+        constraints=[
             lambda p: p.torque_margin(wp, 60)
         ]
     )
 
-    pp  = prop.find_performance(wp)
+    pp = prop.find_performance(wp)
 
     assert prop.torque_margin(wp, 60) > -5e-8
     assert pp.torque < 60 * (1 + 5e-8)
@@ -117,15 +119,15 @@ def test_torque_limit():
 
 def test_rpm_limit():
     wp = WorkingPoint(
-        thrust= 1000,
-        speed= 10,
+        thrust=1000,
+        speed=10,
     )
 
     prop = WageningenBPropeller(
-        blades = 3
+        blades=3
     ).optimize(
-        objective = lambda p: p.losses(wp),
-        constraints = [
+        objective=lambda p: p.losses(wp),
+        constraints=[
             lambda p: p.rotation_speed_margin(wp, 20)
         ]
     )

@@ -11,11 +11,11 @@ from scipy.optimize import root_scalar, minimize
 
 @dataclass(frozen=True)
 class WorkingPoint:
-    thrust:         float | ArrayLike   = 0
-    speed:          float | ArrayLike   = 0
-    immersion:      float   = float('inf')
-    rho:            float   = 1025
-    single_screw:   bool    = False
+    thrust:         float | ArrayLike = 0
+    speed:          float | ArrayLike = 0
+    immersion:      float = float('inf')
+    rho:            float = 1025
+    single_screw:   bool = False
 
 
 @dataclass(frozen=True)
@@ -30,9 +30,9 @@ class PerformancePoint:
 
 @dataclass(frozen=True)
 class WorkingPoint4Q:
-    rotation_speed: float | ArrayLike   = 0
-    speed:          float | ArrayLike   = 0
-    rho:            float   = 1025
+    rotation_speed: float | ArrayLike = 0
+    speed:          float | ArrayLike = 0
+    rho:            float = 1025
 
 
 @dataclass(frozen=True)
@@ -78,12 +78,12 @@ class Propeller(ABC):
         n = wp.speed / j / self.diameter
 
         return PerformancePoint(
-            j= j,
-            kt= kt,
-            kq= kq,
+            j=j,
+            kt=kt,
+            kq=kq,
             eta=kt * j / 2 / pi / kq,
             torque=kq * wp.rho * n ** 2 * self.diameter ** 5,
-            rotation_speed= n,
+            rotation_speed=n,
         )
 
     def find_j(self, wp: WorkingPoint):
@@ -105,8 +105,8 @@ class Propeller(ABC):
                  objective: Callable[[Self], float],
                  constraints: Iterable[Callable[[Self], float]] = (),
                  optimizer: Callable = minimize,
-                 diameter_min : float = 1e-3,
-                 diameter_max : float = float('inf'),
+                 diameter_min: float = 1e-3,
+                 diameter_max: float = float('inf'),
                  verbose: bool = False,) -> Self:
 
         @dataclass(frozen=True)
@@ -118,8 +118,8 @@ class Propeller(ABC):
                 return self.func(self.base.new(self.base.blades, *x))
 
         opt_res = optimizer(
-            fun = lambda x: objective(self.new(self.blades, *x)),
-            x0 = array([
+            fun=lambda x: objective(self.new(self.blades, *x)),
+            x0=array([
                 self.diameter,
                 self.area_ratio,
                 self.pd_ratio]

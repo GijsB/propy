@@ -6,6 +6,7 @@ from numpy.testing import assert_allclose
 
 p = WageningenBPropeller()
 
+
 def test_valid_blades():
     # Test whether limits are set
     assert WageningenBPropeller.blades_min > 0
@@ -16,11 +17,15 @@ def test_valid_blades():
     WageningenBPropeller(blades=WageningenBPropeller.blades_max)
 
     # Test ability to instantiate outside limits
-    with raises(ValueError):    WageningenBPropeller(blades=WageningenBPropeller.blades_min - 1)
-    with raises(ValueError):    WageningenBPropeller(blades=WageningenBPropeller.blades_max + 1)
+    with raises(ValueError):
+        WageningenBPropeller(blades=WageningenBPropeller.blades_min - 1)
+
+    with raises(ValueError):
+        WageningenBPropeller(blades=WageningenBPropeller.blades_max + 1)
 
     # Test input type
-    with raises(TypeError):     WageningenBPropeller(blades=float(WageningenBPropeller.blades_min))
+    with raises(TypeError):
+        WageningenBPropeller(blades=float(WageningenBPropeller.blades_min))
 
 
 def test_valid_area_ratio():
@@ -33,8 +38,11 @@ def test_valid_area_ratio():
     WageningenBPropeller(area_ratio=WageningenBPropeller.area_ratio_max)
 
     # Test ability to instantiate outside limits
-    with raises(ValueError):    WageningenBPropeller(area_ratio=WageningenBPropeller.area_ratio_min * 0.9)
-    with raises(ValueError):    WageningenBPropeller(area_ratio=WageningenBPropeller.area_ratio_max * 1.1)
+    with raises(ValueError):
+        WageningenBPropeller(area_ratio=WageningenBPropeller.area_ratio_min * 0.9)
+
+    with raises(ValueError):
+        WageningenBPropeller(area_ratio=WageningenBPropeller.area_ratio_max * 1.1)
 
 
 def test_valid_pd_ratio():
@@ -47,8 +55,11 @@ def test_valid_pd_ratio():
     WageningenBPropeller(pd_ratio=WageningenBPropeller.pd_ratio_max)
 
     # Test ability to instantiate outside limits
-    with raises(ValueError):    WageningenBPropeller(pd_ratio=WageningenBPropeller.pd_ratio_min * 0.9)
-    with raises(ValueError):    WageningenBPropeller(pd_ratio=WageningenBPropeller.pd_ratio_max * 1.1)
+    with raises(ValueError):
+        WageningenBPropeller(pd_ratio=WageningenBPropeller.pd_ratio_min * 0.9)
+
+    with raises(ValueError):
+        WageningenBPropeller(pd_ratio=WageningenBPropeller.pd_ratio_max * 1.1)
 
 
 def test_valid_diameter():
@@ -56,8 +67,11 @@ def test_valid_diameter():
     WageningenBPropeller(diameter=1.0)
 
     # Test ability to instantiate outside limits
-    with raises(ValueError):    WageningenBPropeller(diameter=0.0)
-    with raises(ValueError):    WageningenBPropeller(diameter=-1.0)
+    with raises(ValueError):
+        WageningenBPropeller(diameter=0.0)
+
+    with raises(ValueError):
+        WageningenBPropeller(diameter=-1.0)
 
 
 def test_kt_range():
@@ -92,7 +106,8 @@ def test_kq_inv():
     j_cal = [p.kq_inv(p.kq(j)) for j in j_des]
     assert_allclose(j_cal, j_des, rtol=1e-15, atol=1e-15)
 
-@mark.parametrize('blades,area_ratio,pd_ratio,j,kt',[
+
+@mark.parametrize('blades,area_ratio,pd_ratio,j,kt', [
     # (2, 0.3, 0.6, [0.2, 0.4, 0.6], [0.15, 0.095, 0.03]),                                    #  TEST FAILS!
     # (2, 0.3, 0.8, [0.2, 0.4, 0.6, 0.8], [0.215, 0.17, 0.105, 0.04]),                        # TEST FAILS!
     # (2, 0.3, 1.0, [0.2, 0.4, 0.6, 0.8, 1.0], [0.272, 0.22, 0.165, 0.105, 0.038]),           # TEST FAILS!
@@ -134,10 +149,10 @@ def test_kt_kuiper(blades, area_ratio, pd_ratio, j, kt):
         area_ratio=area_ratio,
         pd_ratio=pd_ratio
     )
-    assert_allclose(p.kt(j), kt , atol=4e-3)
+    assert_allclose(p.kt(j), kt, atol=4e-3)
 
 
-@mark.parametrize('blades,area_ratio',[
+@mark.parametrize('blades,area_ratio', [
     (2, 0.3),
     (2, 0.5),
     (2, 0.7),
