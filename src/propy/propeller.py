@@ -20,13 +20,6 @@ class PerformancePoint:
 
 
 @dataclass(frozen=True)
-class WorkingPoint4Q:
-    rotation_speed: float | ArrayLike = 0
-    speed:          float | ArrayLike = 0
-    rho:            float = 1025
-
-
-@dataclass(frozen=True)
 class PerformancePoint4Q:
     torque:         NDArray[float64]
     thrust:         NDArray[float64]
@@ -415,15 +408,21 @@ class Propeller(ABC):
             phase=float(atan2(a_c, a_s))
         )
 
-    def find_performance_4q(self, wp: WorkingPoint4Q) -> PerformancePoint4Q:
+    def find_performance_4q(self, rotation_speed, speed, rho=1025.0) -> PerformancePoint4Q:
         """
         Calculate the 4-quadrant performance of this propeller at a given speed. When the workingpoint turns out to be
         in the 1-quadrant area, the more accurate 1-quadrant model is used.
 
         Parameters
         ----------
-        wp
-            The 4 quadrant working point defining the (rotation-) speed.
+        rotation_speed
+            TODO
+
+        speed
+            TODO
+
+        rho
+            TODO
 
         Returns
         -------
@@ -431,20 +430,20 @@ class Propeller(ABC):
         """
 
         # Cast working point data to arrays
-        rotation_speed, speed = broadcast_arrays(*atleast_1d(wp.rotation_speed, wp.speed))
+        rotation_speed, speed = broadcast_arrays(*atleast_1d(rotation_speed, speed))
 
         # Assume 4-quadrant working point at first
         beta = atan2(speed, 0.7 * pi * rotation_speed * self.diameter)
         ct, cq = self.ct(beta), self.cq(beta)
-        thrust = ct * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * wp.rho * self.diameter**2 / 8
-        torque = cq * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * wp.rho * self.diameter**3 / 8
+        thrust = ct * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * rho * self.diameter**2 / 8
+        torque = cq * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * rho * self.diameter**3 / 8
 
         # Substitute more accurate 1-quadrant data if it's available
         is_in_first_quadrant = logical_and(speed > 0, speed < (self.j_max * rotation_speed * self.diameter))
         j = speed[is_in_first_quadrant] / rotation_speed[is_in_first_quadrant] / self.diameter
         kt, kq = self.kt(j), self.kq(j)
-        thrust[is_in_first_quadrant] = kt * wp.rho * rotation_speed[is_in_first_quadrant]**2 * self.diameter**4
-        torque[is_in_first_quadrant] = kq * wp.rho * rotation_speed[is_in_first_quadrant]**2 * self.diameter**5
+        thrust[is_in_first_quadrant] = kt * rho * rotation_speed[is_in_first_quadrant]**2 * self.diameter**4
+        torque[is_in_first_quadrant] = kq * rho * rotation_speed[is_in_first_quadrant]**2 * self.diameter**5
 
         return PerformancePoint4Q(
             beta=beta,

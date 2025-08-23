@@ -2,7 +2,7 @@ from math import atan2
 
 import numpy as np
 
-from propy.propeller import Propeller, WorkingPoint4Q
+from propy.propeller import Propeller
 from propy.wageningen_b import WageningenBPropeller
 
 from pytest import raises, approx
@@ -32,7 +32,6 @@ def test_optimization_max_diameter() -> None:
     thrust = 1393000
     speed = 8.65
     immersion = 3.51
-
 
     prop = WageningenBPropeller(
         blades=4,
@@ -98,8 +97,8 @@ def test_optimization_min_rotation_speed() -> None:
 
 
 def test_torque_limit() -> None:
-    thrust=1000
-    speed=10
+    thrust = 1000
+    speed = 10
 
     prop = WageningenBPropeller(
         blades=3,
@@ -168,8 +167,8 @@ def test_area_ratio_limit() -> None:
 
 
 def test_tip_speed_limit() -> None:
-    thrust=1000
-    speed=10
+    thrust = 1000
+    speed = 10
 
     prop = WageningenBPropeller(
         blades=3
@@ -202,54 +201,51 @@ def test_4q_prop() -> None:
 def test_4q_1q_compare_performance() -> None:
     prop = WageningenBPropeller(blades=4, area_ratio=0.7, pd_ratio=1.4)
 
-    thrust=1000
-    speed=linspace(1, 10, 1000)
+    thrust = 1000
+    speed = linspace(1, 10, 1000)
 
     pp1q = prop.find_performance(speed, thrust)
 
-    wp4q = WorkingPoint4Q(
-        rotation_speed=pp1q.rotation_speed,
-        speed=speed,
-    )
-    pp4q = prop.find_performance_4q(wp4q)
+    rotation_speed = pp1q.rotation_speed
+    pp4q = prop.find_performance_4q(rotation_speed, speed)
 
     assert np.allclose(pp1q.torque, pp4q.torque)
     assert np.allclose(thrust, pp4q.thrust)
-    assert np.allclose(pp1q.rotation_speed, wp4q.rotation_speed)
+    assert np.allclose(pp1q.rotation_speed, rotation_speed)
 
 
 def test_4q_performance_robustness() -> None:
     prop = WageningenBPropeller()
 
-    wp = WorkingPoint4Q(
-        rotation_speed=[0, 0, 0, 1, 1, 1, -1, -1, -1],
-        speed=[0, 1, -1, 0, 1, -1, 0, 1, -1],
-    )
-    pp = prop.find_performance_4q(wp)
+    rotation_speed = [0, 0, 0, 1, 1, 1, -1, -1, -1]
+    speed = [0, 1, -1, 0, 1, -1, 0, 1, -1]
+
+    pp = prop.find_performance_4q(rotation_speed, speed)
     assert pp is not None
 
     rotation_speed = 1
     speed = 1
 
-    wp = WorkingPoint4Q(
-        rotation_speed=rotation_speed,
-        speed=speed,
+    assert prop.find_performance_4q(
+        rotation_speed,
+        speed
+    ) == prop.find_performance_4q(
+        [rotation_speed],
+        speed,
     )
 
-    assert prop.find_performance_4q(wp) == prop.find_performance_4q(
-        WorkingPoint4Q(
-            rotation_speed=[rotation_speed],
-            speed=speed,
-        ))
+    assert prop.find_performance_4q(
+        rotation_speed,
+        speed
+    ) == prop.find_performance_4q(
+        [rotation_speed],
+        [speed],
+    )
 
-    assert prop.find_performance_4q(wp) == prop.find_performance_4q(
-        WorkingPoint4Q(
-            rotation_speed=[rotation_speed],
-            speed=[speed],
-        ))
-
-    assert prop.find_performance_4q(wp) == prop.find_performance_4q(
-        WorkingPoint4Q(
-            rotation_speed=rotation_speed,
-            speed=[speed],
-        ))
+    assert prop.find_performance_4q(
+        rotation_speed,
+        speed
+    ) == prop.find_performance_4q(
+        rotation_speed,
+        [speed],
+    )
