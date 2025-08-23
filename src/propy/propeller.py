@@ -9,13 +9,13 @@ from numpy.typing import ArrayLike, NDArray
 from scipy.optimize import root_scalar, minimize
 
 
-# @dataclass(frozen=True)
-# class WorkingPoint:
-#     thrust:         float | ArrayLike = 0
-#     speed:          float | ArrayLike = 0
-#     immersion:      float = float('inf')
-#     rho:            float = 1025
-#     single_screw:   bool = False
+@dataclass(frozen=True)
+class WorkingPoint:
+    thrust:         float | ArrayLike = 0
+    speed:          float | ArrayLike = 0
+    immersion:      float = float('inf')
+    rho:            float = 1025
+    single_screw:   bool = False
 
 
 @dataclass(frozen=True)
@@ -71,24 +71,24 @@ class Propeller(ABC):
     pd_ratio_min:   ClassVar[float] = float('NaN')
     pd_ratio_max:   ClassVar[float] = float('NaN')
 
-    def find_performance(self, thrust, speed, rho=1025) -> PerformancePoint:
-        j = self.find_j(thrust, speed, rho=rho)
+    def find_performance(self, wp: WorkingPoint) -> PerformancePoint:
+        j = self.find_j(wp)
         kt = self.kt(j)
         kq = self.kq(j)
-        n = speed / j / self.diameter
+        n = wp.speed / j / self.diameter
 
         return PerformancePoint(
             j=j,
             kt=kt,
             kq=kq,
             eta=kt * j / 2 / pi / kq,
-            torque=kq * rho * n ** 2 * self.diameter ** 5,
+            torque=kq * wp.rho * n ** 2 * self.diameter ** 5,
             rotation_speed=n,
         )
 
-    def find_j(self, thrust, speed, rho=1025) -> NDArray[float64]:
-        speed, thrust = broadcast_arrays(*atleast_1d(speed, thrust))
-        ktj2 = thrust / rho / speed ** 2 / self.diameter ** 2
+    def find_j(self, wp: WorkingPoint) -> NDArray[float64]:
+        speed, thrust = broadcast_arrays(*atleast_1d(wp.speed, wp.thrust))
+        ktj2 = thrust / wp.rho / speed ** 2 / self.diameter ** 2
         return self._find_j_for_ktj2s(ktj2)
 
     def _find_j_for_ktj2(self, ktj2: float) -> float:
@@ -143,27 +143,27 @@ class Propeller(ABC):
     def new(cls, *args, **kwargs):
         return cls(*args, **kwargs)
 
-    def losses(self, thrust, speed, rho=1025, **kwargs) -> float:
-        pp = self.find_performance(thrust, speed, rho=rho)
+    def losses(self, wp: WorkingPoint) -> float:
+        pp = self.find_performance(wp)
         return 1 - pp.eta
 
-    def cavitation_margin(self, thrust, immersion, rho=1025, single_screw=True, **kwargs) -> float:
-        min_area_ratio = ((1.3 + 0.3 * self.blades) * thrust / self.diameter ** 2 /
-                          (1e5 + rho * 9.81 * immersion - 1700))
-        if single_screw:
+    def cavitation_margin(self, wp: WorkingPoint) -> float:
+        min_area_ratio = ((1.3 + 0.3 * self.blades) * wp.thrust / self.diameter ** 2 /
+                          (1e5 + wp.rho * 9.81 * wp.immersion - 1700))
+        if wp.single_screw:
             min_area_ratio += 0.2
         return (self.area_ratio - min_area_ratio) / self.area_ratio_max
 
-    def rotation_speed_margin(self, thrust, speed, rotation_speed_max: float, rho=1025, **kwargs) -> float:
-        pp = self.find_performance(thrust, speed, rho=rho)
+    def rotation_speed_margin(self, wp: WorkingPoint, rotation_speed_max: float) -> float:
+        pp = self.find_performance(wp)
         return (rotation_speed_max - pp.rotation_speed) / rotation_speed_max
 
-    def torque_margin(self, thrust, speed, torque_max: float, rho=1025, **kwargs) -> float:
-        pp = self.find_performance(thrust, speed, rho=rho)
+    def torque_margin(self, wp: WorkingPoint, torque_max: float) -> float:
+        pp = self.find_performance(wp)
         return (torque_max - pp.torque) / torque_max
 
-    def tip_speed_margin(self, thrust, speed, tip_speed_max: float, rho=1025, **kwargs) -> float:
-        pp = self.find_performance(thrust, speed, rho=rho)
+    def tip_speed_margin(self, wp: WorkingPoint, tip_speed_max: float) -> float:
+        pp = self.find_performance(wp)
         return (tip_speed_max - self.diameter * pi * pp.rotation_speed) / tip_speed_max
 
     def __post_init__(self):
