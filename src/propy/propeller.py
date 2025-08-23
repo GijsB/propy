@@ -162,8 +162,8 @@ class Propeller(ABC):
         pp = self.find_performance(speed, thrust, rho=rho)
         return (torque_max - pp.torque) / torque_max
 
-    def tip_speed_margin(self, wp: WorkingPoint, tip_speed_max: float) -> float:
-        pp = self.find_performance(wp.speed, wp.thrust, wp.rho)
+    def tip_speed_margin(self, speed, thrust, tip_speed_max: float, rho=1025.0) -> float:
+        pp = self.find_performance(speed, thrust, rho=rho)
         return (tip_speed_max - self.diameter * pi * pp.rotation_speed) / tip_speed_max
 
     def __post_init__(self):

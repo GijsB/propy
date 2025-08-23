@@ -189,14 +189,14 @@ def test_tip_speed_limit() -> None:
     ).optimize(
         objective=lambda p: p.losses(wp.speed, wp.thrust, rho=wp.rho),
         constraints=[
-            lambda p: p.tip_speed_margin(wp, 24)
+            lambda p: p.tip_speed_margin(wp.speed, wp.thrust, 24, rho=wp.rho)
         ]
     )
 
     pp = prop.find_performance(wp.speed, wp.thrust, wp.rho)
 
     # That's not really close, weird
-    assert prop.tip_speed_margin(wp, 24) > -1e-6
+    assert prop.tip_speed_margin(wp.speed, wp.thrust, 24, rho=wp.rho) > -1e-6
     assert pp.rotation_speed * pi * prop.diameter < 24 * (1 + 1e-6)
 
 
