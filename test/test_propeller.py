@@ -52,7 +52,7 @@ def test_optimization_max_diameter() -> None:
     assert prop.diameter <= 7
     assert_allclose(prop.pd_ratio, 1.0, rtol=6e-3)
 
-    pp = prop.find_performance(wp)
+    pp = prop.find_performance(wp.speed, wp.thrust, wp.rho)
 
     assert pp.torque[0] == approx(1667435, rel=1e-2)
     assert pp.rotation_speed[0] == approx(1.767, rel=1e-2)
@@ -86,7 +86,7 @@ def test_optimization_min_rotation_speed() -> None:
         ]
     )
 
-    pp = prop.find_performance(wp)
+    pp = prop.find_performance(wp.speed, wp.thrust, wp.rho)
 
     assert_allclose(prop.diameter, 7.36, rtol=2e-3)
     assert_allclose(pp.j, 0.665, rtol=11e-3)
@@ -115,7 +115,7 @@ def test_torque_limit() -> None:
         ]
     )
 
-    pp = prop.find_performance(wp)
+    pp = prop.find_performance(wp.speed, wp.thrust, wp.rho)
 
     assert prop.torque_margin(wp, 60) > -5e-8
     assert pp.torque < 60 * (1 + 5e-8)
@@ -136,7 +136,7 @@ def test_rpm_limit() -> None:
         ]
     )
 
-    pp = prop.find_performance(wp)
+    pp = prop.find_performance(wp.speed, wp.thrust, wp.rho)
 
     assert prop.rotation_speed_margin(wp, 20) > -1-15
     assert pp.rotation_speed < 20 * (1 + 1e-15)
@@ -193,7 +193,7 @@ def test_tip_speed_limit() -> None:
         ]
     )
 
-    pp = prop.find_performance(wp)
+    pp = prop.find_performance(wp.speed, wp.thrust, wp.rho)
 
     # That's not really close, weird
     assert prop.tip_speed_margin(wp, 24) > -1e-6
@@ -219,7 +219,7 @@ def test_4q_1q_compare_performance() -> None:
         thrust=1000,
         speed=linspace(1, 10, 1000),
     )
-    pp1q = prop.find_performance(wp1q)
+    pp1q = prop.find_performance(wp1q.speed, wp1q.thrust, wp1q.rho)
 
     wp4q = WorkingPoint4Q(
         rotation_speed=pp1q.rotation_speed,

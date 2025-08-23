@@ -71,18 +71,18 @@ class Propeller(ABC):
     pd_ratio_min:   ClassVar[float] = float('NaN')
     pd_ratio_max:   ClassVar[float] = float('NaN')
 
-    def find_performance(self, wp: WorkingPoint) -> PerformancePoint:
-        j = self.find_j(wp.speed, wp.thrust, wp.rho)
+    def find_performance(self, speed, thrust, rho=1025.) -> PerformancePoint:
+        j = self.find_j(speed, thrust, rho)
         kt = self.kt(j)
         kq = self.kq(j)
-        n = wp.speed / j / self.diameter
+        n = speed / j / self.diameter
 
         return PerformancePoint(
             j=j,
             kt=kt,
             kq=kq,
             eta=kt * j / 2 / pi / kq,
-            torque=kq * wp.rho * n ** 2 * self.diameter ** 5,
+            torque=kq * rho * n ** 2 * self.diameter ** 5,
             rotation_speed=n,
         )
 
@@ -144,7 +144,7 @@ class Propeller(ABC):
         return cls(*args, **kwargs)
 
     def losses(self, wp: WorkingPoint) -> float:
-        pp = self.find_performance(wp)
+        pp = self.find_performance(wp.speed, wp.thrust, wp.rho)
         return 1 - pp.eta
 
     def cavitation_margin(self, wp: WorkingPoint) -> float:
@@ -155,15 +155,15 @@ class Propeller(ABC):
         return (self.area_ratio - min_area_ratio) / self.area_ratio_max
 
     def rotation_speed_margin(self, wp: WorkingPoint, rotation_speed_max: float) -> float:
-        pp = self.find_performance(wp)
+        pp = self.find_performance(wp.speed, wp.thrust, wp.rho)
         return (rotation_speed_max - pp.rotation_speed) / rotation_speed_max
 
     def torque_margin(self, wp: WorkingPoint, torque_max: float) -> float:
-        pp = self.find_performance(wp)
+        pp = self.find_performance(wp.speed, wp.thrust, wp.rho)
         return (torque_max - pp.torque) / torque_max
 
     def tip_speed_margin(self, wp: WorkingPoint, tip_speed_max: float) -> float:
-        pp = self.find_performance(wp)
+        pp = self.find_performance(wp.speed, wp.thrust, wp.rho)
         return (tip_speed_max - self.diameter * pi * pp.rotation_speed) / tip_speed_max
 
     def __post_init__(self):
