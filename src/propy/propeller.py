@@ -147,10 +147,10 @@ class Propeller(ABC):
         pp = self.find_performance(speed, thrust, rho=rho)
         return 1 - pp.eta
 
-    def cavitation_margin(self, wp: WorkingPoint) -> float:
-        min_area_ratio = ((1.3 + 0.3 * self.blades) * wp.thrust / self.diameter ** 2 /
-                          (1e5 + wp.rho * 9.81 * wp.immersion - 1700))
-        if wp.single_screw:
+    def cavitation_margin(self, thrust, immersion, rho=1025.0, single_screw=False) -> float:
+        min_area_ratio = ((1.3 + 0.3 * self.blades) * thrust / self.diameter ** 2 /
+                          (1e5 + rho * 9.81 * immersion - 1700))
+        if single_screw:
             min_area_ratio += 0.2
         return (self.area_ratio - min_area_ratio) / self.area_ratio_max
 

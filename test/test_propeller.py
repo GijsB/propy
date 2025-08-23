@@ -40,14 +40,14 @@ def test_optimization_max_diameter() -> None:
     ).optimize(
         objective=lambda p: p.losses(wp.speed, wp.thrust, rho=wp.rho),
         constraints=[
-            lambda p: p.cavitation_margin(wp)
+            lambda p: p.cavitation_margin(wp.thrust, wp.immersion, rho=wp.rho)
         ],
         diameter_max=7,
     )
 
     # Immersion is modified to achieve a safety factor for the minimum area_ratio, this is also done in the book by
     # simply "choosing" a higher area_ratio manually (0.55)
-    assert prop.cavitation_margin(wp) > -1e-15
+    assert prop.cavitation_margin(wp.thrust, wp.immersion, rho=wp.rho) > -1e-15
 
     assert prop.diameter <= 7
     assert_allclose(prop.pd_ratio, 1.0, rtol=6e-3)
@@ -170,12 +170,12 @@ def test_area_ratio_limit() -> None:
     ).optimize(
         objective=lambda p: p.losses(wp.speed, wp.thrust, rho=wp.rho),
         constraints=[
-            lambda p: p.cavitation_margin(wp)
+            lambda p: p.cavitation_margin(wp.thrust, wp.immersion, rho=wp.rho)
         ]
     )
 
     # That's not really close, weird
-    assert prop.cavitation_margin(wp) > -1e-6
+    assert prop.cavitation_margin(wp.thrust, wp.immersion, rho=wp.rho) > -1e-6
 
 
 def test_tip_speed_limit() -> None:
