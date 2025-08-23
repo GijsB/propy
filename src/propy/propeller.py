@@ -10,15 +10,6 @@ from scipy.optimize import root_scalar, minimize
 
 
 @dataclass(frozen=True)
-class WorkingPoint:
-    thrust:         float | ArrayLike = 0
-    speed:          float | ArrayLike = 0
-    immersion:      float = float('inf')
-    rho:            float = 1025
-    single_screw:   bool = False
-
-
-@dataclass(frozen=True)
 class PerformancePoint:
     torque:         NDArray[float64]
     rotation_speed: NDArray[float64]
