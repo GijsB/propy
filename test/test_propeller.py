@@ -132,13 +132,13 @@ def test_rpm_limit() -> None:
     ).optimize(
         objective=lambda p: p.losses(wp.speed, wp.thrust, rho=wp.rho),
         constraints=[
-            lambda p: p.rotation_speed_margin(wp, 20)
+            lambda p: p.rotation_speed_margin(wp.speed, wp.thrust, 20, rho=wp.rho)
         ]
     )
 
     pp = prop.find_performance(wp.speed, wp.thrust, wp.rho)
 
-    assert prop.rotation_speed_margin(wp, 20) > -1-15
+    assert prop.rotation_speed_margin(wp.speed, wp.thrust, 20, rho=wp.rho) > -1-15
     assert pp.rotation_speed < 20 * (1 + 1e-15)
 
 

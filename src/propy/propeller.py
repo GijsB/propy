@@ -154,8 +154,8 @@ class Propeller(ABC):
             min_area_ratio += 0.2
         return (self.area_ratio - min_area_ratio) / self.area_ratio_max
 
-    def rotation_speed_margin(self, wp: WorkingPoint, rotation_speed_max: float) -> float:
-        pp = self.find_performance(wp.speed, wp.thrust, wp.rho)
+    def rotation_speed_margin(self, speed, thrust, rotation_speed_max: float, rho=1025.0) -> float:
+        pp = self.find_performance(speed, thrust, rho)
         return (rotation_speed_max - pp.rotation_speed) / rotation_speed_max
 
     def torque_margin(self, wp: WorkingPoint, torque_max: float) -> float:
