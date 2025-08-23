@@ -416,13 +416,13 @@ class Propeller(ABC):
         Parameters
         ----------
         rotation_speed
-            TODO
+            The rotation speed of the working point in [Hz]
 
         speed
-            TODO
+            The speed of the flow into the propeller in [m/s]
 
         rho
-            TODO
+            The density of the fluid [kg/m^3]
 
         Returns
         -------
