@@ -14,7 +14,7 @@ def test_instantiation() -> None:
     """Check whether instantiation of an abstract Propeller raises a TypeError"""
     with raises(TypeError):
         # noinspection PyAbstractClass
-        Propeller()
+        Propeller()  # type: ignore
 
 
 def test_new() -> None:

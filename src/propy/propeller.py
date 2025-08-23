@@ -86,7 +86,7 @@ class Propeller(ABC):
             rotation_speed=n,
         )
 
-    def find_j(self, wp: WorkingPoint):
+    def find_j(self, wp: WorkingPoint) -> NDArray[float64]:
         speed, thrust = broadcast_arrays(*atleast_1d(wp.speed, wp.thrust))
         ktj2 = thrust / wp.rho / speed ** 2 / self.diameter ** 2
         return self._find_j_for_ktj2s(ktj2)
@@ -98,7 +98,7 @@ class Propeller(ABC):
             x0=0.8 * self.j_max
         ).root)
 
-    def _find_j_for_ktj2s(self, ktj2s: ArrayLike) -> ArrayLike:
+    def _find_j_for_ktj2s(self, ktj2s: ArrayLike) -> NDArray[float64]:
         return array([self._find_j_for_ktj2(ktj2) for ktj2 in ktj2s])
 
     def optimize(self,

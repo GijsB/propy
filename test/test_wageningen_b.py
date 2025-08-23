@@ -25,7 +25,7 @@ def test_valid_blades() -> None:
 
     # Test input type
     with raises(TypeError):
-        WageningenBPropeller(blades=float(WageningenBPropeller.blades_min))
+        WageningenBPropeller(blades=float(WageningenBPropeller.blades_min))  # type: ignore
 
 
 def test_valid_area_ratio() -> None:
@@ -144,12 +144,12 @@ def test_kt_kuiper(blades: int, area_ratio: float, pd_ratio: float, j: float, kt
         [2] M. M. Bernitsas, D. Ray and P. Kinley: Kt, Kq and efficiency curves for the wageningen b-series propellers,
         Department of Naval Architecture and Marine Engineering, University of Michigan. May 1981.
     """
-    p = WageningenBPropeller(
+    prop = WageningenBPropeller(
         blades=blades,
         area_ratio=area_ratio,
         pd_ratio=pd_ratio
     )
-    assert_allclose(p.kt(j), kt, atol=4e-3)
+    assert_allclose(prop.kt(j), kt, atol=4e-3)
 
 
 @mark.parametrize('blades,area_ratio', [
@@ -181,7 +181,7 @@ def test_kt_kuiper(blades: int, area_ratio: float, pd_ratio: float, j: float, kt
 def test_kt_kq_bernitsas(blades: int, area_ratio: float) -> None:
     """
     Compare the calculated kt and kq values with manual chart readings from [2]. This test should protect against
-    typo's in copying the polyniomal. The charts are digitized using the "Engauge digitizer" application, which produces
+    typo's in copying the polynomial. The charts are digitized using the "Engage digitizer" application, which produces
     csv-files. These files are parsed and the results are compared with the polynomials.
 
         [2] M. M. Bernitsas, D. Ray and P. Kinley: Kt, Kq and efficiency curves for the wageningen b-series propellers,
@@ -191,16 +191,16 @@ def test_kt_kq_bernitsas(blades: int, area_ratio: float) -> None:
         for line in file:
             if line.startswith('x'):
                 _, pd_ratio = line.split(';')
-                ktype, pd_ratio = pd_ratio.split('_')
+                k_type, pd_ratio = pd_ratio.split('_')
                 func = WageningenBPropeller(
                     blades=blades,
                     area_ratio=area_ratio,
                     pd_ratio=float(pd_ratio.strip()[-2:])/10
-                ).__getattribute__(ktype)
+                ).__getattribute__(k_type)
             elif len(line.strip()) > 0:
                 j, k = line.strip().split(';')
                 j = float(j.replace(',', '.'))
                 k = float(k.replace(',', '.'))
-                if ktype == 'kq':
+                if k_type == 'kq':
                     k /= 5
                 assert_allclose(k, func(j), atol=3e-3)
