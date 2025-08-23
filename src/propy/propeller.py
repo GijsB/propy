@@ -72,7 +72,7 @@ class Propeller(ABC):
     pd_ratio_max:   ClassVar[float] = float('NaN')
 
     def find_performance(self, wp: WorkingPoint) -> PerformancePoint:
-        j = self.find_j(wp)
+        j = self.find_j(wp.speed, wp.thrust, wp.rho)
         kt = self.kt(j)
         kq = self.kq(j)
         n = wp.speed / j / self.diameter
@@ -86,9 +86,9 @@ class Propeller(ABC):
             rotation_speed=n,
         )
 
-    def find_j(self, wp: WorkingPoint) -> NDArray[float64]:
-        speed, thrust = broadcast_arrays(*atleast_1d(wp.speed, wp.thrust))
-        ktj2 = thrust / wp.rho / speed ** 2 / self.diameter ** 2
+    def find_j(self, speed, thrust, rho=1025.) -> NDArray[float64]:
+        speed, thrust = broadcast_arrays(*atleast_1d(speed, thrust))
+        ktj2 = thrust / rho / speed ** 2 / self.diameter ** 2
         return self._find_j_for_ktj2s(ktj2)
 
     def _find_j_for_ktj2(self, ktj2: float) -> float:
