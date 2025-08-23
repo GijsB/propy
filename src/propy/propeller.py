@@ -143,8 +143,8 @@ class Propeller(ABC):
     def new(cls, *args, **kwargs):
         return cls(*args, **kwargs)
 
-    def losses(self, wp: WorkingPoint) -> float:
-        pp = self.find_performance(wp.speed, wp.thrust, wp.rho)
+    def losses(self, speed, thrust, rho=1025.) -> float:
+        pp = self.find_performance(speed, thrust, rho=rho)
         return 1 - pp.eta
 
     def cavitation_margin(self, wp: WorkingPoint) -> float:

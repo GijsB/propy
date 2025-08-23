@@ -38,7 +38,7 @@ def test_optimization_max_diameter() -> None:
     prop = WageningenBPropeller(
         blades=4,
     ).optimize(
-        objective=lambda p: p.losses(wp),
+        objective=lambda p: p.losses(wp.speed, wp.thrust, rho=wp.rho),
         constraints=[
             lambda p: p.cavitation_margin(wp)
         ],
@@ -80,7 +80,7 @@ def test_optimization_min_rotation_speed() -> None:
     prop = WageningenBPropeller(
         blades=4
     ).optimize(
-        objective=lambda p: p.losses(wp),
+        objective=lambda p: p.losses(wp.speed, wp.thrust, rho=wp.rho),
         constraints=[
             lambda p: p.torque_margin(wp, 1667435)
         ]
@@ -109,7 +109,7 @@ def test_torque_limit() -> None:
     prop = WageningenBPropeller(
         blades=3,
     ).optimize(
-        objective=lambda p: p.losses(wp),
+        objective=lambda p: p.losses(wp.speed, wp.thrust, rho=wp.rho),
         constraints=[
             lambda p: p.torque_margin(wp, 60)
         ]
@@ -130,7 +130,7 @@ def test_rpm_limit() -> None:
     prop = WageningenBPropeller(
         blades=3
     ).optimize(
-        objective=lambda p: p.losses(wp),
+        objective=lambda p: p.losses(wp.speed, wp.thrust, rho=wp.rho),
         constraints=[
             lambda p: p.rotation_speed_margin(wp, 20)
         ]
@@ -151,7 +151,7 @@ def test_diameter_limit() -> None:
     prop = WageningenBPropeller(
         blades=3,
     ).optimize(
-        objective=lambda p: p.losses(wp),
+        objective=lambda p: p.losses(wp.speed, wp.thrust, rho=wp.rho),
         diameter_max=0.2
     )
 
@@ -168,7 +168,7 @@ def test_area_ratio_limit() -> None:
     prop = WageningenBPropeller(
         blades=3
     ).optimize(
-        objective=lambda p: p.losses(wp),
+        objective=lambda p: p.losses(wp.speed, wp.thrust, rho=wp.rho),
         constraints=[
             lambda p: p.cavitation_margin(wp)
         ]
@@ -187,7 +187,7 @@ def test_tip_speed_limit() -> None:
     prop = WageningenBPropeller(
         blades=3
     ).optimize(
-        objective=lambda p: p.losses(wp),
+        objective=lambda p: p.losses(wp.speed, wp.thrust, rho=wp.rho),
         constraints=[
             lambda p: p.tip_speed_margin(wp, 24)
         ]
