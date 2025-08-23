@@ -82,7 +82,7 @@ def test_optimization_min_rotation_speed() -> None:
     ).optimize(
         objective=lambda p: p.losses(wp.speed, wp.thrust, rho=wp.rho),
         constraints=[
-            lambda p: p.torque_margin(wp, 1667435)
+            lambda p: p.torque_margin(wp.speed, wp.thrust, 1667435, rho=wp.rho)
         ]
     )
 
@@ -111,13 +111,13 @@ def test_torque_limit() -> None:
     ).optimize(
         objective=lambda p: p.losses(wp.speed, wp.thrust, rho=wp.rho),
         constraints=[
-            lambda p: p.torque_margin(wp, 60)
+            lambda p: p.torque_margin(wp.speed, wp.thrust, 60, rho=wp.rho)
         ]
     )
 
     pp = prop.find_performance(wp.speed, wp.thrust, wp.rho)
 
-    assert prop.torque_margin(wp, 60) > -5e-8
+    assert prop.torque_margin(wp.speed, wp.thrust, 60, rho=wp.rho) > -5e-8
     assert pp.torque < 60 * (1 + 5e-8)
 
 
