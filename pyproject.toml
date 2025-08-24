@@ -36,4 +36,5 @@ minversion = "6.0"
 
 [tool.mypy]
 python_version = "3.13"
+strict = true
 

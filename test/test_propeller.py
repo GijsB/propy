@@ -1,11 +1,9 @@
 from math import atan2
 
-import numpy as np
-
 from propy.propeller import Propeller
 from propy.wageningen_b import WageningenBPropeller
 
-from pytest import raises, approx, mark
+from pytest import raises, approx
 from numpy import pi, linspace
 from numpy.testing import assert_allclose
 

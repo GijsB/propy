@@ -142,14 +142,14 @@ class WageningenBPropeller(Propeller):
         )
 
     @cached_property
-    def j_max(self):
+    def j_max(self) -> float:
         # Cast to a Polynomial object because we know this to be true for a WageningenBPropeller
         kt = cast(Polynomial, self.kt)
         kt_root = roots(kt.coef[::-1])
         kt_root = kt_root[(kt_root > 0) & (kt_root < 1.6)]
         kt_root = min(kt_root)
         assert isreal(kt_root)
-        return kt_root
+        return float(kt_root)
 
     def _find_j_for_ktj2(self, ktj2: float) -> float:
         """ This may be a faster/more accurate alternative to the default. """

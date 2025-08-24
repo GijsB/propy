@@ -2,9 +2,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable, Callable
 from dataclasses import dataclass
 from functools import lru_cache, cached_property
-from typing import ClassVar, Self
+from typing import ClassVar, Self, Any
 from math import cos, sin, sqrt, atan2, pi
-from numpy import array
 from numpy.linalg import solve
 from scipy.optimize import root_scalar, minimize
 
@@ -55,7 +54,7 @@ class Propeller(ABC):
     pd_ratio_min:   ClassVar[float] = float('NaN')
     pd_ratio_max:   ClassVar[float] = float('NaN')
 
-    def find_performance(self, speed: float, thrust: float, rho: float = 1025.) -> PerformancePoint:
+    def find_performance(self, speed: float, thrust: float, rho: float = 1025.0) -> PerformancePoint:
         j = self.find_j(speed, thrust, rho)
         kt = self.kt(j)
         kq = self.kq(j)
@@ -70,20 +69,21 @@ class Propeller(ABC):
             rotation_speed=n,
         )
 
-    def find_j(self, speed, thrust, rho=1025.) -> float:
+    def find_j(self, speed: float, thrust: float, rho: float = 1025.0) -> float:
         ktj2 = thrust / rho / speed ** 2 / self.diameter ** 2
         return self._find_j_for_ktj2(ktj2)
 
     def _find_j_for_ktj2(self, ktj2: float) -> float:
-        return float(root_scalar(
-            f=lambda j: self.kt(j) / j ** 2 - ktj2,
-            bracket=(1e-9, self.j_max)
-        ).root)
+        return float(
+            root_scalar(
+                f=lambda j: self.kt(j) / j ** 2 - ktj2,
+                bracket=(1e-9, self.j_max)
+            ).root
+        )
 
     def optimize(self,
                  objective: Callable[[Self], float],
-                 constraints: Iterable[Callable[[Self], float]] = (),
-                 optimizer: Callable = minimize,
+                 constraints: Iterable[Callable[["Propeller"], float]] = (),
                  diameter_min: float = 1e-3,
                  diameter_max: float = float('inf'),
                  verbose: bool = False,) -> Self:
@@ -91,25 +91,28 @@ class Propeller(ABC):
         @dataclass(frozen=True)
         class ConstraintFunction:
             base: Propeller
-            func: Callable
+            func: Callable[[Propeller], float]
 
-            def __call__(self, x):
+            def __call__(self, x: Any) -> float:
                 return self.func(self.base.new(self.base.blades, *x))
 
-        opt_res = optimizer(
-            fun=lambda x: objective(self.new(self.blades, *x)),
-            x0=array([
+        def objective_function(x: Any) -> float:
+            return objective(self.new(self.blades, *x))
+
+        # noinspection PyTypeChecker
+        opt_res = minimize(
+            fun=objective_function,
+            x0=(
                 self.diameter,
                 self.area_ratio,
-                self.pd_ratio]
+                self.pd_ratio,
             ),
-            bounds=[
+            bounds=(
                 (diameter_min, diameter_max),
                 (self.area_ratio_min, self.area_ratio_max),
-                (self.pd_ratio_min, self.pd_ratio_max)
-            ],
-            constraints=[{'type': 'ineq',
-                          'fun': ConstraintFunction(self, cfun)} for cfun in constraints]
+                (self.pd_ratio_min, self.pd_ratio_max),
+            ),
+            constraints=[{'type': 'ineq', 'fun': ConstraintFunction(self, cfun)} for cfun in constraints]
         )
 
         if verbose:
@@ -119,31 +122,29 @@ class Propeller(ABC):
 
     @classmethod
     @lru_cache
-    def new(cls, *args, **kwargs):
+    def new(cls, *args: Any, **kwargs: Any) -> Self:
         return cls(*args, **kwargs)
 
     def losses(self, speed: float, thrust: float, rho: float = 1025.) -> float:
         pp = self.find_performance(speed, thrust, rho=rho)
         return 1 - pp.eta
 
-    def cavitation_margin(
-            self,
-            thrust: float,
-            immersion: float,
-            rho: float = 1025.0,
-            single_screw: bool = False) -> float:
+    def cavitation_margin(self,
+                          thrust: float,
+                          immersion: float,
+                          rho: float = 1025.0,
+                          single_screw: bool = False) -> float:
         min_area_ratio = ((1.3 + 0.3 * self.blades) * thrust / self.diameter ** 2 /
                           (1e5 + rho * 9.81 * immersion - 1700))
         if single_screw:
             min_area_ratio += 0.2
         return (self.area_ratio - min_area_ratio) / self.area_ratio_max
 
-    def rotation_speed_margin(
-            self,
-            speed: float,
-            thrust: float,
-            rotation_speed_max: float,
-            rho: float = 1025.0) -> float:
+    def rotation_speed_margin(self,
+                              speed: float,
+                              thrust: float,
+                              rotation_speed_max: float,
+                              rho: float = 1025.0) -> float:
         pp = self.find_performance(speed, thrust, rho)
         return (rotation_speed_max - pp.rotation_speed) / rotation_speed_max
 
@@ -155,7 +156,7 @@ class Propeller(ABC):
         pp = self.find_performance(speed, thrust, rho=rho)
         return (tip_speed_max - self.diameter * pi * pp.rotation_speed) / tip_speed_max
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not (self.diameter > 0):
             raise ValueError(f'Diameter (= {self.diameter}) must be > 0')
 
