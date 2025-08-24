@@ -3,29 +3,29 @@ from collections.abc import Iterable, Callable
 from dataclasses import dataclass
 from functools import lru_cache, cached_property
 from typing import ClassVar, Self
-from numpy import pi, array, atan2, cos, sin, sqrt, logical_and, broadcast_arrays, atleast_1d, float64, fromiter
+from math import cos, sin, sqrt, atan2, pi
+from numpy import array
 from numpy.linalg import solve
-from numpy.typing import ArrayLike, NDArray
 from scipy.optimize import root_scalar, minimize
 
 
 @dataclass(frozen=True)
 class PerformancePoint:
-    torque:         float
+    torque: float
     rotation_speed: float
-    j:              float
-    kt:             float
-    kq:             float
-    eta:            float
+    j: float
+    kt: float
+    kq: float
+    eta: float
 
 
 @dataclass(frozen=True)
 class PerformancePoint4Q:
-    torque:         NDArray[float64]
-    thrust:         NDArray[float64]
-    beta:           NDArray[float64]
-    ct:             NDArray[float64]
-    cq:             NDArray[float64]
+    torque: float
+    thrust: float
+    beta: float
+    ct: float
+    cq: float
 
 
 @dataclass(frozen=True)
@@ -77,8 +77,7 @@ class Propeller(ABC):
     def _find_j_for_ktj2(self, ktj2: float) -> float:
         return float(root_scalar(
             f=lambda j: self.kt(j) / j ** 2 - ktj2,
-            bracket=[1e-9, self.j_max],
-            x0=0.8 * self.j_max
+            bracket=(1e-9, self.j_max)
         ).root)
 
     def optimize(self,
@@ -123,26 +122,26 @@ class Propeller(ABC):
     def new(cls, *args, **kwargs):
         return cls(*args, **kwargs)
 
-    def losses(self, speed, thrust, rho=1025.) -> float:
+    def losses(self, speed: float, thrust: float, rho: float=1025.) -> float:
         pp = self.find_performance(speed, thrust, rho=rho)
         return 1 - pp.eta
 
-    def cavitation_margin(self, thrust, immersion, rho=1025.0, single_screw=False) -> float:
+    def cavitation_margin(self, thrust: float, immersion: float, rho: float=1025.0, single_screw: bool=False) -> float:
         min_area_ratio = ((1.3 + 0.3 * self.blades) * thrust / self.diameter ** 2 /
                           (1e5 + rho * 9.81 * immersion - 1700))
         if single_screw:
             min_area_ratio += 0.2
         return (self.area_ratio - min_area_ratio) / self.area_ratio_max
 
-    def rotation_speed_margin(self, speed, thrust, rotation_speed_max: float, rho=1025.0) -> float:
+    def rotation_speed_margin(self, speed: float, thrust: float, rotation_speed_max: float, rho: float=1025.0) -> float:
         pp = self.find_performance(speed, thrust, rho)
         return (rotation_speed_max - pp.rotation_speed) / rotation_speed_max
 
-    def torque_margin(self, speed, thrust, torque_max: float, rho=1025.0) -> float:
+    def torque_margin(self, speed: float, thrust: float, torque_max: float, rho: float=1025.0) -> float:
         pp = self.find_performance(speed, thrust, rho=rho)
         return (torque_max - pp.torque) / torque_max
 
-    def tip_speed_margin(self, speed, thrust, tip_speed_max: float, rho=1025.0) -> float:
+    def tip_speed_margin(self, speed: float, thrust: float, tip_speed_max: float, rho: float=1025.0) -> float:
         pp = self.find_performance(speed, thrust, rho=rho)
         return (tip_speed_max - self.diameter * pi * pp.rotation_speed) / tip_speed_max
 
@@ -173,7 +172,7 @@ class Propeller(ABC):
 
     @property
     @abstractmethod
-    def kt(self) -> Callable[[float | ArrayLike], float | ArrayLike]:
+    def kt(self) -> Callable[[float], float]:
         """
         Thrust coefficient of the propeller
 
@@ -202,7 +201,7 @@ class Propeller(ABC):
 
     @property
     @abstractmethod
-    def kq(self) -> Callable[[float | ArrayLike], float | ArrayLike]:
+    def kq(self) -> Callable[[float], float]:
         """
         Torque coefficient of the propeller
 
@@ -229,10 +228,10 @@ class Propeller(ABC):
         """
         pass
 
-    def eta(self, j):
+    def eta(self, j: float) -> float:
         return self.kt(j) * j / 2 / pi / self.kq(j)
 
-    def kt_inv(self, kt):
+    def kt_inv(self, kt: float) -> float:
         """
         The inverse function of the kt polynomial (single)
 
@@ -256,12 +255,11 @@ class Propeller(ABC):
         else:
             return root_scalar(
                 f=lambda j: self.kt(j) - kt,
-                bracket=[0, self.j_max],
-                x0=self.j_max * (kt - self.kt_max) / (self.kt_min - self.kt_max),
+                bracket=(0, self.j_max),
                 rtol=1e-15, xtol=1e-15
             ).root
 
-    def kq_inv(self, kq):
+    def kq_inv(self, kq: float) -> float:
         """
         The inverse function of the kq polynomial (single)
 
@@ -270,12 +268,12 @@ class Propeller(ABC):
 
         Parameters
         ----------
-        kq: float
+        kq
             The torque coefficient
 
         Returns
         -------
-        j: float
+        j
             The advance ratio
         """
         if kq >= self.kq_max:
@@ -285,8 +283,7 @@ class Propeller(ABC):
         else:
             return root_scalar(
                 f=lambda j: self.kq(j) - kq,
-                bracket=[0, self.j_max],
-                x0=self.j_max * (kq - self.kq_max) / (self.kq_min - self.kq_max),
+                bracket=(0, self.j_max),
                 rtol=1e-15, xtol=1e-15
             ).root
 
@@ -295,7 +292,7 @@ class Propeller(ABC):
         amplitude: float
         phase: float
 
-        def __call__(self, beta: float | ArrayLike) -> float | ArrayLike:
+        def __call__(self, beta: float) -> float:
             return self.amplitude * sin(beta + self.phase)
 
     @cached_property
@@ -347,8 +344,8 @@ class Propeller(ABC):
         )
 
         return Propeller.FourQuadrantFunction(
-            amplitude=float(sqrt(a_c**2 + a_s**2)),
-            phase=float(atan2(a_c, a_s))
+            amplitude=sqrt(a_c**2 + a_s**2),
+            phase=atan2(a_c, a_s)
         )
 
     @cached_property
@@ -400,13 +397,13 @@ class Propeller(ABC):
         )
 
         return Propeller.FourQuadrantFunction(
-            amplitude=float(sqrt(a_c ** 2 + a_s ** 2)),
-            phase=float(atan2(a_c, a_s))
+            amplitude=sqrt(a_c ** 2 + a_s ** 2),
+            phase=atan2(a_c, a_s)
         )
 
-    def find_performance_4q(self, rotation_speed, speed, rho=1025.0) -> PerformancePoint4Q:
+    def find_performance_4q(self, rotation_speed: float, speed: float, rho: float=1025.0) -> PerformancePoint4Q:
         """
-        Calculate the 4-quadrant performance of this propeller at a given speed. When the workingpoint turns out to be
+        Calculate the 4-quadrant performance of this propeller at a given speed. When the working point turns out to be
         in the 1-quadrant area, the more accurate 1-quadrant model is used.
 
         Parameters
@@ -422,12 +419,8 @@ class Propeller(ABC):
 
         Returns
         -------
-            The performance at the given workingpoint.
+            The performance at the given working point.
         """
-
-        # Cast working point data to arrays
-        rotation_speed, speed = broadcast_arrays(*atleast_1d(rotation_speed, speed))
-
         # Assume 4-quadrant working point at first
         beta = atan2(speed, 0.7 * pi * rotation_speed * self.diameter)
         ct, cq = self.ct(beta), self.cq(beta)
@@ -435,11 +428,11 @@ class Propeller(ABC):
         torque = cq * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * rho * self.diameter**3 / 8
 
         # Substitute more accurate 1-quadrant data if it's available
-        is_in_first_quadrant = logical_and(speed > 0, speed < (self.j_max * rotation_speed * self.diameter))
-        j = speed[is_in_first_quadrant] / rotation_speed[is_in_first_quadrant] / self.diameter
-        kt, kq = self.kt(j), self.kq(j)
-        thrust[is_in_first_quadrant] = kt * rho * rotation_speed[is_in_first_quadrant]**2 * self.diameter**4
-        torque[is_in_first_quadrant] = kq * rho * rotation_speed[is_in_first_quadrant]**2 * self.diameter**5
+        if 0 < speed < (self.j_max * rotation_speed * self.diameter):
+            j = speed / rotation_speed / self.diameter
+            kt, kq = self.kt(j), self.kq(j)
+            thrust = kt * rho * rotation_speed**2 * self.diameter**4
+            torque = kq * rho * rotation_speed**2 * self.diameter**5
 
         return PerformancePoint4Q(
             beta=beta,
