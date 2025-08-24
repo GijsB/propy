@@ -3,7 +3,7 @@ from collections.abc import Iterable, Callable
 from dataclasses import dataclass
 from functools import lru_cache, cached_property
 from typing import ClassVar, Self
-from numpy import pi, array, atan2, cos, sin, sqrt, logical_and, broadcast_arrays, atleast_1d, float64
+from numpy import pi, array, atan2, cos, sin, sqrt, logical_and, broadcast_arrays, atleast_1d, float64, fromiter
 from numpy.linalg import solve
 from numpy.typing import ArrayLike, NDArray
 from scipy.optimize import root_scalar, minimize
@@ -11,12 +11,12 @@ from scipy.optimize import root_scalar, minimize
 
 @dataclass(frozen=True)
 class PerformancePoint:
-    torque:         NDArray[float64]
-    rotation_speed: NDArray[float64]
-    j:              NDArray[float64]
-    kt:             NDArray[float64]
-    kq:             NDArray[float64]
-    eta:            NDArray[float64]
+    torque:         float
+    rotation_speed: float
+    j:              float
+    kt:             float
+    kq:             float
+    eta:            float
 
 
 @dataclass(frozen=True)
@@ -55,7 +55,7 @@ class Propeller(ABC):
     pd_ratio_min:   ClassVar[float] = float('NaN')
     pd_ratio_max:   ClassVar[float] = float('NaN')
 
-    def find_performance(self, speed, thrust, rho=1025.) -> PerformancePoint:
+    def find_performance(self, speed: float, thrust: float, rho: float=1025.) -> PerformancePoint:
         j = self.find_j(speed, thrust, rho)
         kt = self.kt(j)
         kq = self.kq(j)
@@ -70,10 +70,9 @@ class Propeller(ABC):
             rotation_speed=n,
         )
 
-    def find_j(self, speed, thrust, rho=1025.) -> NDArray[float64]:
-        speed, thrust = broadcast_arrays(*atleast_1d(speed, thrust))
+    def find_j(self, speed, thrust, rho=1025.) -> float:
         ktj2 = thrust / rho / speed ** 2 / self.diameter ** 2
-        return self._find_j_for_ktj2s(ktj2)
+        return self._find_j_for_ktj2(ktj2)
 
     def _find_j_for_ktj2(self, ktj2: float) -> float:
         return float(root_scalar(
@@ -81,9 +80,6 @@ class Propeller(ABC):
             bracket=[1e-9, self.j_max],
             x0=0.8 * self.j_max
         ).root)
-
-    def _find_j_for_ktj2s(self, ktj2s: ArrayLike) -> NDArray[float64]:
-        return array([self._find_j_for_ktj2(ktj2) for ktj2 in ktj2s])
 
     def optimize(self,
                  objective: Callable[[Self], float],

@@ -158,21 +158,3 @@ class WageningenBPropeller(Propeller):
         assert len(r) == 1
         assert isreal(r[0])
         return float(r[0])
-
-    def _find_j_for_ktj2s(self, ktj2s: ArrayLike) -> ArrayLike:
-        """ This may be a faster/more accurate alternative to the default. """
-        res = zeros_like(ktj2s)
-        for i, ktj2 in enumerate(ktj2s):
-            # Define a new polynomial: kt(j) - kt/j^2 * j^2
-            p = self.kt.coef.copy()
-            p[2] -= ktj2
-
-            # Find the root of this polynomial between 0 < j < j_max
-            r = roots(p[::-1])
-            r = r[(0 < r) & (r < self.j_max)]
-
-            # At this point, there should be exactly 1 real root
-            assert len(r) == 1
-            assert isreal(r[0])
-            res[i] = r[0]
-        return res

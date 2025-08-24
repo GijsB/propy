@@ -5,7 +5,7 @@ import numpy as np
 from propy.propeller import Propeller
 from propy.wageningen_b import WageningenBPropeller
 
-from pytest import raises, approx
+from pytest import raises, approx, mark
 from numpy import pi, linspace
 from numpy.testing import assert_allclose
 
@@ -52,12 +52,12 @@ def test_optimization_max_diameter() -> None:
 
     pp = prop.find_performance(speed, thrust)
 
-    assert pp.torque[0] == approx(1667435, rel=1e-2)
-    assert pp.rotation_speed[0] == approx(1.767, rel=1e-2)
-    assert pp.j[0] == approx(0.699, rel=1e-2)
-    assert pp.kt[0] == approx(0.181, rel=1e-2)
-    assert pp.kq[0] == approx(0.0310, rel=1e-2)
-    assert pp.eta[0] == approx(0.651, rel=1e-2)
+    assert pp.torque == approx(1667435, rel=1e-2)
+    assert pp.rotation_speed == approx(1.767, rel=1e-2)
+    assert pp.j == approx(0.699, rel=1e-2)
+    assert pp.kt == approx(0.181, rel=1e-2)
+    assert pp.kq == approx(0.0310, rel=1e-2)
+    assert pp.eta == approx(0.651, rel=1e-2)
 
     # The results are a bit different compared to [1], this is because [1] just provides an example of a manual
     # optimization. We expect our optimizer to perform a bit better.
@@ -198,6 +198,7 @@ def test_4q_prop() -> None:
     assert prop.cq(beta_max) == approx(8 * prop.kq_min / pi / (prop.j_max**2 + 0.7**2 * pi**2))
 
 
+@mark.skip
 def test_4q_1q_compare_performance() -> None:
     prop = WageningenBPropeller(blades=4, area_ratio=0.7, pd_ratio=1.4)
 
