@@ -26,5 +26,7 @@ jobs:
         pip install -e '.[dev]'
     - name: Test for compliance with pep8
       run: flake8
+    - name: Run type-checker
+      run: mypy .
     - name: Test with pytest
       run: pytest

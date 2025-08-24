@@ -7,7 +7,7 @@ from numpy.testing import assert_allclose
 p = WageningenBPropeller()
 
 
-def test_valid_blades():
+def test_valid_blades() -> None:
     # Test whether limits are set
     assert WageningenBPropeller.blades_min > 0
     assert WageningenBPropeller.blades_max >= WageningenBPropeller.blades_min
@@ -25,10 +25,10 @@ def test_valid_blades():
 
     # Test input type
     with raises(TypeError):
-        WageningenBPropeller(blades=float(WageningenBPropeller.blades_min))
+        WageningenBPropeller(blades=float(WageningenBPropeller.blades_min))  # type: ignore
 
 
-def test_valid_area_ratio():
+def test_valid_area_ratio() -> None:
     # Test whether limits are set
     assert WageningenBPropeller.area_ratio_min > 0
     assert WageningenBPropeller.area_ratio_max >= WageningenBPropeller.area_ratio_min
@@ -45,7 +45,7 @@ def test_valid_area_ratio():
         WageningenBPropeller(area_ratio=WageningenBPropeller.area_ratio_max * 1.1)
 
 
-def test_valid_pd_ratio():
+def test_valid_pd_ratio() -> None:
     # Test whether limits are set
     assert WageningenBPropeller.pd_ratio_min > 0
     assert WageningenBPropeller.pd_ratio_max >= WageningenBPropeller.pd_ratio_min
@@ -62,7 +62,7 @@ def test_valid_pd_ratio():
         WageningenBPropeller(pd_ratio=WageningenBPropeller.pd_ratio_max * 1.1)
 
 
-def test_valid_diameter():
+def test_valid_diameter() -> None:
     # Test ability to instantiate above limits
     WageningenBPropeller(diameter=1.0)
 
@@ -74,7 +74,7 @@ def test_valid_diameter():
         WageningenBPropeller(diameter=-1.0)
 
 
-def test_kt_range():
+def test_kt_range() -> None:
     # The kt-curve should run all the way down to 0
     assert p.kt_min == 0
 
@@ -82,25 +82,25 @@ def test_kt_range():
     assert_allclose(p.kt_max, p.kt(0), rtol=1e-15, atol=1e-15)
 
 
-def test_j_range():
+def test_j_range() -> None:
     # j-max should be calculated such that kt(j_max) is close to 0
     assert_allclose(0, p.kt(p.j_max), rtol=1e-15, atol=1e-15)
 
 
-def test_kq_range():
+def test_kq_range() -> None:
     # The kq-curve should stop before it's at 0, where kt=0
     assert_allclose(p.kq_min, p.kq(p.j_max), rtol=1e-15, atol=1e-15)
     assert_allclose(p.kq_max, p.kq(0), rtol=1e-15, atol=1e-15)
 
 
-def test_kt_inv():
+def test_kt_inv() -> None:
     """Test if kt -> kt_inv returns the same result"""
     j_des = linspace(0, p.j_max, 10)
     j_cal = [p.kt_inv(p.kt(j)) for j in j_des]
     assert_allclose(j_cal, j_des, rtol=1e-15, atol=1e-15)
 
 
-def test_kq_inv():
+def test_kq_inv() -> None:
     """Test if kq -> kq_inv returns the same result"""
     j_des = linspace(0, p.j_max, 10)
     j_cal = [p.kq_inv(p.kq(j)) for j in j_des]
@@ -133,7 +133,7 @@ def test_kq_inv():
     (5, 0.90, 1.2, [0.2, 0.4, 0.6, 0.8, 1.0, 1.2], [0.526, 0.444, 0.348, 0.242, 0.136, 0.026]),
     (5, 0.90, 1.4, [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4], [0.62, 0.544, 0.454, 0.352, 0.248, 0.14, 0.032]),
 ])
-def test_kt_kuiper(blades, area_ratio, pd_ratio, j, kt):
+def test_kt_kuiper(blades: int, area_ratio: float, pd_ratio: float, j: float, kt: float) -> None:
     """
     Compare the calculated kt values with manual chart readings from [1]. This book also mentions that the polynomials
     published "in other publications" have some small errors. Especially the 2-bladed propellers of the series are a bit
@@ -144,12 +144,12 @@ def test_kt_kuiper(blades, area_ratio, pd_ratio, j, kt):
         [2] M. M. Bernitsas, D. Ray and P. Kinley: Kt, Kq and efficiency curves for the wageningen b-series propellers,
         Department of Naval Architecture and Marine Engineering, University of Michigan. May 1981.
     """
-    p = WageningenBPropeller(
+    prop = WageningenBPropeller(
         blades=blades,
         area_ratio=area_ratio,
         pd_ratio=pd_ratio
     )
-    assert_allclose(p.kt(j), kt, atol=4e-3)
+    assert_allclose(prop.kt(j), kt, atol=4e-3)
 
 
 @mark.parametrize('blades,area_ratio', [
@@ -178,10 +178,10 @@ def test_kt_kuiper(blades, area_ratio, pd_ratio, j, kt):
     (7, 0.7),
     (7, 0.9),
 ])
-def test_kt_kq_bernitsas(blades, area_ratio):
+def test_kt_kq_bernitsas(blades: int, area_ratio: float) -> None:
     """
     Compare the calculated kt and kq values with manual chart readings from [2]. This test should protect against
-    typo's in copying the polyniomal. The charts are digitized using the "Engauge digitizer" application, which produces
+    typo's in copying the polynomial. The charts are digitized using the "Engage digitizer" application, which produces
     csv-files. These files are parsed and the results are compared with the polynomials.
 
         [2] M. M. Bernitsas, D. Ray and P. Kinley: Kt, Kq and efficiency curves for the wageningen b-series propellers,
@@ -191,16 +191,16 @@ def test_kt_kq_bernitsas(blades, area_ratio):
         for line in file:
             if line.startswith('x'):
                 _, pd_ratio = line.split(';')
-                ktype, pd_ratio = pd_ratio.split('_')
+                k_type, pd_ratio = pd_ratio.split('_')
                 func = WageningenBPropeller(
                     blades=blades,
                     area_ratio=area_ratio,
                     pd_ratio=float(pd_ratio.strip()[-2:])/10
-                ).__getattribute__(ktype)
+                ).__getattribute__(k_type)
             elif len(line.strip()) > 0:
-                j, k = line.strip().split(';')
-                j = float(j.replace(',', '.'))
-                k = float(k.replace(',', '.'))
-                if ktype == 'kq':
+                j: float
+                k: float
+                j, k = (float(x.replace(',', '.')) for x in line.strip().split(';'))
+                if k_type == 'kq':
                     k /= 5
                 assert_allclose(k, func(j), atol=3e-3)
