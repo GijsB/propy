@@ -5,8 +5,7 @@ from functools import cached_property
 from typing import ClassVar
 
 from numpy.polynomial.polynomial import Polynomial
-from numpy import roots, isreal, zeros_like
-from numpy.typing import ArrayLike
+from numpy import roots, isreal
 
 
 @dataclass(frozen=True)

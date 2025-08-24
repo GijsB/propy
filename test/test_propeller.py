@@ -214,6 +214,7 @@ def test_4q_1q_compare_performance() -> None:
     assert np.allclose(thrust, pp4q.thrust)
     assert np.allclose(pp1q.rotation_speed, rotation_speed)
 
+
 @mark.skip
 def test_4q_performance_robustness() -> None:
     prop = WageningenBPropeller()

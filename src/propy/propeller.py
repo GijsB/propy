@@ -55,7 +55,7 @@ class Propeller(ABC):
     pd_ratio_min:   ClassVar[float] = float('NaN')
     pd_ratio_max:   ClassVar[float] = float('NaN')
 
-    def find_performance(self, speed: float, thrust: float, rho: float=1025.) -> PerformancePoint:
+    def find_performance(self, speed: float, thrust: float, rho: float = 1025.) -> PerformancePoint:
         j = self.find_j(speed, thrust, rho)
         kt = self.kt(j)
         kq = self.kq(j)
@@ -122,26 +122,36 @@ class Propeller(ABC):
     def new(cls, *args, **kwargs):
         return cls(*args, **kwargs)
 
-    def losses(self, speed: float, thrust: float, rho: float=1025.) -> float:
+    def losses(self, speed: float, thrust: float, rho: float = 1025.) -> float:
         pp = self.find_performance(speed, thrust, rho=rho)
         return 1 - pp.eta
 
-    def cavitation_margin(self, thrust: float, immersion: float, rho: float=1025.0, single_screw: bool=False) -> float:
+    def cavitation_margin(
+            self,
+            thrust: float,
+            immersion: float,
+            rho: float = 1025.0,
+            single_screw: bool = False) -> float:
         min_area_ratio = ((1.3 + 0.3 * self.blades) * thrust / self.diameter ** 2 /
                           (1e5 + rho * 9.81 * immersion - 1700))
         if single_screw:
             min_area_ratio += 0.2
         return (self.area_ratio - min_area_ratio) / self.area_ratio_max
 
-    def rotation_speed_margin(self, speed: float, thrust: float, rotation_speed_max: float, rho: float=1025.0) -> float:
+    def rotation_speed_margin(
+            self,
+            speed: float,
+            thrust: float,
+            rotation_speed_max: float,
+            rho: float = 1025.0) -> float:
         pp = self.find_performance(speed, thrust, rho)
         return (rotation_speed_max - pp.rotation_speed) / rotation_speed_max
 
-    def torque_margin(self, speed: float, thrust: float, torque_max: float, rho: float=1025.0) -> float:
+    def torque_margin(self, speed: float, thrust: float, torque_max: float, rho: float = 1025.0) -> float:
         pp = self.find_performance(speed, thrust, rho=rho)
         return (torque_max - pp.torque) / torque_max
 
-    def tip_speed_margin(self, speed: float, thrust: float, tip_speed_max: float, rho: float=1025.0) -> float:
+    def tip_speed_margin(self, speed: float, thrust: float, tip_speed_max: float, rho: float = 1025.0) -> float:
         pp = self.find_performance(speed, thrust, rho=rho)
         return (tip_speed_max - self.diameter * pi * pp.rotation_speed) / tip_speed_max
 
@@ -401,7 +411,7 @@ class Propeller(ABC):
             phase=atan2(a_c, a_s)
         )
 
-    def find_performance_4q(self, rotation_speed: float, speed: float, rho: float=1025.0) -> PerformancePoint4Q:
+    def find_performance_4q(self, rotation_speed: float, speed: float, rho: float = 1025.0) -> PerformancePoint4Q:
         """
         Calculate the 4-quadrant performance of this propeller at a given speed. When the working point turns out to be
         in the 1-quadrant area, the more accurate 1-quadrant model is used.
