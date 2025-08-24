@@ -198,9 +198,9 @@ def test_kt_kq_bernitsas(blades: int, area_ratio: float) -> None:
                     pd_ratio=float(pd_ratio.strip()[-2:])/10
                 ).__getattribute__(k_type)
             elif len(line.strip()) > 0:
-                j, k = line.strip().split(';')
-                j = float(j.replace(',', '.'))
-                k = float(k.replace(',', '.'))
+                j: float
+                k: float
+                j, k = (float(x.replace(',', '.')) for x in line.strip().split(';'))
                 if k_type == 'kq':
                     k /= 5
                 assert_allclose(k, func(j), atol=3e-3)
