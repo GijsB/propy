@@ -9,25 +9,6 @@ from scipy.optimize import root_scalar, minimize
 
 
 @dataclass(frozen=True)
-class PerformancePoint:
-    torque: float
-    rotation_speed: float
-    j: float
-    kt: float
-    kq: float
-    eta: float
-
-
-@dataclass(frozen=True)
-class PerformancePoint4Q:
-    torque: float
-    thrust: float
-    beta: float
-    ct: float
-    cq: float
-
-
-@dataclass(frozen=True)
 class Propeller(ABC):
     """
     Fields
