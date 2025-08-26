@@ -4,7 +4,7 @@ from propy.propeller import Propeller
 from propy.wageningen_b import WageningenBPropeller
 
 from pytest import raises, approx
-from numpy import pi, linspace
+from numpy import pi
 from numpy.testing import assert_allclose
 
 
@@ -48,18 +48,19 @@ def test_optimization_max_diameter() -> None:
     assert prop.diameter <= 7
     assert_allclose(prop.pd_ratio, 1.0, rtol=6e-3)
 
-    pp = prop.find_performance(speed, thrust)
+    j = prop.find_j_for_vt(speed, thrust)
+    n, q = prop.find_nq_for_vt(speed, thrust)
 
-    assert pp.torque == approx(1667435, rel=1e-2)
-    assert pp.rotation_speed == approx(1.767, rel=1e-2)
-    assert pp.j == approx(0.699, rel=1e-2)
-    assert pp.kt == approx(0.181, rel=1e-2)
-    assert pp.kq == approx(0.0310, rel=1e-2)
-    assert pp.eta == approx(0.651, rel=1e-2)
+    assert q == approx(1667435, rel=1e-2)
+    assert n == approx(1.767, rel=1e-2)
+    assert j == approx(0.699, rel=1e-2)
+    assert prop.kt(j) == approx(0.181, rel=1e-2)
+    assert prop.kq(j) == approx(0.0310, rel=1e-2)
+    assert prop.eta(j) == approx(0.651, rel=1e-2)
 
     # The results are a bit different compared to [1], this is because [1] just provides an example of a manual
     # optimization. We expect our optimizer to perform a bit better.
-    assert pp.eta > 0.651
+    assert prop.eta(j) > 0.651
 
 
 def test_optimization_min_rotation_speed() -> None:
@@ -80,18 +81,19 @@ def test_optimization_min_rotation_speed() -> None:
         ]
     )
 
-    pp = prop.find_performance(speed, thrust)
+    j = prop.find_j_for_vt(speed, thrust)
 
     assert_allclose(prop.diameter, 7.36, rtol=2e-3)
-    assert_allclose(pp.j, 0.665, rtol=11e-3)
-    assert_allclose(pp.kt, 0.148, rtol=21e-3)
-    assert_allclose(pp.kq, 0.0239, rtol=27e-3)
+    assert_allclose(j, 0.665, rtol=11e-3)
+    assert_allclose(prop.kt(j), 0.148, rtol=21e-3)
+    assert_allclose(prop.kq(j), 0.0239, rtol=27e-3)
 
     # The results are a bit different compared to [1], this is because [1] just provides an example of a manual
     # optimization. We expect our optimizer to perform a bit better.
-    assert pp.rotation_speed < 1.767 * (1 + 1e-10)
-    assert pp.torque < 1667435 * (1 + 1e-10)
-    assert pp.eta > 0.656
+    n, q = prop.find_nq_for_vt(speed, thrust)
+    assert n < 1.767 * (1 + 1e-10)
+    assert q < 1667435 * (1 + 1e-10)
+    assert prop.eta(j) > 0.656
 
 
 def test_torque_limit() -> None:
@@ -107,10 +109,10 @@ def test_torque_limit() -> None:
         ]
     )
 
-    pp = prop.find_performance(speed, thrust)
+    n, q = prop.find_nq_for_vt(speed, thrust)
 
     assert prop.torque_margin(speed, thrust, 60) > -5e-8
-    assert pp.torque < 60 * (1 + 5e-8)
+    assert q < 60 * (1 + 5e-8)
 
 
 def test_rpm_limit() -> None:
@@ -126,10 +128,10 @@ def test_rpm_limit() -> None:
         ]
     )
 
-    pp = prop.find_performance(speed, thrust)
+    n, q = prop.find_nq_for_vt(speed, thrust)
 
     assert prop.rotation_speed_margin(speed, thrust, 20) > -1-15
-    assert pp.rotation_speed < 20 * (1 + 1e-15)
+    assert n < 20 * (1 + 1e-15)
 
 
 def test_diameter_limit() -> None:
@@ -177,11 +179,11 @@ def test_tip_speed_limit() -> None:
         ]
     )
 
-    pp = prop.find_performance(speed, thrust)
+    n, q = prop.find_nq_for_vt(speed, thrust)
 
     # That's not really close, weird
     assert prop.tip_speed_margin(speed, thrust, 24) > -1e-6
-    assert pp.rotation_speed * pi * prop.diameter < 24 * (1 + 1e-6)
+    assert n * pi * prop.diameter < 24 * (1 + 1e-6)
 
 
 def test_4q_prop() -> None:
@@ -194,18 +196,3 @@ def test_4q_prop() -> None:
 
     assert prop.ct(beta_max) == approx(8 * prop.kt_min / pi / (prop.j_max**2 + 0.7**2 * pi**2))
     assert prop.cq(beta_max) == approx(8 * prop.kq_min / pi / (prop.j_max**2 + 0.7**2 * pi**2))
-
-
-def test_4q_1q_compare_performance() -> None:
-    prop = WageningenBPropeller(blades=4, area_ratio=0.7, pd_ratio=1.4)
-
-    thrust = 1000
-    for speed in linspace(1, 10, 1000):
-        pp1q = prop.find_performance(speed, thrust)
-
-        rotation_speed = pp1q.rotation_speed
-        pp4q = prop.find_performance_4q(rotation_speed, speed)
-
-        assert pp4q.torque == approx(pp1q.torque)
-        assert pp4q.thrust == approx(thrust)
-        assert rotation_speed == approx(pp1q.rotation_speed)
