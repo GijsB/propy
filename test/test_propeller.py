@@ -201,5 +201,8 @@ def test_4q_prop() -> None:
 def test_finding_type_consistency() -> None:
     prop = WageningenBPropeller()
 
-    assert type(prop.find_j_for_vn(1, 1)) == float
-    assert type(prop.find_j_for_vn(array([1]), array([1]))) == ndarray
+    assert isinstance(prop.find_j_for_vn(1, 1), float)
+    assert isinstance(prop.find_j_for_vn(array([1]), array([1])), ndarray)
+
+    assert isinstance(prop.find_beta_for_vn(1, 1), float)
+    assert isinstance(prop.find_beta_for_vn(array([1]), array([1])), ndarray)

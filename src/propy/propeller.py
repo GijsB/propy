@@ -5,6 +5,7 @@ from functools import lru_cache, cached_property
 from typing import ClassVar, Self, Any, TypeVar
 from math import cos, sin, sqrt, atan2, pi
 from numpy import float64
+from numpy import atan2 as atan2_v
 from numpy.typing import NDArray
 from numpy.linalg import solve
 from scipy.optimize import root_scalar, minimize
@@ -281,8 +282,9 @@ class Propeller(ABC):
     def find_j_for_vn(self, speed: ScalarOrArray, rotation_speed: ScalarOrArray) -> ScalarOrArray:
         return speed / rotation_speed / self.diameter
 
-    def find_beta_for_vn(self, speed: float, rotation_speed: float) -> float:
-        return atan2(speed, 0.7 * pi * rotation_speed * self.diameter)
+    def find_beta_for_vn(self, speed: ScalarOrArray, rotation_speed: ScalarOrArray) -> ScalarOrArray:
+        result: ScalarOrArray = atan2_v(speed, 0.7 * pi * rotation_speed * self.diameter)
+        return result
 
     def find_tq_for_vn(self, speed: float, rotation_speed: float, rho: float = 1025.0) -> tuple[float, float]:
         # Use more accurate 1-quadrant data if it's applicable
