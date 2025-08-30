@@ -151,8 +151,10 @@ class WageningenBPropeller(Propeller):
         assert isreal(kt_root)
         return float(kt_root)
 
-    def _find_j_for_ktj2(self, ktj2: float) -> float:
+    def find_j_for_vt(self, speed: float, thrust: float, rho: float = 1025.0) -> float:
         """ This may be a faster/more accurate alternative to the default. """
+        ktj2 = thrust / rho / speed ** 2 / self.diameter ** 2
+
         # Cast to a Polynomial object because we know this to be true for a WageningenBPropeller
         kt = cast(Polynomial, self.kt)
 
