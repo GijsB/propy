@@ -147,62 +147,6 @@ class Propeller(ABC):
         """
         pass
 
-    def kt_inv(self, kt: float) -> float:
-        """
-        The inverse function of the kt polynomial (single)
-
-        Calculates j as a function of a given kt. This is achieved using a root-finding algorithm. This way, it's more
-        precise, but only a single value can be calculated at a time.
-
-        Parameters
-        ----------
-        kt: float
-            The thrust coefficient
-
-        Returns
-        -------
-        j: float
-            The advance ratio
-        """
-        if kt >= self.kt_max:
-            return 0
-        elif kt <= self.kq_min:
-            return self.j_max
-        else:
-            return root_scalar(
-                f=lambda j: self.kt(j) - kt,
-                bracket=(0, self.j_max),
-                rtol=1e-15, xtol=1e-15
-            ).root
-
-    def kq_inv(self, kq: float) -> float:
-        """
-        The inverse function of the kq polynomial (single)
-
-        Calculates j as a function of a given kq. This is achieved using a root-finding algorithm. This way, it's
-        precise, but only a single value can be calculated at a time.
-
-        Parameters
-        ----------
-        kq
-            The torque coefficient
-
-        Returns
-        -------
-        j
-            The advance ratio
-        """
-        if kq >= self.kq_max:
-            return 0
-        elif kq <= self.kq_min:
-            return self.j_max
-        else:
-            return root_scalar(
-                f=lambda j: self.kq(j) - kq,
-                bracket=(0, self.j_max),
-                rtol=1e-15, xtol=1e-15
-            ).root
-
     def eta(self, j: float) -> float:
         return self.kt(j) * j / 2 / pi / self.kq(j)
 

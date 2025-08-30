@@ -1,7 +1,6 @@
 from propy.wageningen_b import WageningenBPropeller
 
 from pytest import raises, mark
-from numpy import linspace
 from numpy.testing import assert_allclose
 
 p = WageningenBPropeller()
@@ -91,20 +90,6 @@ def test_kq_range() -> None:
     # The kq-curve should stop before it's at 0, where kt=0
     assert_allclose(p.kq_min, p.kq(p.j_max), rtol=1e-15, atol=1e-15)
     assert_allclose(p.kq_max, p.kq(0), rtol=1e-15, atol=1e-15)
-
-
-def test_kt_inv() -> None:
-    """Test if kt -> kt_inv returns the same result"""
-    j_des = linspace(0, p.j_max, 10)
-    j_cal = [p.kt_inv(p.kt(j)) for j in j_des]
-    assert_allclose(j_cal, j_des, rtol=1e-15, atol=1e-15)
-
-
-def test_kq_inv() -> None:
-    """Test if kq -> kq_inv returns the same result"""
-    j_des = linspace(0, p.j_max, 10)
-    j_cal = [p.kq_inv(p.kq(j)) for j in j_des]
-    assert_allclose(j_cal, j_des, rtol=1e-15, atol=1e-15)
 
 
 @mark.parametrize('blades,area_ratio,pd_ratio,j,kt', [
