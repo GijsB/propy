@@ -35,7 +35,7 @@ class Propeller(ABC):
     pd_ratio_min:   ClassVar[float] = float('NaN')
     pd_ratio_max:   ClassVar[float] = float('NaN')
 
-    # Class housekeeping #
+    # Class housekeeping
     @classmethod
     @lru_cache
     def new(cls, *args: Any, **kwargs: Any) -> Self:
@@ -265,6 +265,44 @@ class Propeller(ABC):
             phase=atan2(a_c, a_s)
         )
 
+    # Inverse propeller model
+    def find_j_for_vt(self, speed: float, thrust: float, rho: float = 1025.0) -> float:
+        ktj2 = thrust / rho / speed ** 2 / self.diameter ** 2
+        return root_scalar(
+            f=lambda j: self.kt(j) / j ** 2 - ktj2,
+            bracket=(1e-9, self.j_max)
+        ).root
+
+    def find_j_for_vn(self, speed: float, rotation_speed: float) -> float:
+        return speed / rotation_speed / self.diameter
+
+    def find_beta_for_vn(self, speed: float, rotation_speed: float) -> float:
+        return atan2(speed, 0.7 * pi * rotation_speed * self.diameter)
+
+    def find_tq_for_vn(self, speed: float, rotation_speed: float, rho: float = 1025.0) -> tuple[float, float]:
+        # Use more accurate 1-quadrant data if it's applicable
+        if 0 < speed < (self.j_max * rotation_speed * self.diameter):
+            j = self.find_j_for_vn(speed, rotation_speed)
+            kt, kq = self.kt(j), self.kq(j)
+            thrust = kt * rho * rotation_speed ** 2 * self.diameter ** 4
+            torque = kq * rho * rotation_speed ** 2 * self.diameter ** 5
+        else:
+            # Fall back to the 4-quadrant model
+            beta = self.find_beta_for_vn(speed, rotation_speed)
+            ct, cq = self.ct(beta), self.cq(beta)
+            thrust = ct * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * rho * self.diameter**2 / 8
+            torque = cq * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * rho * self.diameter**3 / 8
+
+        return thrust, torque
+
+    def find_nq_for_vt(self, speed: float, thrust: float, rho: float = 1025.0) -> tuple[float, float]:
+        j = self.find_j_for_vt(speed, thrust, rho)
+        kq = self.kq(j)
+        rotation_speed = speed / j / self.diameter
+        torque = kq * rho * rotation_speed ** 2 * self.diameter ** 5
+        return rotation_speed, torque
+
+    # Optimisation methods
     def optimize(self,
                  objective: Callable[[Self], float],
                  constraints: Iterable[Callable[["Propeller"], float]] = (),
@@ -334,39 +372,3 @@ class Propeller(ABC):
     def tip_speed_margin(self, speed: float, thrust: float, tip_speed_max: float, rho: float = 1025.0) -> float:
         n, q = self.find_nq_for_vt(speed, thrust, rho=rho)
         return (tip_speed_max - self.diameter * pi * n) / tip_speed_max
-
-    def find_j_for_vt(self, speed: float, thrust: float, rho: float = 1025.0) -> float:
-        ktj2 = thrust / rho / speed ** 2 / self.diameter ** 2
-        return root_scalar(
-            f=lambda j: self.kt(j) / j ** 2 - ktj2,
-            bracket=(1e-9, self.j_max)
-        ).root
-
-    def find_j_for_vn(self, speed: float, rotation_speed: float) -> float:
-        return speed / rotation_speed / self.diameter
-
-    def find_beta_for_vn(self, speed: float, rotation_speed: float) -> float:
-        return atan2(speed, 0.7 * pi * rotation_speed * self.diameter)
-
-    def find_tq_for_vn(self, speed: float, rotation_speed: float, rho: float = 1025.0) -> tuple[float, float]:
-        # Use more accurate 1-quadrant data if it's applicable
-        if 0 < speed < (self.j_max * rotation_speed * self.diameter):
-            j = self.find_j_for_vn(speed, rotation_speed)
-            kt, kq = self.kt(j), self.kq(j)
-            thrust = kt * rho * rotation_speed ** 2 * self.diameter ** 4
-            torque = kq * rho * rotation_speed ** 2 * self.diameter ** 5
-        else:
-            # Fall back to the 4-quadrant model
-            beta = self.find_beta_for_vn(speed, rotation_speed)
-            ct, cq = self.ct(beta), self.cq(beta)
-            thrust = ct * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * rho * self.diameter**2 / 8
-            torque = cq * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * rho * self.diameter**3 / 8
-
-        return thrust, torque
-
-    def find_nq_for_vt(self, speed: float, thrust: float, rho: float = 1025.0) -> tuple[float, float]:
-        j = self.find_j_for_vt(speed, thrust, rho)
-        kq = self.kq(j)
-        rotation_speed = speed / j / self.diameter
-        torque = kq * rho * rotation_speed ** 2 * self.diameter ** 5
-        return rotation_speed, torque
