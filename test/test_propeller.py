@@ -206,3 +206,7 @@ def test_finding_type_consistency() -> None:
 
     assert isinstance(prop.find_beta_for_vn(1, 1), float)
     assert isinstance(prop.find_beta_for_vn(array([1]), array([1])), ndarray)
+
+    assert isinstance(prop.ct(1), float)
+    assert isinstance(prop.ct(1.0), float)
+    assert isinstance(prop.ct(array([1, 2])), ndarray)

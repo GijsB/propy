@@ -6,6 +6,7 @@ from typing import ClassVar, Self, Any, TypeVar
 from math import cos, sin, sqrt, atan2, pi
 from numpy import float64
 from numpy import atan2 as atan2_v
+from numpy import sin as sin_v
 from numpy.typing import NDArray
 from numpy.linalg import solve
 from scipy.optimize import root_scalar, minimize
@@ -162,8 +163,9 @@ class Propeller(ABC):
         amplitude: float
         phase: float
 
-        def __call__(self, beta: float) -> float:
-            return self.amplitude * sin(beta + self.phase)
+        def __call__(self, beta: ScalarOrArray) -> ScalarOrArray:
+            result: ScalarOrArray = self.amplitude * sin_v(beta + self.phase)
+            return result
 
     @cached_property
     def ct(self) -> FourQuadrantFunction:
