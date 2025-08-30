@@ -154,7 +154,7 @@ class Propeller(ABC):
         """
         pass
 
-    def eta(self, j: float) -> float:
+    def eta(self, j: ScalarOrArray) -> ScalarOrArray:
         return self.kt(j) * j / 2 / pi / self.kq(j)
 
     # Basic 4-quadrant model as a function of the advance angle (beta)
