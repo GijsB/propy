@@ -98,7 +98,7 @@ class Propeller(ABC):
     # Basic model as a function of the advance ratio (j)
     @property
     @abstractmethod
-    def kt(self) -> Callable[[float], float]:
+    def kt(self) -> Callable[[ScalarOrArray], ScalarOrArray]:
         """
         Thrust coefficient of the propeller
 
@@ -127,7 +127,7 @@ class Propeller(ABC):
 
     @property
     @abstractmethod
-    def kq(self) -> Callable[[float], float]:
+    def kq(self) -> Callable[[ScalarOrArray], ScalarOrArray]:
         """
         Torque coefficient of the propeller
 

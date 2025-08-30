@@ -214,3 +214,9 @@ def test_finding_type_consistency() -> None:
     assert isinstance(prop.cq(1), float)
     assert isinstance(prop.cq(1.0), float)
     assert isinstance(prop.cq(array([1, 2])), ndarray)
+
+    assert isinstance(prop.kt(0.1), float)
+    assert isinstance(prop.kt(array([0.1, 0.2])), ndarray)
+
+    assert isinstance(prop.kq(0.1), float)
+    assert isinstance(prop.kq(array([0.1, 0.2])), ndarray)
