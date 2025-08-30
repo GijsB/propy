@@ -4,7 +4,7 @@ from propy.propeller import Propeller
 from propy.wageningen_b import WageningenBPropeller
 
 from pytest import raises, approx
-from numpy import pi
+from numpy import pi, array, ndarray
 from numpy.testing import assert_allclose
 
 
@@ -196,3 +196,10 @@ def test_4q_prop() -> None:
 
     assert prop.ct(beta_max) == approx(8 * prop.kt_min / pi / (prop.j_max**2 + 0.7**2 * pi**2))
     assert prop.cq(beta_max) == approx(8 * prop.kq_min / pi / (prop.j_max**2 + 0.7**2 * pi**2))
+
+
+def test_finding_type_consistency() -> None:
+    prop = WageningenBPropeller()
+
+    assert type(prop.find_j_for_vn(1, 1)) == float
+    assert type(prop.find_j_for_vn(array([1]), array([1]))) == ndarray

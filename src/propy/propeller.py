@@ -2,10 +2,15 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable, Callable
 from dataclasses import dataclass
 from functools import lru_cache, cached_property
-from typing import ClassVar, Self, Any
+from typing import ClassVar, Self, Any, TypeVar
 from math import cos, sin, sqrt, atan2, pi
+from numpy import float64
+from numpy.typing import NDArray
 from numpy.linalg import solve
 from scipy.optimize import root_scalar, minimize
+
+
+ScalarOrArray = TypeVar('ScalarOrArray', float, NDArray[float64])
 
 
 @dataclass(frozen=True)
@@ -273,7 +278,7 @@ class Propeller(ABC):
             bracket=(1e-9, self.j_max)
         ).root
 
-    def find_j_for_vn(self, speed: float, rotation_speed: float) -> float:
+    def find_j_for_vn(self, speed: ScalarOrArray, rotation_speed: ScalarOrArray) -> ScalarOrArray:
         return speed / rotation_speed / self.diameter
 
     def find_beta_for_vn(self, speed: float, rotation_speed: float) -> float:
