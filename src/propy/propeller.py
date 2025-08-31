@@ -2,29 +2,17 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable, Callable
 from dataclasses import dataclass
 from functools import lru_cache, cached_property
-from typing import ClassVar, Self, Any
+from typing import ClassVar, Self, Any, TypeVar
 from math import cos, sin, sqrt, atan2, pi
+from numpy import float64, array, zeros_like
+from numpy import atan2 as atan2_v
+from numpy import sin as sin_v
+from numpy.typing import NDArray
 from numpy.linalg import solve
 from scipy.optimize import root_scalar, minimize
 
 
-@dataclass(frozen=True)
-class PerformancePoint:
-    torque: float
-    rotation_speed: float
-    j: float
-    kt: float
-    kq: float
-    eta: float
-
-
-@dataclass(frozen=True)
-class PerformancePoint4Q:
-    torque: float
-    thrust: float
-    beta: float
-    ct: float
-    cq: float
+ScalarOrArray = TypeVar('ScalarOrArray', float, NDArray[float64])
 
 
 @dataclass(frozen=True)
@@ -54,113 +42,17 @@ class Propeller(ABC):
     pd_ratio_min:   ClassVar[float] = float('NaN')
     pd_ratio_max:   ClassVar[float] = float('NaN')
 
-    def find_performance(self, speed: float, thrust: float, rho: float = 1025.0) -> PerformancePoint:
-        j = self.find_j(speed, thrust, rho)
-        kt = self.kt(j)
-        kq = self.kq(j)
-        n = speed / j / self.diameter
-
-        return PerformancePoint(
-            j=j,
-            kt=kt,
-            kq=kq,
-            eta=kt * j / 2 / pi / kq,
-            torque=kq * rho * n ** 2 * self.diameter ** 5,
-            rotation_speed=n,
-        )
-
-    def find_j(self, speed: float, thrust: float, rho: float = 1025.0) -> float:
-        ktj2 = thrust / rho / speed ** 2 / self.diameter ** 2
-        return self._find_j_for_ktj2(ktj2)
-
-    def _find_j_for_ktj2(self, ktj2: float) -> float:
-        return float(
-            root_scalar(
-                f=lambda j: self.kt(j) / j ** 2 - ktj2,
-                bracket=(1e-9, self.j_max)
-            ).root
-        )
-
-    def optimize(self,
-                 objective: Callable[[Self], float],
-                 constraints: Iterable[Callable[["Propeller"], float]] = (),
-                 diameter_min: float = 1e-3,
-                 diameter_max: float = float('inf'),
-                 verbose: bool = False,) -> Self:
-
-        @dataclass(frozen=True)
-        class ConstraintFunction:
-            base: Propeller
-            func: Callable[[Propeller], float]
-
-            def __call__(self, x: Any) -> float:
-                return self.func(self.base.new(self.base.blades, *x))
-
-        def objective_function(x: Any) -> float:
-            return objective(self.new(self.blades, *x))
-
-        # noinspection PyTypeChecker
-        opt_res = minimize(
-            fun=objective_function,
-            x0=(
-                self.diameter,
-                self.area_ratio,
-                self.pd_ratio,
-            ),
-            bounds=(
-                (diameter_min, diameter_max),
-                (self.area_ratio_min, self.area_ratio_max),
-                (self.pd_ratio_min, self.pd_ratio_max),
-            ),
-            constraints=[{'type': 'ineq', 'fun': ConstraintFunction(self, cfun)} for cfun in constraints]
-        )
-
-        if verbose:
-            print(opt_res)
-
-        return self.new(self.blades, *opt_res.x)
-
+    # Class housekeeping
     @classmethod
     @lru_cache
     def new(cls, *args: Any, **kwargs: Any) -> Self:
         return cls(*args, **kwargs)
 
-    def losses(self, speed: float, thrust: float, rho: float = 1025.) -> float:
-        pp = self.find_performance(speed, thrust, rho=rho)
-        return 1 - pp.eta
-
-    def cavitation_margin(self,
-                          thrust: float,
-                          immersion: float,
-                          rho: float = 1025.0,
-                          single_screw: bool = False) -> float:
-        min_area_ratio = ((1.3 + 0.3 * self.blades) * thrust / self.diameter ** 2 /
-                          (1e5 + rho * 9.81 * immersion - 1700))
-        if single_screw:
-            min_area_ratio += 0.2
-        return (self.area_ratio - min_area_ratio) / self.area_ratio_max
-
-    def rotation_speed_margin(self,
-                              speed: float,
-                              thrust: float,
-                              rotation_speed_max: float,
-                              rho: float = 1025.0) -> float:
-        pp = self.find_performance(speed, thrust, rho)
-        return (rotation_speed_max - pp.rotation_speed) / rotation_speed_max
-
-    def torque_margin(self, speed: float, thrust: float, torque_max: float, rho: float = 1025.0) -> float:
-        pp = self.find_performance(speed, thrust, rho=rho)
-        return (torque_max - pp.torque) / torque_max
-
-    def tip_speed_margin(self, speed: float, thrust: float, tip_speed_max: float, rho: float = 1025.0) -> float:
-        pp = self.find_performance(speed, thrust, rho=rho)
-        return (tip_speed_max - self.diameter * pi * pp.rotation_speed) / tip_speed_max
-
     def __post_init__(self) -> None:
         if not (self.diameter > 0):
             raise ValueError(f'Diameter (= {self.diameter}) must be > 0')
 
-        if not (isinstance(self.blades, int)):
+        if not isinstance(self.blades, int):
             raise TypeError(f'The amount of blades (= {self.blades}) must be an integer')
 
         if not (self.blades >= self.blades_min):
@@ -183,7 +75,30 @@ class Propeller(ABC):
 
     @property
     @abstractmethod
-    def kt(self) -> Callable[[float], float]:
+    def j_max(self) -> float:
+        """The maximum valid advance-ratio of this propeller"""
+        pass
+
+    @property
+    def kt_max(self) -> float:
+        return self.kt(0)
+
+    @property
+    def kt_min(self) -> float:
+        return 0
+
+    @property
+    def kq_max(self) -> float:
+        return self.kq(0)
+
+    @property
+    def kq_min(self) -> float:
+        return self.kq(self.j_max)
+
+    # Basic model as a function of the advance ratio (j)
+    @property
+    @abstractmethod
+    def kt(self) -> Callable[[ScalarOrArray], ScalarOrArray]:
         """
         Thrust coefficient of the propeller
 
@@ -205,14 +120,13 @@ class Propeller(ABC):
 
         Returns
         -------
-        Function(j)
             A callable that calculates the thrust coefficient of the propeller as a function of the advance ratio.
         """
         pass
 
     @property
     @abstractmethod
-    def kq(self) -> Callable[[float], float]:
+    def kq(self) -> Callable[[ScalarOrArray], ScalarOrArray]:
         """
         Torque coefficient of the propeller
 
@@ -234,77 +148,22 @@ class Propeller(ABC):
 
         Returns
         -------
-        Function(j)
             A callable that calculates the torque coefficient of the propeller as a function of the advance ratio.
         """
         pass
 
-    def eta(self, j: float) -> float:
+    def eta(self, j: ScalarOrArray) -> ScalarOrArray:
         return self.kt(j) * j / 2 / pi / self.kq(j)
 
-    def kt_inv(self, kt: float) -> float:
-        """
-        The inverse function of the kt polynomial (single)
-
-        Calculates j as a function of a given kt. This is achieved using a root-finding algorithm. This way, it's more
-        precise, but only a single value can be calculated at a time.
-
-        Parameters
-        ----------
-        kt: float
-            The thrust coefficient
-
-        Returns
-        -------
-        j: float
-            The advance ratio
-        """
-        if kt >= self.kt_max:
-            return 0
-        elif kt <= self.kq_min:
-            return self.j_max
-        else:
-            return root_scalar(
-                f=lambda j: self.kt(j) - kt,
-                bracket=(0, self.j_max),
-                rtol=1e-15, xtol=1e-15
-            ).root
-
-    def kq_inv(self, kq: float) -> float:
-        """
-        The inverse function of the kq polynomial (single)
-
-        Calculates j as a function of a given kq. This is achieved using a root-finding algorithm. This way, it's
-        precise, but only a single value can be calculated at a time.
-
-        Parameters
-        ----------
-        kq
-            The torque coefficient
-
-        Returns
-        -------
-        j
-            The advance ratio
-        """
-        if kq >= self.kq_max:
-            return 0
-        elif kq <= self.kq_min:
-            return self.j_max
-        else:
-            return root_scalar(
-                f=lambda j: self.kq(j) - kq,
-                bracket=(0, self.j_max),
-                rtol=1e-15, xtol=1e-15
-            ).root
-
+    # Basic 4-quadrant model as a function of the advance angle (beta)
     @dataclass(frozen=True)
     class FourQuadrantFunction:
         amplitude: float
         phase: float
 
-        def __call__(self, beta: float) -> float:
-            return self.amplitude * sin(beta + self.phase)
+        def __call__(self, beta: ScalarOrArray) -> ScalarOrArray:
+            result: ScalarOrArray = self.amplitude * sin_v(beta + self.phase)
+            return result
 
     @cached_property
     def ct(self) -> FourQuadrantFunction:
@@ -334,7 +193,6 @@ class Propeller(ABC):
 
         Returns
         -------
-        FourQuadrantFunction(beta)
             A function that returns the thrust coefficient of the propeller as a function the load angle beta
         """
 
@@ -387,7 +245,6 @@ class Propeller(ABC):
 
         Returns
         -------
-        FourQuadrantFunction(beta)
             A function that returns the torque coefficient of the propeller as a function the load angle beta
         """
 
@@ -412,65 +269,355 @@ class Propeller(ABC):
             phase=atan2(a_c, a_s)
         )
 
-    def find_performance_4q(self, rotation_speed: float, speed: float, rho: float = 1025.0) -> PerformancePoint4Q:
+    # Inverse propeller model
+    def find_j_for_vt(
+            self,
+            speed: float,
+            thrust: float,
+            rho: float = 1025.0
+    ) -> float:
         """
-        Calculate the 4-quadrant performance of this propeller at a given speed. When the working point turns out to be
-        in the 1-quadrant area, the more accurate 1-quadrant model is used.
+        Calculate the advance ratio given the speed and thrust.
 
         Parameters
         ----------
-        rotation_speed
-            The rotation speed of the working point in [Hz]
-
         speed
-            The speed of the flow into the propeller in [m/s]
-
+            The speed of in flow into the propeller [m/s]
+        thrust
+            The thrust produced by the propeller [N]
         rho
-            The density of the fluid [kg/m^3]
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
 
         Returns
         -------
-            The performance at the given working point.
+            The advance ratio of the propeller at the given work-point [-]
         """
-        # Assume 4-quadrant working point at first
-        beta = atan2(speed, 0.7 * pi * rotation_speed * self.diameter)
-        ct, cq = self.ct(beta), self.cq(beta)
-        thrust = ct * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * rho * self.diameter**2 / 8
-        torque = cq * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * rho * self.diameter**3 / 8
+        ktj2 = thrust / rho / speed ** 2 / self.diameter ** 2
+        return root_scalar(
+            f=lambda j: self.kt(j) / j ** 2 - ktj2,
+            bracket=(1e-9, self.j_max)
+        ).root
 
-        # Substitute more accurate 1-quadrant data if it's available
+    def find_j_for_vt_vec(
+            self,
+            speed: NDArray[float64],
+            thrust: NDArray[float64],
+            rho: float = 1025.0) -> NDArray[float64]:
+        """
+        Calculate the advance ratio given arrays of the speed and thrust.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        thrust
+            The thrust produced by the propeller [N]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+            The advance ratio of the propeller at the given work-point [-]
+        """
+        return array([self.find_j_for_vt(s, t, rho=rho) for s, t in zip(speed, thrust)])
+
+    def find_j_for_vn(
+            self,
+            speed: float,
+            rotation_speed: float
+    ) -> float:
+        """
+        Calculate the advance ratio given the speed and rotation rate.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        rotation_speed
+            The rate at which the propeller is rotating [Hz]
+
+        Returns
+        -------
+            The advance ratio of the propeller at the given work-point [-]
+        """
+        return speed / rotation_speed / self.diameter
+
+    def find_j_for_vn_vec(
+            self,
+            speed: NDArray[float64],
+            rotation_speed: NDArray[float64]
+    ) -> NDArray[float64]:
+        """
+        Calculate the advance ratio given arrays of the speed and rotation rate.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        rotation_speed
+            The rate at which the propeller is rotating [Hz]
+
+        Returns
+        -------
+            The advance ratio of the propeller at the given work-point [-]
+        """
+        return speed / rotation_speed / self.diameter
+
+    def find_beta_for_vn(
+            self,
+            speed: float,
+            rotation_speed: float
+    ) -> float:
+        """
+        Calculate the advance angle of the propeller given the speed and rotation rate.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        rotation_speed
+            The rate at which the propeller is rotating [Hz]
+
+        Returns
+        -------
+            The advance angle of the propeller at the given work-point [rad]
+        """
+        return atan2(speed, 0.7 * pi * rotation_speed * self.diameter)
+
+    def find_beta_for_vn_vec(
+            self,
+            speed: NDArray[float64],
+            rotation_speed: NDArray[float64]
+    ) -> NDArray[float64]:
+        """
+        Calculate the advance angle of the propeller given arrays of the speed and rotation rate.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        rotation_speed
+            The rate at which the propeller is rotating [Hz]
+
+        Returns
+        -------
+            The advance angle of the propeller at the given work-point [rad]
+        """
+        return atan2_v(speed, 0.7 * pi * rotation_speed * self.diameter)
+
+    def find_tq_for_vn(
+            self,
+            speed: float,
+            rotation_speed: float,
+            rho: float = 1025.0
+    ) -> tuple[float, float]:
+        """
+        Calculate the thrust and torque for a given speed and rotation rate.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        rotation_speed
+            The rate at which the propeller is rotating [Hz]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+        tuple[float, float]
+            The thrust [N] and torque [Nm] at the given work-point
+        """
         if 0 < speed < (self.j_max * rotation_speed * self.diameter):
-            j = speed / rotation_speed / self.diameter
+            # Use more accurate 1-quadrant data if it's applicable
+            j = self.find_j_for_vn(speed, rotation_speed)
             kt, kq = self.kt(j), self.kq(j)
-            thrust = kt * rho * rotation_speed**2 * self.diameter**4
-            torque = kq * rho * rotation_speed**2 * self.diameter**5
+            thrust = kt * rho * rotation_speed ** 2 * self.diameter ** 4
+            torque = kq * rho * rotation_speed ** 2 * self.diameter ** 5
+        else:
+            # Fall back to the 4-quadrant model
+            beta = self.find_beta_for_vn(speed, rotation_speed)
+            ct, cq = self.ct(beta), self.cq(beta)
+            thrust = ct * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * rho * self.diameter**2 / 8
+            torque = cq * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * rho * self.diameter**3 / 8
+        return thrust, torque
 
-        return PerformancePoint4Q(
-            beta=beta,
-            ct=ct,
-            cq=cq,
-            thrust=thrust,
-            torque=torque
+    def find_tq_for_vn_vec(
+            self,
+            speed: NDArray[float64],
+            rotation_speed: NDArray[float64],
+            rho: float = 1025.0
+    ) -> tuple[NDArray[float64], NDArray[float64]]:
+        """
+        Calculate arrays of thrust and torque for a given speed and rotation rate.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        rotation_speed
+            The rate at which the propeller is rotating [Hz]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+        tuple[NDArray, NDArray]
+            The thrust [N] and torque [Nm] at the given work-point
+        """
+        is_1q = (0 < speed) & (speed < (self.j_max * rotation_speed * self.diameter))
+
+        j = zeros_like(is_1q, dtype=float64)
+        j[is_1q] = self.find_j_for_vn_vec(speed[is_1q], rotation_speed[is_1q])
+        j[~is_1q] = self.find_j_for_vn_vec(speed[~is_1q], rotation_speed[~is_1q])
+
+        kt = zeros_like(is_1q, dtype=float64)
+        kt[is_1q] = self.kt(j[is_1q])
+        kt[~is_1q] = self.ct(j[~is_1q])
+
+        kq = zeros_like(is_1q, dtype=float64)
+        kq[is_1q] = self.kq(j[is_1q])
+        kq[~is_1q] = self.cq(j[~is_1q])
+
+        thrust = zeros_like(is_1q, dtype=float64)
+        thrust[is_1q] = kt[is_1q] * rho * rotation_speed[is_1q] ** 2 * self.diameter ** 4
+        thrust[~is_1q] = (kt[~is_1q] * pi * rho * self.diameter**2 / 8 *
+                          (speed[~is_1q]**2 + (0.7 * pi * rotation_speed[~is_1q] * self.diameter)**2))
+
+        torque = zeros_like(is_1q, dtype=float64)
+        torque[is_1q] = kq[is_1q] * rho * rotation_speed[is_1q] ** 2 * self.diameter ** 5
+        torque[~is_1q] = (kq[~is_1q] * pi * rho * self.diameter ** 3 / 8 *
+                          (speed[~is_1q] ** 2 + (0.7 * pi * rotation_speed[~is_1q] * self.diameter) ** 2))
+
+        return thrust, torque
+
+    def find_nq_for_vt(
+            self,
+            speed: float,
+            thrust: float,
+            rho: float = 1025.0
+    ) -> tuple[float, float]:
+        """
+        Calculate rotation speed and torque for a given speed and rotation rate.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        thrust
+            The thrust produced by the propeller [N]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+        tuple[float, float]
+            The rotation-rate [Hz] and torque [Nm] at the given work-point
+        """
+        j = self.find_j_for_vt(speed, thrust, rho)
+        kq = self.kq(j)
+        rotation_speed = speed / j / self.diameter
+        torque = kq * rho * rotation_speed ** 2 * self.diameter ** 5
+        return rotation_speed, torque
+
+    def find_nq_for_vt_vec(
+            self,
+            speed: NDArray[float64],
+            thrust: NDArray[float64],
+            rho: float = 1025.0
+    ) -> tuple[NDArray[float64], NDArray[float64]]:
+        """
+        Calculate arrays of rotation speed and torque for a given speed and rotation rate.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        thrust
+            The thrust produced by the propeller [N]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+        tuple[NDArray, NDArray]
+            The rotation-rate [Hz] and torque [Nm] at the given work-point
+        """
+        j = self.find_j_for_vt_vec(speed, thrust, rho)
+        kq = self.kq(j)
+        rotation_speed = speed / j / self.diameter
+        torque = kq * rho * rotation_speed ** 2 * self.diameter ** 5
+        return rotation_speed, torque
+
+    # Optimisation methods
+    def optimize(
+            self,
+            objective: Callable[[Self], float],
+            constraints: Iterable[Callable[["Propeller"], float]] = (),
+            diameter_min: float = 1e-3,
+            diameter_max: float = float('inf'),
+            verbose: bool = False
+    ) -> Self:
+
+        @dataclass(frozen=True)
+        class ConstraintFunction:
+            base: Propeller
+            func: Callable[[Propeller], float]
+
+            def __call__(self, x: Any) -> float:
+                return self.func(self.base.new(self.base.blades, *x))
+
+        def objective_function(x: Any) -> float:
+            return objective(self.new(self.blades, *x))
+
+        # noinspection PyTypeChecker
+        opt_res = minimize(
+            fun=objective_function,
+            x0=(
+                self.diameter,
+                self.area_ratio,
+                self.pd_ratio,
+            ),
+            bounds=(
+                (diameter_min, diameter_max),
+                (self.area_ratio_min, self.area_ratio_max),
+                (self.pd_ratio_min, self.pd_ratio_max),
+            ),
+            constraints=[{'type': 'ineq', 'fun': ConstraintFunction(self, cfun)} for cfun in constraints]
         )
 
-    @property
-    @abstractmethod
-    def j_max(self) -> float:
-        """The maximum valid advance-ratio of this propeller"""
-        pass
+        if verbose:
+            print(opt_res)
 
-    @property
-    def kt_max(self) -> float:
-        return self.kt(0)
+        return self.new(self.blades, *opt_res.x)
 
-    @property
-    def kt_min(self) -> float:
-        return 0
+    def losses(self, speed: float, thrust: float, rho: float = 1025.) -> float:
+        j = self.find_j_for_vt(speed, thrust, rho=rho)
+        return 1 - self.eta(j)
 
-    @property
-    def kq_max(self) -> float:
-        return self.kq(0)
+    def cavitation_margin(self,
+                          thrust: float,
+                          immersion: float,
+                          rho: float = 1025.0,
+                          single_screw: bool = False) -> float:
+        min_area_ratio = ((1.3 + 0.3 * self.blades) * thrust / self.diameter ** 2 /
+                          (1e5 + rho * 9.81 * immersion - 1700))
+        if single_screw:
+            min_area_ratio += 0.2
+        return (self.area_ratio - min_area_ratio) / self.area_ratio_max
 
-    @property
-    def kq_min(self) -> float:
-        return self.kq(self.j_max)
+    def rotation_speed_margin(self,
+                              speed: float,
+                              thrust: float,
+                              rotation_speed_max: float,
+                              rho: float = 1025.0) -> float:
+        n, q = self.find_nq_for_vt(speed, thrust, rho=rho)
+        return (rotation_speed_max - n) / rotation_speed_max
+
+    def torque_margin(self, speed: float, thrust: float, torque_max: float, rho: float = 1025.0) -> float:
+        n, q = self.find_nq_for_vt(speed, thrust, rho=rho)
+        return (torque_max - q) / torque_max
+
+    def tip_speed_margin(self, speed: float, thrust: float, tip_speed_max: float, rho: float = 1025.0) -> float:
+        n, q = self.find_nq_for_vt(speed, thrust, rho=rho)
+        return (tip_speed_max - self.diameter * pi * n) / tip_speed_max

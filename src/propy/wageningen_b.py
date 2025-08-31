@@ -1,4 +1,4 @@
-from propy.propeller import Propeller
+from propy.propeller import Propeller, ScalarOrArray
 
 from dataclasses import dataclass
 from functools import cached_property
@@ -40,9 +40,9 @@ class WageningenBPropeller(Propeller):
     pd_ratio_max: ClassVar[float] = 1.4
 
     @cached_property
-    def kq(self) -> Callable[[float], float]:
+    def kq(self) -> Callable[[ScalarOrArray], ScalarOrArray]:
         return cast(
-            Callable[[float], float],
+            Callable[[ScalarOrArray], ScalarOrArray],
             Polynomial(symbol='J', coef=[
                 + 0.0037936800 * self.pd_ratio**0 * self.area_ratio**0 * self.blades**0 +
                 + 0.0158960000 * self.pd_ratio**0 * self.area_ratio**2 * self.blades**0 +
@@ -95,9 +95,9 @@ class WageningenBPropeller(Propeller):
         )
 
     @cached_property
-    def kt(self) -> Callable[[float], float]:
+    def kt(self) -> Callable[[ScalarOrArray], ScalarOrArray]:
         return cast(
-            Callable[[float], float],
+            Callable[[ScalarOrArray], ScalarOrArray],
             Polynomial(symbol='J', coef=[
                 + 0.008804960 * self.pd_ratio**0 * self.area_ratio**0 * self.blades**0 +
                 + 0.014404300 * self.pd_ratio**0 * self.area_ratio**0 * self.blades**1 +
@@ -151,8 +151,10 @@ class WageningenBPropeller(Propeller):
         assert isreal(kt_root)
         return float(kt_root)
 
-    def _find_j_for_ktj2(self, ktj2: float) -> float:
+    def find_j_for_vt(self, speed: float, thrust: float, rho: float = 1025.0) -> float:
         """ This may be a faster/more accurate alternative to the default. """
+        ktj2 = thrust / rho / speed ** 2 / self.diameter ** 2
+
         # Cast to a Polynomial object because we know this to be true for a WageningenBPropeller
         kt = cast(Polynomial, self.kt)
 
