@@ -52,7 +52,7 @@ class Propeller(ABC):
         if not (self.diameter > 0):
             raise ValueError(f'Diameter (= {self.diameter}) must be > 0')
 
-        if not (isinstance(self.blades, int)):
+        if not isinstance(self.blades, int):
             raise TypeError(f'The amount of blades (= {self.blades}) must be an integer')
 
         if not (self.blades >= self.blades_min):
@@ -286,12 +286,7 @@ class Propeller(ABC):
             speed: NDArray[float64],
             thrust: NDArray[float64],
             rho: float = 1025.0) -> NDArray[float64]:
-        ktj2s = thrust / rho / speed ** 2 / self.diameter ** 2
-        roots = [root_scalar(
-            f=lambda j: self.kt(j) / j ** 2 - ktj2,
-            bracket=(1e-9, self.j_max)
-        ).root for ktj2 in ktj2s]
-        return array(roots)
+        return array([self.find_j_for_vt(s, t, rho=rho) for s, t in zip(speed, thrust)])
 
     def find_j_for_vn(self, speed: float, rotation_speed: float) -> float:
         return speed / rotation_speed / self.diameter
