@@ -120,7 +120,6 @@ class Propeller(ABC):
 
         Returns
         -------
-        Function(j)
             A callable that calculates the thrust coefficient of the propeller as a function of the advance ratio.
         """
         pass
@@ -149,7 +148,6 @@ class Propeller(ABC):
 
         Returns
         -------
-        Function(j)
             A callable that calculates the torque coefficient of the propeller as a function of the advance ratio.
         """
         pass
@@ -195,7 +193,6 @@ class Propeller(ABC):
 
         Returns
         -------
-        FourQuadrantFunction(beta)
             A function that returns the thrust coefficient of the propeller as a function the load angle beta
         """
 
@@ -248,7 +245,6 @@ class Propeller(ABC):
 
         Returns
         -------
-        FourQuadrantFunction(beta)
             A function that returns the torque coefficient of the propeller as a function the load angle beta
         """
 
@@ -274,7 +270,28 @@ class Propeller(ABC):
         )
 
     # Inverse propeller model
-    def find_j_for_vt(self, speed: float, thrust: float, rho: float = 1025.0) -> float:
+    def find_j_for_vt(
+            self,
+            speed: float,
+            thrust: float,
+            rho: float = 1025.0
+    ) -> float:
+        """
+        Calculate the advance ratio given the speed and thrust.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        thrust
+            The thrust produced by the propeller [N]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+            The advance ratio of the propeller at the given work-point [-]
+        """
         ktj2 = thrust / rho / speed ** 2 / self.diameter ** 2
         return root_scalar(
             f=lambda j: self.kt(j) / j ** 2 - ktj2,
@@ -286,23 +303,133 @@ class Propeller(ABC):
             speed: NDArray[float64],
             thrust: NDArray[float64],
             rho: float = 1025.0) -> NDArray[float64]:
+        """
+        Calculate the advance ratio given arrays of the speed and thrust.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        thrust
+            The thrust produced by the propeller [N]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+            The advance ratio of the propeller at the given work-point [-]
+        """
         return array([self.find_j_for_vt(s, t, rho=rho) for s, t in zip(speed, thrust)])
 
-    def find_j_for_vn(self, speed: float, rotation_speed: float) -> float:
+    def find_j_for_vn(
+            self,
+            speed: float,
+            rotation_speed: float
+    ) -> float:
+        """
+        Calculate the advance ratio given the speed and rotation rate.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        rotation_speed
+            The rate at which the propeller is rotating [Hz]
+
+        Returns
+        -------
+            The advance ratio of the propeller at the given work-point [-]
+        """
         return speed / rotation_speed / self.diameter
 
-    def find_j_for_vn_vec(self, speed: NDArray[float64], rotation_speed: NDArray[float64]) -> NDArray[float64]:
+    def find_j_for_vn_vec(
+            self,
+            speed: NDArray[float64],
+            rotation_speed: NDArray[float64]
+    ) -> NDArray[float64]:
+        """
+        Calculate the advance ratio given arrays of the speed and rotation rate.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        rotation_speed
+            The rate at which the propeller is rotating [Hz]
+
+        Returns
+        -------
+            The advance ratio of the propeller at the given work-point [-]
+        """
         return speed / rotation_speed / self.diameter
 
-    def find_beta_for_vn(self, speed: float, rotation_speed: float) -> float:
+    def find_beta_for_vn(
+            self,
+            speed: float,
+            rotation_speed: float
+    ) -> float:
+        """
+        Calculate the advance angle of the propeller given the speed and rotation rate.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        rotation_speed
+            The rate at which the propeller is rotating [Hz]
+
+        Returns
+        -------
+            The advance angle of the propeller at the given work-point [rad]
+        """
         return atan2(speed, 0.7 * pi * rotation_speed * self.diameter)
 
-    def find_beta_for_vn_vec(self, speed: NDArray[float64], rotation_speed: NDArray[float64]) -> NDArray[float64]:
+    def find_beta_for_vn_vec(
+            self,
+            speed: NDArray[float64],
+            rotation_speed: NDArray[float64]
+    ) -> NDArray[float64]:
+        """
+        Calculate the advance angle of the propeller given arrays of the speed and rotation rate.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        rotation_speed
+            The rate at which the propeller is rotating [Hz]
+
+        Returns
+        -------
+            The advance angle of the propeller at the given work-point [rad]
+        """
         return atan2_v(speed, 0.7 * pi * rotation_speed * self.diameter)
 
-    def find_tq_for_vn(self, speed: float, rotation_speed: float, rho: float = 1025.0) -> tuple[float, float]:
-        # Use more accurate 1-quadrant data if it's applicable
+    def find_tq_for_vn(
+            self,
+            speed: float,
+            rotation_speed: float,
+            rho: float = 1025.0
+    ) -> tuple[float, float]:
+        """
+        Calculate the thrust and torque for a given speed and rotation rate.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        rotation_speed
+            The rate at which the propeller is rotating [Hz]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+        tuple[float, float]
+            The thrust [N] and torque [Nm] at the given work-point
+        """
         if 0 < speed < (self.j_max * rotation_speed * self.diameter):
+            # Use more accurate 1-quadrant data if it's applicable
             j = self.find_j_for_vn(speed, rotation_speed)
             kt, kq = self.kt(j), self.kq(j)
             thrust = kt * rho * rotation_speed ** 2 * self.diameter ** 4
@@ -313,7 +440,6 @@ class Propeller(ABC):
             ct, cq = self.ct(beta), self.cq(beta)
             thrust = ct * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * rho * self.diameter**2 / 8
             torque = cq * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * rho * self.diameter**3 / 8
-
         return thrust, torque
 
     def find_tq_for_vn_vec(
@@ -322,7 +448,23 @@ class Propeller(ABC):
             rotation_speed: NDArray[float64],
             rho: float = 1025.0
     ) -> tuple[NDArray[float64], NDArray[float64]]:
+        """
+        Calculate arrays of thrust and torque for a given speed and rotation rate.
 
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        rotation_speed
+            The rate at which the propeller is rotating [Hz]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+        tuple[NDArray, NDArray]
+            The thrust [N] and torque [Nm] at the given work-point
+        """
         is_1q = (0 < speed) & (speed < (self.j_max * rotation_speed * self.diameter))
 
         j = zeros_like(is_1q, dtype=float64)
@@ -349,7 +491,29 @@ class Propeller(ABC):
 
         return thrust, torque
 
-    def find_nq_for_vt(self, speed: float, thrust: float, rho: float = 1025.0) -> tuple[float, float]:
+    def find_nq_for_vt(
+            self,
+            speed: float,
+            thrust: float,
+            rho: float = 1025.0
+    ) -> tuple[float, float]:
+        """
+        Calculate rotation speed and torque for a given speed and rotation rate.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        thrust
+            The thrust produced by the propeller [N]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+        tuple[float, float]
+            The rotation-rate [Hz] and torque [Nm] at the given work-point
+        """
         j = self.find_j_for_vt(speed, thrust, rho)
         kq = self.kq(j)
         rotation_speed = speed / j / self.diameter
@@ -362,7 +526,23 @@ class Propeller(ABC):
             thrust: NDArray[float64],
             rho: float = 1025.0
     ) -> tuple[NDArray[float64], NDArray[float64]]:
+        """
+        Calculate arrays of rotation speed and torque for a given speed and rotation rate.
 
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        thrust
+            The thrust produced by the propeller [N]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+        tuple[NDArray, NDArray]
+            The rotation-rate [Hz] and torque [Nm] at the given work-point
+        """
         j = self.find_j_for_vt_vec(speed, thrust, rho)
         kq = self.kq(j)
         rotation_speed = speed / j / self.diameter
