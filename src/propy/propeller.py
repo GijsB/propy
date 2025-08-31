@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from functools import lru_cache, cached_property
 from typing import ClassVar, Self, Any, TypeVar
 from math import cos, sin, sqrt, atan2, pi
-from numpy import float64
+from numpy import float64, array
 from numpy import atan2 as atan2_v
 from numpy import sin as sin_v
 from numpy.typing import NDArray
@@ -281,12 +281,29 @@ class Propeller(ABC):
             bracket=(1e-9, self.j_max)
         ).root
 
-    def find_j_for_vn(self, speed: ScalarOrArray, rotation_speed: ScalarOrArray) -> ScalarOrArray:
+    def find_j_for_vt_vec(
+            self,
+            speed: NDArray[float64],
+            thrust: NDArray[float64],
+            rho: float = 1025.0) -> NDArray[float64]:
+        ktj2s = thrust / rho / speed ** 2 / self.diameter ** 2
+        roots = [root_scalar(
+            f=lambda j: self.kt(j) / j ** 2 - ktj2,
+            bracket=(1e-9, self.j_max)
+        ).root for ktj2 in ktj2s]
+        return array(roots)
+
+    def find_j_for_vn(self, speed: float, rotation_speed: float) -> float:
         return speed / rotation_speed / self.diameter
 
-    def find_beta_for_vn(self, speed: ScalarOrArray, rotation_speed: ScalarOrArray) -> ScalarOrArray:
-        result: ScalarOrArray = atan2_v(speed, 0.7 * pi * rotation_speed * self.diameter)
-        return result
+    def find_j_for_vn_vec(self, speed: NDArray[float64], rotation_speed: NDArray[float64]) -> NDArray[float64]:
+        return speed / rotation_speed / self.diameter
+
+    def find_beta_for_vn(self, speed: float, rotation_speed: float) -> float:
+        return atan2(speed, 0.7 * pi * rotation_speed * self.diameter)
+
+    def find_beta_for_vn_vec(self, speed: NDArray[float64], rotation_speed: NDArray[float64]) -> NDArray[float64]:
+        return atan2_v(speed, 0.7 * pi * rotation_speed * self.diameter)
 
     def find_tq_for_vn(self, speed: float, rotation_speed: float, rho: float = 1025.0) -> tuple[float, float]:
         # Use more accurate 1-quadrant data if it's applicable
