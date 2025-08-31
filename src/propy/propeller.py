@@ -322,6 +322,7 @@ class Propeller(ABC):
             rotation_speed: NDArray[float64],
             rho: float = 1025.0
     ) -> tuple[NDArray[float64], NDArray[float64]]:
+
         is_1q = (0 < speed) & (speed < (self.j_max * rotation_speed * self.diameter))
 
         j = zeros_like(is_1q, dtype=float64)
@@ -355,13 +356,28 @@ class Propeller(ABC):
         torque = kq * rho * rotation_speed ** 2 * self.diameter ** 5
         return rotation_speed, torque
 
+    def find_nq_for_vt_vec(
+            self,
+            speed: NDArray[float64],
+            thrust: NDArray[float64],
+            rho: float = 1025.0
+    ) -> tuple[NDArray[float64], NDArray[float64]]:
+
+        j = self.find_j_for_vt_vec(speed, thrust, rho)
+        kq = self.kq(j)
+        rotation_speed = speed / j / self.diameter
+        torque = kq * rho * rotation_speed ** 2 * self.diameter ** 5
+        return rotation_speed, torque
+
     # Optimisation methods
-    def optimize(self,
-                 objective: Callable[[Self], float],
-                 constraints: Iterable[Callable[["Propeller"], float]] = (),
-                 diameter_min: float = 1e-3,
-                 diameter_max: float = float('inf'),
-                 verbose: bool = False,) -> Self:
+    def optimize(
+            self,
+            objective: Callable[[Self], float],
+            constraints: Iterable[Callable[["Propeller"], float]] = (),
+            diameter_min: float = 1e-3,
+            diameter_max: float = float('inf'),
+            verbose: bool = False
+    ) -> Self:
 
         @dataclass(frozen=True)
         class ConstraintFunction:
