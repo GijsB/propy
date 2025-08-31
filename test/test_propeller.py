@@ -216,6 +216,11 @@ def test_finding_type_consistency() -> None:
     assert (prop.find_beta_for_vn_vec(array([1.23456]), array([6.789]))[0] ==
             approx(prop.find_beta_for_vn(1.23456, 6.789)))
 
+    t, q = prop.find_tq_for_vn(1.23456, 6.789)
+    t_vec, q_vec = prop.find_tq_for_vn_vec(array([1.23456]), array([6.789]))
+    assert t_vec == approx(t)
+    assert q_vec == approx(q)
+
     assert isinstance(prop.ct(1), float)
     assert isinstance(prop.ct(1.0), float)
     assert isinstance(prop.ct(array([1, 2])), ndarray)

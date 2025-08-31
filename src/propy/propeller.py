@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from functools import lru_cache, cached_property
 from typing import ClassVar, Self, Any, TypeVar
 from math import cos, sin, sqrt, atan2, pi
-from numpy import float64, array
+from numpy import float64, array, zeros_like
 from numpy import atan2 as atan2_v
 from numpy import sin as sin_v
 from numpy.typing import NDArray
@@ -313,6 +313,38 @@ class Propeller(ABC):
             ct, cq = self.ct(beta), self.cq(beta)
             thrust = ct * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * rho * self.diameter**2 / 8
             torque = cq * (speed**2 + (0.7 * pi * rotation_speed * self.diameter)**2) * pi * rho * self.diameter**3 / 8
+
+        return thrust, torque
+
+    def find_tq_for_vn_vec(
+            self,
+            speed: NDArray[float64],
+            rotation_speed: NDArray[float64],
+            rho: float = 1025.0
+    ) -> tuple[NDArray[float64], NDArray[float64]]:
+        is_1q = (0 < speed) & (speed < (self.j_max * rotation_speed * self.diameter))
+
+        j = zeros_like(is_1q, dtype=float64)
+        j[is_1q] = self.find_j_for_vn_vec(speed[is_1q], rotation_speed[is_1q])
+        j[~is_1q] = self.find_j_for_vn_vec(speed[~is_1q], rotation_speed[~is_1q])
+
+        kt = zeros_like(is_1q, dtype=float64)
+        kt[is_1q] = self.kt(j[is_1q])
+        kt[~is_1q] = self.ct(j[~is_1q])
+
+        kq = zeros_like(is_1q, dtype=float64)
+        kq[is_1q] = self.kq(j[is_1q])
+        kq[~is_1q] = self.cq(j[~is_1q])
+
+        thrust = zeros_like(is_1q, dtype=float64)
+        thrust[is_1q] = kt[is_1q] * rho * rotation_speed[is_1q] ** 2 * self.diameter ** 4
+        thrust[~is_1q] = (kt[~is_1q] * pi * rho * self.diameter**2 / 8 *
+                          (speed[~is_1q]**2 + (0.7 * pi * rotation_speed[~is_1q] * self.diameter)**2))
+
+        torque = zeros_like(is_1q, dtype=float64)
+        torque[is_1q] = kq[is_1q] * rho * rotation_speed[is_1q] ** 2 * self.diameter ** 5
+        torque[~is_1q] = (kq[~is_1q] * pi * rho * self.diameter ** 3 / 8 *
+                          (speed[~is_1q] ** 2 + (0.7 * pi * rotation_speed[~is_1q] * self.diameter) ** 2))
 
         return thrust, torque
 
