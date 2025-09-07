@@ -15,6 +15,7 @@ class GawnBurrillPropeller(Propeller):
     Source: Mathematical Model of Segmental Section Propeller Series for Open-Water and Cavitating Conditions Applicable
     in CAD. D. Radojcic
     """
+    blades: int = 3
 
     blades_min: ClassVar[int] = 3
     blades_max: ClassVar[int] = 3
@@ -28,7 +29,7 @@ class GawnBurrillPropeller(Propeller):
         # Cast to a Polynomial object because we know this to be true for a GawnBurril propeller
         kt = cast(Polynomial, self.kt)
         kt_root = roots(kt.coef[::-1])
-        kt_root = kt_root[(kt_root > 0) & (kt_root < 1.6)]
+        kt_root = kt_root[(kt_root > 0) & (kt_root < 2.0)]
         kt_root = min(kt_root)
         assert isreal(kt_root)
         return float(kt_root)
