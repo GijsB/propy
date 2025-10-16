@@ -43,9 +43,9 @@ pip install -e ".[dev]"
 
 ### Git workflow
 The main branch only contains releases, which are also tagged with the version number. When it's a good time for a new 
-release, the changes from the develop are pulled into the main branch. New features are developed in `feature/...` 
-branches. These changes are reviewed in a Github pull-request. After all the checks are passed, they can be merged into 
-the develop branch. 
+release, the changes from the develop branch are pulled into the main branch. New features are developed in 
+`feature/...` branches. These changes are reviewed in a GitHub pull-request. After all the checks are passed, they can 
+be merged into the develop branch. 
 
 
 ### Testing & validation
