@@ -15,6 +15,12 @@ After installation, the package can be used like any other python package.
 
 ## Usage
 
+```python
+>>> from propy import WageningenBPropeller
+>>> WageningenBPropeller()
+WageningenBPropeller(blades=4, diameter=1.0, area_ratio=0.5, pd_ratio=0.8)
+
+```
 
 ## Development
 
