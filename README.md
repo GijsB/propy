@@ -15,12 +15,79 @@ After installation, the package can be used like any other python package.
 
 ## Usage
 
+### Propeller types
+The propy module contains parametric propeller models of the following types:
+ - `WageningenBPropeller`: The famous Wageningen B-type propeller
+ - ...
+
+The code below shows an example of how to initialize a propeller with default parameters and a propeller with other
+parameters.
+
 ```python
 >>> from propy import WageningenBPropeller
 >>> WageningenBPropeller()
 WageningenBPropeller(blades=4, diameter=1.0, area_ratio=0.5, pd_ratio=0.8)
 
+>>> WageningenBPropeller(blades=2, diameter=0.5)
+WageningenBPropeller(blades=2, diameter=0.5, area_ratio=0.5, pd_ratio=0.8)
+
 ```
+
+### Open-water model (1 Quadrant)
+The most basic use-case is to use the open-water model of a propeller. Such a model is able to specify the thrust- and
+torque-coefficient for different advance-ratio's. These coefficients are defined as follows:
+ - Advance ratio: `j = speed / rotation_speed / diameter`, `0 <= j <= j_max`
+ - Thrust coefficient: `kt(j) = thrust / rho / rotation_speed^2 / diameter^4`, `kt_min <= kt <= kt_max `
+ - Torque coefficient: `kq(j) = torque / rho / rotation_speed^2 / diameter^5`, `kq_min <= kq <= kq_max`
+
+The code below demonstrates how one (or multiple) thrust- and torque-coefficient can be obtained for a given speed and
+rotation speed:
+
+```python
+>>> from propy import WageningenBPropeller
+>>> prop = WageningenBPropeller()
+>>> speed = 10  # 10 m/s speed
+>>> rotation_speed = 20  # 20 Hz rotation speed
+>>> j = speed / rotation_speed / prop.diameter
+>>> j
+0.5
+>>> prop.kt(j)
+np.float64(0.1718411109337457)
+>>> prop.kq(j)
+np.float64(0.02375335163072481)
+>>> prop.eta(j)
+np.float64(0.5756948041835945)
+
+```
+
+The code below shows how an open-water chart can conveniently be generated
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+from propy import WageningenBPropeller
+
+prop = WageningenBPropeller(
+    diameter=0.3,
+    blades=2,
+    area_ratio=0.9,
+    pd_ratio=0.5
+)
+
+j = np.linspace(0, prop.j_max)
+
+plt.figure()
+plt.plot(j, prop.kt(j), label='kt')
+plt.plot(j, prop.kq(j), label='kq')
+plt.plot(j, prop.eta(j), label='eta')
+
+plt.xlabel('Advance ratio J')
+plt.title(f'Open-water chart')
+plt.grid()
+plt.legend()
+```
+
+![Open water chart](doc/open_water_chart.png)
 
 ## Development
 
