@@ -75,6 +75,48 @@ plt.legend()
 ![Open water chart](doc/open_water_chart.png)
 
 
+
+### 4-Quadrant model
+The open-water model can only be used to calculate working points where the propeller is actually "propelling". When the
+propeller is breaking of reversing, a 4-quadrant model must be used. The propeller characteristics for these working 
+points can be very complex. Although some data is available, this is not currently implemented in this library. Instead,
+a simple function fit is used to get a very rough approximation.
+
+The 4-quadrant model has 3 main coefficients, which are somewhat similar to the 1-quadrant model:
+- The load angle: 
+  - `beta = atan(speed / 0.7 / pi / rotation_speed / diameter)`
+  - `beta = atan(j / 0.7 / pi)`
+- The thrust coefficient:
+  - `ct = 8 * thrust / (speed^2 + (0.7 * pi * rotation_speed * diameter)^2) / pi / rho / diameter^2`
+  - `ct = 8 * kt / pi / (j^2 + 0.7^2 * pi^2)`
+- The torque coefficient:
+  - `cq = 8 * torque / (speed^2 + (0.7 * pi * rotation_speed * diameter)^2) / pi / rho / diameter^3`
+  - `cq = 8 * kq / pi / (j^2 + 0.7^2 * pi^2)`
+
+The code below shows how the 4-quadrant model can give an estimate of the thrust and drag for a working point with a
+very low rotation speed. At this working point, the advance ratio would be higher than `j_max`, so the 1-quadrant model
+cannot be used.
+
+```python
+>>> from propy import WageningenBPropeller
+>>> from math import atan, pi
+>>>
+>>> speed = 10  # 10 m/s speed
+>>> rotation_speed = 10  # 10 Hz rotation speed
+>>> rho = 1000  # 1000 kg/m3 water density
+>>>
+>>> prop = WageningenBPropeller()
+>>>
+>>> j = speed / rotation_speed / prop.diameter
+>>> beta = atan(j / 0.7 / pi)
+>>> thrust = prop.ct(beta) * (speed**2 + (0.7 * pi * rotation_speed * prop.diameter)**2) * pi * rho * prop.diameter**2 / 8
+>>> torque = prop.cq(beta) * (speed**2 + (0.7 * pi * rotation_speed * prop.diameter)**2) * pi * rho * prop.diameter**3 / 8
+>>>
+>>> print(f'{j=:1.2}, {beta=:1.2} rad, {thrust=:1.2} N, {torque=:1.2} Nm')
+j=1.0, beta=0.43 rad, thrust=-4.7e+03 N, torque=-2.7e+01 Nm
+
+```
+
 ## Development
 
 ### Installation
