@@ -568,7 +568,7 @@ class Propeller(ABC):
                 return self.func(self.base.new(self.base.blades, *x))
 
         def objective_function(x: Any) -> float:
-            return objective(self.new(self.blades, *x))
+            return objective(self.new(self.blades, *(float(arg) for arg in x)))
 
         # noinspection PyTypeChecker
         opt_res = minimize(

@@ -73,7 +73,7 @@ a limit on the torque needs to be taken into account.
 ...     ]
 ... )
 >>> prop
-WageningenBPropeller(blades=3, diameter=np.float64(0.26219119004078595), area_ratio=np.float64(0.3), pd_ratio=np.float64(1.4))
+WageningenBPropeller(blades=3, diameter=0.26219119004078595, area_ratio=0.3, pd_ratio=1.4)
 
 >>> # Just checking the result
 >>> rotation_speed, torque = prop.find_nq_for_vt(speed, thrust)
