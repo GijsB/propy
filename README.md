@@ -20,18 +20,6 @@ The propy module contains parametric propeller models of the following types:
  - `WageningenBPropeller`: The famous Wageningen B-type propeller
  - ...
 
-The code below shows an example of how to initialize a propeller with default parameters and a propeller with other
-parameters.
-
-```python
->>> from propy import WageningenBPropeller
->>> WageningenBPropeller()
-WageningenBPropeller(blades=4, diameter=1.0, area_ratio=0.5, pd_ratio=0.8)
-
->>> WageningenBPropeller(blades=2, diameter=0.5)
-WageningenBPropeller(blades=2, diameter=0.5, area_ratio=0.5, pd_ratio=0.8)
-
-```
 
 ### Open-water model (1 Quadrant)
 The most basic use-case is to use the open-water model of a propeller. Such a model is able to specify the thrust- and
@@ -40,23 +28,20 @@ torque-coefficient for different advance-ratio's. These coefficients are defined
  - Thrust coefficient: `kt(j) = thrust / rho / rotation_speed^2 / diameter^4`, `kt_min <= kt <= kt_max `
  - Torque coefficient: `kq(j) = torque / rho / rotation_speed^2 / diameter^5`, `kq_min <= kq <= kq_max`
 
-The code below demonstrates how one (or multiple) thrust- and torque-coefficient can be obtained for a given speed and
-rotation speed:
+The code below shows how the open water model kan be used to obtain the thrust and torque produced by the propeller.
 
-```python
+```
 >>> from propy import WageningenBPropeller
 >>> prop = WageningenBPropeller()
 >>> speed = 10  # 10 m/s speed
 >>> rotation_speed = 20  # 20 Hz rotation speed
+>>> rho = 1000  # 1000 kg/m3 water density
 >>> j = speed / rotation_speed / prop.diameter
->>> j
-0.5
->>> prop.kt(j)
-np.float64(0.1718411109337457)
->>> prop.kq(j)
-np.float64(0.02375335163072481)
->>> prop.eta(j)
-np.float64(0.5756948041835945)
+>>> thrust = prop.kt(j) * rho * rotation_speed**2 * prop.diameter**4
+>>> torque = prop.kq(j) * rho * rotation_speed**2 * prop.diameter**5
+>>> eta = prop.eta(j)
+>>> print(f'{j=:1.2}, {thrust=:1.2} N, {torque=:1.2} Nm, {eta=:1.2}')
+j=0.5, thrust=6.9e+04 N, torque=9.5e+03 Nm, eta=0.58
 
 ```
 
