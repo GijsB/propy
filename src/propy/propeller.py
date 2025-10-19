@@ -565,10 +565,12 @@ class Propeller(ABC):
             func: Callable[[Propeller], float]
 
             def __call__(self, x: Any) -> float:
+                x = (float(arg) for arg in x)
                 return self.func(self.base.new(self.base.blades, *x))
 
         def objective_function(x: Any) -> float:
-            return objective(self.new(self.blades, *(float(arg) for arg in x)))
+            x = (float(arg) for arg in x)
+            return objective(self.new(self.blades, *x))
 
         # noinspection PyTypeChecker
         opt_res = minimize(
@@ -589,7 +591,7 @@ class Propeller(ABC):
         if verbose:
             print(opt_res)
 
-        return self.new(self.blades, *opt_res.x)
+        return self.new(self.blades, *(float(arg) for arg in opt_res.x))
 
     def losses(self, speed: float, thrust: float, rho: float = 1025.) -> float:
         j = self.find_j_for_vt(speed, thrust, rho=rho)
