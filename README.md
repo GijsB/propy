@@ -30,18 +30,22 @@ torque-coefficient for different advance-ratio's. These coefficients are defined
 
 The code below shows how the open water model kan be used to obtain the thrust and torque produced by the propeller.
 
-```
+```python
 >>> from propy import WageningenBPropeller
->>> prop = WageningenBPropeller()
+>>>
 >>> speed = 10  # 10 m/s speed
 >>> rotation_speed = 20  # 20 Hz rotation speed
 >>> rho = 1000  # 1000 kg/m3 water density
+>>>
+>>> prop = WageningenBPropeller()
+>>>
 >>> j = speed / rotation_speed / prop.diameter
 >>> thrust = prop.kt(j) * rho * rotation_speed**2 * prop.diameter**4
 >>> torque = prop.kq(j) * rho * rotation_speed**2 * prop.diameter**5
->>> eta = prop.eta(j)
->>> print(f'{j=:1.2}, {thrust=:1.2} N, {torque=:1.2} Nm, {eta=:1.2}')
-j=0.5, thrust=6.9e+04 N, torque=9.5e+03 Nm, eta=0.58
+>>> efficiency = prop.eta(j)
+>>>
+>>> print(f'{j=:1.2}, {thrust=:1.2} N, {torque=:1.2} Nm, {efficiency=:1.2}')
+j=0.5, thrust=6.9e+04 N, torque=9.5e+03 Nm, efficiency=0.58
 
 ```
 
