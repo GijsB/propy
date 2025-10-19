@@ -37,6 +37,52 @@ the open water models.
 - `find_nq_for_vt_vec`: Calculate arrays of rotation speed and torque for a given speed and thrust.
 
 
+### Optimization
+Even with all these models (below) and convenient functions, it can be challenging to design propellers. This package 
+includes an optimization function for that reason. The `optimize` function is able to minimize an objective function, 
+taking into account an arbitrary number of constraints. These objective- and constraint-functions need to be in this
+form: `f(p: Propeller) -> float`. The constraints are satisfied when the result is >= 0. 
+
+To aid the user, a number of common objective and constraint functions are available. These functions can be wrapped by
+the user to obtain the desired objectives/constraints.:
+- `losses(speed, thrust)`: Calculates `1-eta` of the propeller at the given working point.
+- `cavitation_margin(thrust, immersion)`: Returns a number that indicates how close the propeller is to cavitating.
+- `rotation_speed_margin(speed, thrust, rotation_speed_max)`: Returns a number that indicates how close the propeller is
+  to the maximum allowed speed.
+- `torque_margin(speed, thrust, torque_max)`: Returns a number that indicates how close the propeller is to the maximum
+  allowed torque.
+- `tip_speed_margin(speed, thrust, tip_speed_max)`: Returns a number that indicates how close the propeller is to the 
+  maximum allowed tip speed.
+
+The code below demonstrates how the `optimize` function can be used to minimize the losses of a 3-bladed propeller when
+a limit on the torque needs to be taken into account.
+
+```python
+>>> from propy import WageningenBPropeller
+>>>
+>>> speed = 10
+>>> thrust = 1000
+>>> torque_limit = 60
+>>> 
+>>> prop = WageningenBPropeller(
+...     blades=3,
+... ).optimize(
+...     objective=lambda p: p.losses(speed, thrust),
+...     constraints=[
+...         lambda p: p.torque_margin(speed, thrust, torque_limit)
+...     ]
+... )
+>>> prop
+WageningenBPropeller(blades=3, diameter=np.float64(0.26219119004078595), area_ratio=np.float64(0.3), pd_ratio=np.float64(1.4))
+
+>>> # Just checking the result
+>>> rotation_speed, torque = prop.find_nq_for_vt(speed, thrust)
+>>> print(f'{speed=} m/s, {rotation_speed=:1.3} Hz, {torque=:1.3} Nm, {torque_limit=} Nm')
+speed=10 m/s, rotation_speed=34.7 Hz, torque=60.0 Nm, torque_limit=60 Nm
+
+```
+
+
 ### Open-water model (1 Quadrant)
 The most basic use-case is to use the open-water model of a propeller. Such a model is able to specify the thrust- and
 torque-coefficient for different advance-ratio's. These coefficients are defined as follows:
@@ -93,7 +139,6 @@ plt.legend()
 ```
 
 ![Open water chart](doc/open_water_chart.png)
-
 
 
 ### 4-Quadrant model
@@ -176,6 +221,7 @@ plt.title('Open water chart, 4-quadrants')
 ```
 
 ![Open water chart](doc/open_water_chart_4q.png)
+
 
 ## Development
 
