@@ -498,7 +498,7 @@ class Propeller(ABC):
             rho: float = 1025.0
     ) -> tuple[float, float]:
         """
-        Calculate rotation speed and torque for a given speed and rotation rate.
+        Calculate rotation speed and torque for a given speed and thrust.
 
         Parameters
         ----------
@@ -527,7 +527,7 @@ class Propeller(ABC):
             rho: float = 1025.0
     ) -> tuple[NDArray[float64], NDArray[float64]]:
         """
-        Calculate arrays of rotation speed and torque for a given speed and rotation rate.
+        Calculate arrays of rotation speed and torque for a given speed and thrust.
 
         Parameters
         ----------

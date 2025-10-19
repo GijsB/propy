@@ -33,8 +33,8 @@ the open water models.
 - `find_beta_for_vn_vec`: Calculate the advance angle of the propeller given arrays of the speed and rotation rate.
 - `find_tq_for_vn`: Calculate the thrust and torque for a given speed and rotation rate.
 - `find_tq_for_vn_vec`: Calculate arrays of thrust and torque for a given speed and rotation rate.
-- `find_nq_for_vt`: Calculate rotation speed and torque for a given speed and rotation rate.
-- `find_nq_for_vt_vec`: Calculate arrays of rotation speed and torque for a given speed and rotation rate.
+- `find_nq_for_vt`: Calculate rotation speed and torque for a given speed and thrust.
+- `find_nq_for_vt_vec`: Calculate arrays of rotation speed and torque for a given speed and thrust.
 
 
 ### Open-water model (1 Quadrant)
