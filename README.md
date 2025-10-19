@@ -155,7 +155,7 @@ prop = WageningenBPropeller(
 
 j = np.linspace(0, prop.j_max)
 ct_1q = 8 * prop.kt(j) / np.pi / (j**2 + 0.7**2 * np.pi**2)
-cq_1q = 8 * prop.kq(j) / np.pi / (j ** 2 + 0.7 ** 2 * np.pi ** 2)
+cq_1q = 8 * prop.kq(j) / np.pi / (j**2 + 0.7**2 * np.pi**2)
 
 beta = np.linspace(0, 2 * np.pi)
 ct = prop.ct(beta)
