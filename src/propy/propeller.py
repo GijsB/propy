@@ -498,7 +498,7 @@ class Propeller(ABC):
             rho: float = 1025.0
     ) -> tuple[float, float]:
         """
-        Calculate rotation speed and torque for a given speed and rotation rate.
+        Calculate rotation speed and torque for a given speed and thrust.
 
         Parameters
         ----------
@@ -527,7 +527,7 @@ class Propeller(ABC):
             rho: float = 1025.0
     ) -> tuple[NDArray[float64], NDArray[float64]]:
         """
-        Calculate arrays of rotation speed and torque for a given speed and rotation rate.
+        Calculate arrays of rotation speed and torque for a given speed and thrust.
 
         Parameters
         ----------
@@ -565,9 +565,11 @@ class Propeller(ABC):
             func: Callable[[Propeller], float]
 
             def __call__(self, x: Any) -> float:
+                x = (float(arg) for arg in x)
                 return self.func(self.base.new(self.base.blades, *x))
 
         def objective_function(x: Any) -> float:
+            x = (float(arg) for arg in x)
             return objective(self.new(self.blades, *x))
 
         # noinspection PyTypeChecker
@@ -589,7 +591,7 @@ class Propeller(ABC):
         if verbose:
             print(opt_res)
 
-        return self.new(self.blades, *opt_res.x)
+        return self.new(self.blades, *(float(arg) for arg in opt_res.x))
 
     def losses(self, speed: float, thrust: float, rho: float = 1025.) -> float:
         j = self.find_j_for_vt(speed, thrust, rho=rho)

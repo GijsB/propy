@@ -26,15 +26,20 @@ dev = [
     "pytest>=6.0",
     "flake8>=7.0",
     "mypy>=1.12",
-    "scipy-stubs"
+    "scipy-stubs",
+    "matplotlib"
 ]
 
 [tool.setuptools_scm]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
+addopts = "--doctest-modules --doctest-glob='*.md'"
 
 [tool.mypy]
 python_version = "3.13"
 strict = true
+exclude = [
+    'doc/*'
+]
 
