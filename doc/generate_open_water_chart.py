@@ -20,7 +20,7 @@ if __name__ == "__main__":
     plt.plot(j, prop.eta(j), label='eta')
 
     plt.xlabel('Advance ratio J')
-    plt.title(f'Open-water chart')
+    plt.title('Open-water chart')
     plt.grid()
     plt.legend()
 
