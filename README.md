@@ -63,7 +63,7 @@ j = np.linspace(0, prop.j_max)
 
 plt.figure()
 plt.plot(j, prop.kt(j), label='kt')
-plt.plot(j, prop.kq(j), label='kq')
+plt.plot(j, prop.kq(j)*10, label='10*kq')
 plt.plot(j, prop.eta(j), label='eta')
 
 plt.xlabel('Advance ratio J')
@@ -73,6 +73,7 @@ plt.legend()
 ```
 
 ![Open water chart](doc/open_water_chart.png)
+
 
 ## Development
 
