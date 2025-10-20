@@ -26,7 +26,7 @@ class GawnBurrillPropeller(Propeller):
 
     @cached_property
     def j_max(self) -> float:
-        # Cast to a Polynomial object because we know this to be true for a GawnBurril propeller
+        # Cast to a Polynomial object because we know this to be true for a GawnBurrill propeller
         kt = cast(Polynomial, self.kt)
         kt_root = roots(kt.coef[::-1])
         kt_root = kt_root[(kt_root > 0) & (kt_root < 2.0)]
