@@ -83,6 +83,7 @@ def test_kq_range() -> None:
     assert_allclose(p.kq_min, p.kq(p.j_max), rtol=1e-15, atol=1e-15)
     assert_allclose(p.kq_max, p.kq(p.j_min), rtol=1e-15, atol=1e-15)
 
+
 @mark.parametrize('area_ratio,pd_ratio,j,kt', [
     (0.50, 0.8, [0.4, 0.6, 0.8], [0.22, 0.13, 0.03]),
     (0.50, 1.2, [0.6, 0.8, 1.0, 1.2], [0.34, 0.23, 0.14, 0.04]),

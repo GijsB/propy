@@ -164,9 +164,9 @@ class WageningenBPropeller(Propeller):
 
         # Find the root of this polynomial between 0 < j < j_max
         r = roots(p[::-1])
+        r = r[isreal(r)]
         r = r[(0 < r) & (r <= self.j_max)]
 
         # At this point, there should be exactly 1 real root
         assert len(r) == 1
-        assert isreal(r[0])
         return float(r[0].real)
