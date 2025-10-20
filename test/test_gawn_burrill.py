@@ -91,7 +91,7 @@ def test_kq_range() -> None:
     (0.90, 1.2, [0.6, 0.8, 1.0, 1.2], [0.36, 0.25, 0.12, 0.03]),
     (0.90, 1.6, [1.0, 1.2, 1.4, 1.6], [0.35, 0.24, 0.11, 0.03]),
 ])
-def test_kt_kuiper(area_ratio: float, pd_ratio: float, j: float, kt: float) -> None:
+def test_kt_radojcic(area_ratio: float, pd_ratio: float, j: float, kt: float) -> None:
     """
     Compare the calculated kt values with manual chart readings from [1].
 
@@ -103,3 +103,25 @@ def test_kt_kuiper(area_ratio: float, pd_ratio: float, j: float, kt: float) -> N
         pd_ratio=pd_ratio
     )
     assert_allclose(prop.kt(j), kt, atol=0.02)
+
+
+@mark.parametrize('area_ratio,pd_ratio,j,kq', [
+    (0.50, 0.8, [0.4, 0.6, 0.8], [0.026, 0.018, 0.006]),
+    (0.50, 1.2, [0.6, 0.8, 1.0, 1.2], [0.06, 0.043, 0.028, 0.014]),
+    (0.50, 1.6, [0.8, 1.0, 1.2, 1.4, 1.6], [0.1, 0.078, 0.057, 0.037, 0.018]),
+    (0.90, 0.8, [0.4, 0.6, 0.8], [0.028, 0.018, 0.006]),
+    (0.90, 1.2, [0.6, 0.8, 1.0, 1.2], [0.068, 0.047, 0.028, 0.012]),
+    (0.90, 1.6, [1.0, 1.2, 1.4, 1.6], [0.089, 0.062, 0.036, 0.014]),
+])
+def test_kq_radojcic(area_ratio: float, pd_ratio: float, j: float, kq: float) -> None:
+    """
+    Compare the calculated kt values with manual chart readings from [1].
+
+        [1] D. Radojcic, Mathematical Model of Segmental Section Propeller Series for Open-Water and Cavitating
+        Conditions Applicable in CAD.
+    """
+    prop = GawnBurrillPropeller(
+        area_ratio=area_ratio,
+        pd_ratio=pd_ratio
+    )
+    assert_allclose(prop.kq(j), kq, atol=0.001)
