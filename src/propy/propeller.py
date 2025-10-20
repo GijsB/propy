@@ -560,7 +560,7 @@ class Propeller(ABC):
             self,
             objective: Callable[[Self], float],
             constraints: Iterable[Callable[["Propeller"], float]] = (),
-            diameter_min: float = 1e-3,
+            diameter_min: float = 0.03,
             diameter_max: float = float('inf'),
             verbose: bool = False
     ) -> Self:

@@ -35,7 +35,7 @@ class GawnBurrillPropeller(Propeller):
         kt_root = kt_root[(kt_root > 0) & (kt_root < 2.0)]
         kt_root = min(kt_root)
         assert isreal(kt_root)
-        return float(kt_root)
+        return float(kt_root.real)
 
     @property
     def j_min(self) -> float:
