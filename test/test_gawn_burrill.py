@@ -115,7 +115,7 @@ def test_kt_radojcic(area_ratio: float, pd_ratio: float, j: float, kt: float) ->
 ])
 def test_kq_radojcic(area_ratio: float, pd_ratio: float, j: float, kq: float) -> None:
     """
-    Compare the calculated kt values with manual chart readings from [1].
+    Compare the calculated kq values with manual chart readings from [1].
 
         [1] D. Radojcic, Mathematical Model of Segmental Section Propeller Series for Open-Water and Cavitating
         Conditions Applicable in CAD.
