@@ -12,8 +12,11 @@ from numpy import roots, isreal
 @dataclass(frozen=True)
 class GawnBurrillPropeller(Propeller):
     """
-    Source: Mathematical Model of Segmental Section Propeller Series for Open-Water and Cavitating Conditions Applicable
-    in CAD. D. Radojcic
+
+    References
+    ----------
+        [1] D. Radojcic, Mathematical Model of Segmental Section Propeller Series for Open-Water and Cavitating
+        Conditions Applicable in CAD.
     """
     blades: int = 3
 
