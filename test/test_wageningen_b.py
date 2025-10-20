@@ -78,7 +78,7 @@ def test_kt_range() -> None:
     assert p.kt_min == 0
 
     # Kt should be max at j=0
-    assert_allclose(p.kt_max, p.kt(0), rtol=1e-15, atol=1e-15)
+    assert_allclose(p.kt_max, p.kt(p.j_min), rtol=1e-15, atol=1e-15)
 
 
 def test_j_range() -> None:
@@ -89,7 +89,7 @@ def test_j_range() -> None:
 def test_kq_range() -> None:
     # The kq-curve should stop before it's at 0, where kt=0
     assert_allclose(p.kq_min, p.kq(p.j_max), rtol=1e-15, atol=1e-15)
-    assert_allclose(p.kq_max, p.kq(0), rtol=1e-15, atol=1e-15)
+    assert_allclose(p.kq_max, p.kq(p.j_min), rtol=1e-15, atol=1e-15)
 
 
 @mark.parametrize('blades,area_ratio,pd_ratio,j,kt', [

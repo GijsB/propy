@@ -38,6 +38,10 @@ class GawnBurrillPropeller(Propeller):
         return float(kt_root)
 
     @property
+    def j_min(self) -> float:
+        return self.area_ratio / 2
+
+    @property
     def kt_max(self) -> float:
         return self.kt(0.3)
 

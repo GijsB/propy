@@ -81,7 +81,7 @@ def test_j_range() -> None:
 def test_kq_range() -> None:
     # The kq-curve should stop before it's at 0, where kt=0
     assert_allclose(p.kq_min, p.kq(p.j_max), rtol=1e-15, atol=1e-15)
-    assert_allclose(p.kq_max, p.kq(0), rtol=1e-15, atol=1e-15)
+    assert_allclose(p.kq_max, p.kq(p.j_min), rtol=1e-15, atol=1e-15)
 
 @mark.parametrize('area_ratio,pd_ratio,j,kt', [
     (0.50, 0.8, [0.4, 0.6, 0.8], [0.22, 0.13, 0.03]),
