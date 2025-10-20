@@ -42,10 +42,6 @@ class GawnBurrillPropeller(Propeller):
         return self.area_ratio / 2
 
     @property
-    def kt_max(self) -> float:
-        return self.kt(0.3)
-
-    @property
     def kt(self) -> Callable[[ScalarOrArray], ScalarOrArray]:
         area_ratio = (sqrt(0.935**2 + 4 * 0.113 * self.area_ratio) - 0.935) / 2 / 0.1133
         return cast(
