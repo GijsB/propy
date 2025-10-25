@@ -80,8 +80,13 @@ class Propeller(ABC):
         pass
 
     @property
+    def j_min(self) -> float:
+        """The minimum valid advance-ratio of this propeller"""
+        return 0.0
+
+    @property
     def kt_max(self) -> float:
-        return self.kt(0)
+        return self.kt(self.j_min)
 
     @property
     def kt_min(self) -> float:
@@ -89,7 +94,7 @@ class Propeller(ABC):
 
     @property
     def kq_max(self) -> float:
-        return self.kq(0)
+        return self.kq(self.j_min)
 
     @property
     def kq_min(self) -> float:
@@ -200,8 +205,8 @@ class Propeller(ABC):
         beta_max = atan2(self.j_max, 0.7 * pi)
         ct_min = self.kt_min * 8 / pi / (self.j_max**2 + 0.7**2 * pi**2)
 
-        # The thrust coefficient at J=0 (and thus beta=0)
-        beta_min = 0
+        # The thrust coefficient at j_min
+        beta_min = atan2(self.j_min, 0.7 * pi)
         ct_max = self.kt_max * 8 / pi / (0.7**2 * pi**2)
 
         # Linearly fit the ct(beta) function on these two points
@@ -253,7 +258,7 @@ class Propeller(ABC):
         cq_min = self.kq_min * 8 / pi / (self.j_max**2 + 0.7**2 * pi**2)
 
         # The torque coefficient at J=0 (and thus beta=0)
-        beta_min = 0
+        beta_min = atan2(self.j_min, 0.7 * pi)
         cq_max = self.kq_max * 8 / pi / (0.7 ** 2 * pi ** 2)
 
         # Linearly fit the ct(beta) function on these two points
@@ -295,7 +300,7 @@ class Propeller(ABC):
         ktj2 = thrust / rho / speed ** 2 / self.diameter ** 2
         return root_scalar(
             f=lambda j: self.kt(j) / j ** 2 - ktj2,
-            bracket=(1e-9, self.j_max)
+            bracket=(self.j_min + 1e-9, self.j_max)
         ).root
 
     def find_j_for_vt_vec(
@@ -428,7 +433,7 @@ class Propeller(ABC):
         tuple[float, float]
             The thrust [N] and torque [Nm] at the given work-point
         """
-        if 0 < speed < (self.j_max * rotation_speed * self.diameter):
+        if (self.j_min * rotation_speed * self.diameter) < speed < (self.j_max * rotation_speed * self.diameter):
             # Use more accurate 1-quadrant data if it's applicable
             j = self.find_j_for_vn(speed, rotation_speed)
             kt, kq = self.kt(j), self.kq(j)
@@ -465,7 +470,8 @@ class Propeller(ABC):
         tuple[NDArray, NDArray]
             The thrust [N] and torque [Nm] at the given work-point
         """
-        is_1q = (0 < speed) & (speed < (self.j_max * rotation_speed * self.diameter))
+        is_1q = (((self.j_min * rotation_speed * self.diameter) < speed) &
+                 (speed < (self.j_max * rotation_speed * self.diameter)))
 
         j = zeros_like(is_1q, dtype=float64)
         j[is_1q] = self.find_j_for_vn_vec(speed[is_1q], rotation_speed[is_1q])
@@ -538,6 +544,11 @@ class Propeller(ABC):
         rho
             The density of the water [kg/m^3], defaults to 1025 kg/m^3
 
+        Raises
+        ------
+        RuntimeError
+            When the optimization was not successful.
+
         Returns
         -------
         tuple[NDArray, NDArray]
@@ -554,7 +565,7 @@ class Propeller(ABC):
             self,
             objective: Callable[[Self], float],
             constraints: Iterable[Callable[["Propeller"], float]] = (),
-            diameter_min: float = 1e-3,
+            diameter_min: float = 0.03,
             diameter_max: float = float('inf'),
             verbose: bool = False
     ) -> Self:
@@ -590,6 +601,9 @@ class Propeller(ABC):
 
         if verbose:
             print(opt_res)
+
+        if not opt_res.success:
+            raise RuntimeError(opt_res.message)
 
         return self.new(self.blades, *(float(arg) for arg in opt_res.x))
 

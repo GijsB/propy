@@ -17,7 +17,8 @@ After installation, the package can be used like any other python package.
 
 ### Propeller types
 The propy module contains parametric propeller models of the following types:
- - `WageningenBPropeller`: The famous Wageningen B-type propeller
+ - `WageningenBPropeller`: The famous Wageningen B-type propeller.
+ - `GawnBurrillPropeller`: The Gawn-Burrill series.
  - ...
 
 
@@ -60,7 +61,7 @@ a limit on the torque needs to be taken into account.
 ```python
 >>> from propy import WageningenBPropeller
 >>>
->>> speed = 10
+>>> speed = 5
 >>> thrust = 1000
 >>> torque_limit = 60
 >>> 
@@ -73,12 +74,12 @@ a limit on the torque needs to be taken into account.
 ...     ]
 ... )
 >>> prop
-WageningenBPropeller(blades=3, diameter=0.262..., area_ratio=0.3, pd_ratio=1.4)
+WageningenBPropeller(blades=3, diameter=0.379..., area_ratio=0.3..., pd_ratio=0.917...)
 
 >>> # Just checking the result
 >>> rotation_speed, torque = prop.find_nq_for_vt(speed, thrust)
 >>> print(f'{speed=} m/s, {rotation_speed=:1.3} Hz, {torque=:1.3} Nm, {torque_limit=} Nm')
-speed=10 m/s, rotation_speed=34.7 Hz, torque=60.0 Nm, torque_limit=60 Nm
+speed=5 m/s, rotation_speed=18.7 Hz, torque=60.0 Nm, torque_limit=60 Nm
 
 ```
 

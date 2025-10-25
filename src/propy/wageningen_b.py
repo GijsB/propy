@@ -149,7 +149,7 @@ class WageningenBPropeller(Propeller):
         kt_root = kt_root[(kt_root > 0) & (kt_root < 1.6)]
         kt_root = min(kt_root)
         assert isreal(kt_root)
-        return float(kt_root)
+        return float(kt_root.real)
 
     def find_j_for_vt(self, speed: float, thrust: float, rho: float = 1025.0) -> float:
         """ This may be a faster/more accurate alternative to the default. """
@@ -164,9 +164,9 @@ class WageningenBPropeller(Propeller):
 
         # Find the root of this polynomial between 0 < j < j_max
         r = roots(p[::-1])
+        r = r[isreal(r)]
         r = r[(0 < r) & (r <= self.j_max)]
 
         # At this point, there should be exactly 1 real root
         assert len(r) == 1
-        assert isreal(r[0])
-        return float(r[0])
+        return float(r[0].real)
