@@ -597,6 +597,9 @@ class Propeller(ABC):
         if verbose:
             print(opt_res)
 
+        if not opt_res.success:
+            raise RuntimeError(opt_res.message)
+
         return self.new(self.blades, *(float(arg) for arg in opt_res.x))
 
     def losses(self, speed: float, thrust: float, rho: float = 1025.) -> float:
