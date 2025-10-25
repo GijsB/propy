@@ -544,6 +544,11 @@ class Propeller(ABC):
         rho
             The density of the water [kg/m^3], defaults to 1025 kg/m^3
 
+        Raises
+        ------
+        RuntimeError
+            When the optimization was not successful.
+
         Returns
         -------
         tuple[NDArray, NDArray]
