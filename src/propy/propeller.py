@@ -563,7 +563,7 @@ class Propeller(ABC):
     # Optimisation methods
     def optimize(
             self,
-            objective: Callable[[Self], float],
+            objective: Callable[["Propeller"], float],
             constraints: Iterable[Callable[["Propeller"], float]] = (),
             diameter_min: float = 0.03,
             diameter_max: float = float('inf'),
@@ -579,13 +579,8 @@ class Propeller(ABC):
                 x = (float(arg) for arg in x)
                 return self.func(self.base.new(self.base.blades, *x))
 
-        def objective_function(x: Any) -> float:
-            x = (float(arg) for arg in x)
-            return objective(self.new(self.blades, *x))
-
-        # noinspection PyTypeChecker
         opt_res = minimize(
-            fun=objective_function,
+            fun=ConstraintFunction(self, objective),
             x0=(
                 self.diameter,
                 self.area_ratio,
