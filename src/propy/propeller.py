@@ -571,16 +571,16 @@ class Propeller(ABC):
     ) -> Self:
 
         @dataclass(frozen=True)
-        class ConstraintFunction:
+        class FunctionWrapper:
             base: Propeller
             func: Callable[[Propeller], float]
 
-            def __call__(self, x: Any) -> float:
-                x = (float(arg) for arg in x)
-                return self.func(self.base.new(self.base.blades, *x))
+            def __call__(self, args: Iterable[float]) -> float:
+                args = (float(arg) for arg in args)
+                return self.func(self.base.new(self.base.blades, *args))
 
         opt_res = minimize(
-            fun=ConstraintFunction(self, objective),
+            fun=FunctionWrapper(self, objective),
             x0=(
                 self.diameter,
                 self.area_ratio,
@@ -591,7 +591,7 @@ class Propeller(ABC):
                 (self.area_ratio_min, self.area_ratio_max),
                 (self.pd_ratio_min, self.pd_ratio_max),
             ),
-            constraints=[{'type': 'ineq', 'fun': ConstraintFunction(self, cfun)} for cfun in constraints]
+            constraints=[{'type': 'ineq', 'fun': FunctionWrapper(self, cfun)} for cfun in constraints]
         )
 
         if verbose:
