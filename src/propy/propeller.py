@@ -9,7 +9,9 @@ from numpy import atan2 as atan2_v
 from numpy import sin as sin_v
 from numpy.typing import NDArray
 from numpy.linalg import solve
-from scipy.optimize import root_scalar, minimize
+from scipy.optimize import root_scalar
+
+from propy.optimization import slsqp, FunctionWrapper, OptimizationMethod
 
 
 ScalarOrArray = TypeVar('ScalarOrArray', float, NDArray[float64])
@@ -565,42 +567,23 @@ class Propeller(ABC):
             self,
             objective: Callable[["Propeller"], float],
             constraints: Iterable[Callable[["Propeller"], float]] = (),
+            method: OptimizationMethod = slsqp,
             diameter_min: float = 0.03,
             diameter_max: float = float('inf'),
             verbose: bool = False
     ) -> Self:
-
-        @dataclass(frozen=True)
-        class FunctionWrapper:
-            base: Propeller
-            func: Callable[[Propeller], float]
-
-            def __call__(self, args: Iterable[float]) -> float:
-                args = (float(arg) for arg in args)
-                return self.func(self.base.new(self.base.blades, *args))
-
-        opt_res = minimize(
-            fun=FunctionWrapper(self, objective),
-            x0=(
-                self.diameter,
-                self.area_ratio,
-                self.pd_ratio,
-            ),
+        args = method(
+            objective=FunctionWrapper(self, objective),
+            constraints=tuple(FunctionWrapper(self, constraint) for constraint in constraints),
             bounds=(
-                (diameter_min, diameter_max),
-                (self.area_ratio_min, self.area_ratio_max),
-                (self.pd_ratio_min, self.pd_ratio_max),
+                (diameter_min, self.diameter, diameter_max),
+                (self.area_ratio_min, self.area_ratio, self.area_ratio_max),
+                (self.pd_ratio_min, self.pd_ratio, self.pd_ratio_max)
             ),
-            constraints=[{'type': 'ineq', 'fun': FunctionWrapper(self, cfun)} for cfun in constraints]
+            verbose=verbose
         )
 
-        if verbose:
-            print(opt_res)
-
-        if not opt_res.success:
-            raise RuntimeError(opt_res.message)
-
-        return self.new(self.blades, *(float(arg) for arg in opt_res.x))
+        return self.new(self.blades, *args)
 
     def losses(self, speed: float, thrust: float, rho: float = 1025.) -> float:
         j = self.find_j_for_vt(speed, thrust, rho=rho)
