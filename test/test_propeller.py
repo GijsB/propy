@@ -140,6 +140,7 @@ def test_diameter_limit() -> None:
 
     prop = WageningenBPropeller(
         blades=3,
+        diameter=0.19
     ).optimize(
         objective=lambda p: p.losses(speed, thrust),
         diameter_max=0.2

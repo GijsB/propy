@@ -569,7 +569,7 @@ class Propeller(ABC):
             constraints: Iterable[Callable[["Propeller"], float]] = (),
             method: OptimizationMethod = slsqp,
             diameter_min: float = 0.03,
-            diameter_max: float = float('inf'),
+            diameter_max: float = 30.0,
             verbose: bool = False
     ) -> Self:
         args = method(
