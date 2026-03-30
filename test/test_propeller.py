@@ -2,10 +2,14 @@ from math import atan2
 
 from propy.propeller import Propeller
 from propy.wageningen_b import WageningenBPropeller
+from propy.optimization import slsqp, cobyqa, trust_constrained, OptimizationMethod
 
-from pytest import raises, approx
+from pytest import raises, approx, mark
 from numpy import pi, array, ndarray
 from numpy.testing import assert_allclose
+
+
+optimization_methods = (slsqp, cobyqa, trust_constrained, )
 
 
 def test_instantiation() -> None:
@@ -21,7 +25,8 @@ def test_new() -> None:
         Propeller.new()
 
 
-def test_optimization_max_diameter() -> None:
+@mark.parametrize('method', optimization_methods)
+def test_optimization_max_diameter(method: OptimizationMethod) -> None:
     """
     This test compares the result of a propeller optimization with the results from [1] chapter 9.3.
 
@@ -38,6 +43,7 @@ def test_optimization_max_diameter() -> None:
         constraints=[
             lambda p: p.cavitation_margin(thrust, immersion)
         ],
+        method=method,
         diameter_max=7,
     )
 
@@ -63,7 +69,8 @@ def test_optimization_max_diameter() -> None:
     assert prop.eta(j) > 0.651
 
 
-def test_optimization_min_rotation_speed() -> None:
+@mark.parametrize('method', optimization_methods)
+def test_optimization_min_rotation_speed(method: OptimizationMethod) -> None:
     """
     This test compares the result of a propeller optimization with the results from [1] chapter 9.4.
 
@@ -76,6 +83,7 @@ def test_optimization_min_rotation_speed() -> None:
         blades=4
     ).optimize(
         objective=lambda p: p.losses(speed, thrust),
+        method=method,
         constraints=[
             lambda p: p.torque_margin(speed, thrust, 1667435)
         ]
@@ -96,7 +104,8 @@ def test_optimization_min_rotation_speed() -> None:
     assert prop.eta(j) > 0.656
 
 
-def test_torque_limit() -> None:
+@mark.parametrize('method', optimization_methods)
+def test_torque_limit(method: OptimizationMethod) -> None:
     thrust = 1000
     speed = 10
 
@@ -104,6 +113,7 @@ def test_torque_limit() -> None:
         blades=3,
     ).optimize(
         objective=lambda p: p.losses(speed, thrust),
+        method=method,
         constraints=[
             lambda p: p.torque_margin(speed, thrust, 60)
         ]
@@ -115,7 +125,8 @@ def test_torque_limit() -> None:
     assert q < 60 * (1 + 5e-8)
 
 
-def test_rpm_limit() -> None:
+@mark.parametrize('method', optimization_methods)
+def test_rpm_limit(method: OptimizationMethod) -> None:
     thrust = 1000
     speed = 10
 
@@ -123,6 +134,7 @@ def test_rpm_limit() -> None:
         blades=3
     ).optimize(
         objective=lambda p: p.losses(speed, thrust),
+        method=method,
         constraints=[
             lambda p: p.rotation_speed_margin(speed, thrust, 20)
         ]
@@ -131,10 +143,11 @@ def test_rpm_limit() -> None:
     n, q = prop.find_nq_for_vt(speed, thrust)
 
     assert prop.rotation_speed_margin(speed, thrust, 20) > -1-15
-    assert n < 20 * (1 + 1e-15)
+    assert n == approx(20, rel=1e-4, abs=1e-6)
 
 
-def test_diameter_limit() -> None:
+@mark.parametrize('method', optimization_methods)
+def test_diameter_limit(method: OptimizationMethod) -> None:
     thrust = 1000
     speed = 10
 
@@ -143,13 +156,15 @@ def test_diameter_limit() -> None:
         diameter=0.19
     ).optimize(
         objective=lambda p: p.losses(speed, thrust),
-        diameter_max=0.2
+        diameter_max=0.2,
+        method=method
     )
 
-    assert prop.diameter < 0.2*(1+1e-15)
+    assert prop.diameter == approx(0.2)
 
 
-def test_area_ratio_limit() -> None:
+@mark.parametrize('method', optimization_methods)
+def test_area_ratio_limit(method: OptimizationMethod) -> None:
     thrust = 1000
     speed = 20
     immersion = 1
@@ -158,6 +173,7 @@ def test_area_ratio_limit() -> None:
         blades=3
     ).optimize(
         objective=lambda p: p.losses(speed, thrust),
+        method=method,
         constraints=[
             lambda p: p.cavitation_margin(thrust, immersion)
         ]
@@ -167,7 +183,8 @@ def test_area_ratio_limit() -> None:
     assert prop.cavitation_margin(thrust, immersion) > -1e-6
 
 
-def test_tip_speed_limit() -> None:
+@mark.parametrize('method', optimization_methods)
+def test_tip_speed_limit(method: OptimizationMethod) -> None:
     thrust = 1000
     speed = 10
 
@@ -175,6 +192,7 @@ def test_tip_speed_limit() -> None:
         blades=3
     ).optimize(
         objective=lambda p: p.losses(speed, thrust),
+        method=method,
         constraints=[
             lambda p: p.tip_speed_margin(speed, thrust, 24)
         ]
