@@ -1,4 +1,3 @@
-from propy.optimization import cobyqa, FunctionWrapper
 from propy.wageningen_b import WageningenBPropeller
 
 from scipy.optimize import minimize, Bounds, NonlinearConstraint
