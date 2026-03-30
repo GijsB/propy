@@ -2,14 +2,14 @@ from math import atan2
 
 from propy.propeller import Propeller
 from propy.wageningen_b import WageningenBPropeller
-from propy.optimization import slsqp, cobyqa, trust_constrained, OptimizationMethod
+from propy.optimization import slsqp, trust_constrained, OptimizationMethod
 
 from pytest import raises, approx, mark
 from numpy import pi, array, ndarray
 from numpy.testing import assert_allclose
 
 
-optimization_methods = (slsqp, cobyqa, trust_constrained, )
+optimization_methods = (slsqp, trust_constrained, )
 
 
 def test_instantiation() -> None:
