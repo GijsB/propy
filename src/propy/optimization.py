@@ -9,6 +9,11 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class PropFunctionWrapper:
+    """
+    A "callable" object that serves as a way to generate a new Propeller of a specific type and call a specific
+    method on that propeller.
+    """
+
     base: "Propeller"
     func: Callable[["Propeller"], float]
 
@@ -18,6 +23,10 @@ class PropFunctionWrapper:
 
 
 class OptimizationMethod(Protocol):
+    """
+    This object defines the call-signature for all optimization methods defined below
+    """
+
     def __call__(
         self,
         objective: PropFunctionWrapper,
@@ -33,6 +42,9 @@ def slsqp(
     bounds: Iterable[tuple[float, float, float]],
     verbose: bool = False,
 ) -> tuple[float, ...]:
+    """
+    This OptimizationMethod wraps the "Sequential Least-SQuares Programming" optimizer from scipy.
+    """
     
     opt_res = minimize(
         method='SLSQP',
@@ -61,6 +73,9 @@ def trust_constrained(
     bounds: Iterable[tuple[float, float, float]],
     verbose: bool = False,
 ) -> tuple[float, ...]:
+    """
+    This OptimizationMethod wraps the "Trust constrained" optimizer from scipy.
+    """
 
     opt_res = minimize(
         method='trust-constr',
@@ -69,7 +84,7 @@ def trust_constrained(
         bounds=Bounds(
             lb=tuple(bound[0] for bound in bounds),
             ub=tuple(bound[2] for bound in bounds),
-            keep_feasible=(True, True, True)
+            keep_feasible=tuple([True for _ in bounds])
         ),
         constraints=[{'type': 'ineq', 'fun': cfun} for cfun in constraints]
     )
