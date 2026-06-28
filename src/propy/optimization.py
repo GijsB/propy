@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True)
-class FunctionWrapper:
+class PropFunctionWrapper:
     base: "Propeller"
     func: Callable[["Propeller"], float]
 
@@ -20,16 +20,16 @@ class FunctionWrapper:
 class OptimizationMethod(Protocol):
     def __call__(
         self,
-        objective: FunctionWrapper,
-        constraints: Iterable[FunctionWrapper],
+        objective: PropFunctionWrapper,
+        constraints: Iterable[PropFunctionWrapper],
         bounds: Iterable[tuple[float, float, float]],
         verbose: bool = False
     ) -> Any: ...
 
 
 def slsqp(
-    objective: FunctionWrapper,
-    constraints: Iterable[FunctionWrapper],
+    objective: PropFunctionWrapper,
+    constraints: Iterable[PropFunctionWrapper],
     bounds: Iterable[tuple[float, float, float]],
     verbose: bool = False,
 ) -> tuple[float, ...]:
@@ -55,37 +55,9 @@ def slsqp(
     return tuple(float(arg) for arg in opt_res.x)
 
 
-def cobyqa(
-    objective: FunctionWrapper,
-    constraints: Iterable[FunctionWrapper],
-    bounds: Iterable[tuple[float, float, float]],
-    verbose: bool = False,
-) -> tuple[float, ...]:
-    
-    opt_res = minimize(
-        method='COBYQA',
-        fun=objective,
-        x0=tuple(bound[1] for bound in bounds),
-        bounds=Bounds(
-            lb=tuple(bound[0] for bound in bounds),
-            ub=tuple(bound[2] for bound in bounds),
-            keep_feasible=tuple([True for _ in bounds])
-        ),
-        constraints=[{'type': 'ineq', 'fun': cfun} for cfun in constraints]
-    )
-
-    if verbose:
-        print(opt_res)
-
-    if not opt_res.success:
-        raise RuntimeError(opt_res.message)
-    
-    return tuple(float(arg) for arg in opt_res.x)
-
-
 def trust_constrained(
-    objective: FunctionWrapper,
-    constraints: Iterable[FunctionWrapper],
+    objective: PropFunctionWrapper,
+    constraints: Iterable[PropFunctionWrapper],
     bounds: Iterable[tuple[float, float, float]],
     verbose: bool = False,
 ) -> tuple[float, ...]:

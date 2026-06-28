@@ -11,7 +11,7 @@ from numpy.typing import NDArray
 from numpy.linalg import solve
 from scipy.optimize import root_scalar
 
-from propy.optimization import slsqp, FunctionWrapper, OptimizationMethod
+from propy.optimization import slsqp, PropFunctionWrapper, OptimizationMethod
 
 
 ScalarOrArray = TypeVar('ScalarOrArray', float, NDArray[float64])
@@ -573,8 +573,8 @@ class Propeller(ABC):
             verbose: bool = False
     ) -> Self:
         args = method(
-            objective=FunctionWrapper(self, objective),
-            constraints=tuple(FunctionWrapper(self, constraint) for constraint in constraints),
+            objective=PropFunctionWrapper(self, objective),
+            constraints=tuple(PropFunctionWrapper(self, constraint) for constraint in constraints),
             bounds=(
                 (diameter_min, self.diameter, diameter_max),
                 (self.area_ratio_min, self.area_ratio, self.area_ratio_max),
