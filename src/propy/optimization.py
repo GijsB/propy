@@ -1,0 +1,98 @@
+from typing import Any, Callable, Iterable, TYPE_CHECKING, Protocol
+from dataclasses import dataclass
+
+from scipy.optimize import minimize, Bounds
+
+if TYPE_CHECKING:
+    from propy.propeller import Propeller
+
+
+@dataclass(frozen=True)
+class PropFunctionWrapper:
+    """
+    A "callable" object that serves as a way to generate a new Propeller of a specific type and call a specific
+    method on that propeller.
+    """
+
+    base: "Propeller"
+    func: Callable[["Propeller"], float]
+
+    def __call__(self, args: Iterable[float]) -> float:
+        args = tuple(float(arg) for arg in args)
+        return self.func(self.base.new(self.base.blades, *args))
+
+
+class OptimizationMethod(Protocol):
+    """
+    This object defines the call-signature for all optimization methods defined below
+    """
+
+    def __call__(
+        self,
+        objective: PropFunctionWrapper,
+        constraints: Iterable[PropFunctionWrapper],
+        bounds: Iterable[tuple[float, float, float]],
+        verbose: bool = False
+    ) -> Any: ...
+
+
+def slsqp(
+    objective: PropFunctionWrapper,
+    constraints: Iterable[PropFunctionWrapper],
+    bounds: Iterable[tuple[float, float, float]],
+    verbose: bool = False,
+) -> tuple[float, ...]:
+    """
+    This OptimizationMethod wraps the "Sequential Least-SQuares Programming" optimizer from scipy.
+    """
+    
+    opt_res = minimize(
+        method='SLSQP',
+        fun=objective,
+        x0=tuple(bound[1] for bound in bounds),
+        bounds=Bounds(
+            lb=tuple(bound[0] for bound in bounds),
+            ub=tuple(bound[2] for bound in bounds),
+            keep_feasible=tuple([True for _ in bounds])
+        ),
+        constraints=[{'type': 'ineq', 'fun': cfun} for cfun in constraints]
+    )
+
+    if verbose:
+        print(opt_res)
+
+    if not opt_res.success:
+        raise RuntimeError(opt_res.message)
+    
+    return tuple(float(arg) for arg in opt_res.x)
+
+
+def trust_constrained(
+    objective: PropFunctionWrapper,
+    constraints: Iterable[PropFunctionWrapper],
+    bounds: Iterable[tuple[float, float, float]],
+    verbose: bool = False,
+) -> tuple[float, ...]:
+    """
+    This OptimizationMethod wraps the "Trust constrained" optimizer from scipy.
+    """
+
+    opt_res = minimize(
+        method='trust-constr',
+        fun=objective,
+        x0=tuple(bound[1] for bound in bounds),
+        bounds=Bounds(
+            lb=tuple(bound[0] for bound in bounds),
+            ub=tuple(bound[2] for bound in bounds),
+            keep_feasible=tuple([True for _ in bounds])
+        ),
+        constraints=[{'type': 'ineq', 'fun': cfun} for cfun in constraints]
+    )
+
+    if verbose:
+        print(opt_res)
+
+    if not opt_res.success:
+        raise RuntimeError(opt_res.message)
+    
+    return tuple(float(arg) for arg in opt_res.x)

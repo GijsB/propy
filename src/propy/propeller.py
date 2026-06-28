@@ -9,7 +9,9 @@ from numpy import atan2 as atan2_v
 from numpy import sin as sin_v
 from numpy.typing import NDArray
 from numpy.linalg import solve
-from scipy.optimize import root_scalar, minimize
+from scipy.optimize import root_scalar
+
+from propy.optimization import slsqp, PropFunctionWrapper, OptimizationMethod
 
 
 ScalarOrArray = TypeVar('ScalarOrArray', float, NDArray[float64])
@@ -563,77 +565,233 @@ class Propeller(ABC):
     # Optimisation methods
     def optimize(
             self,
-            objective: Callable[[Self], float],
+            objective: Callable[["Propeller"], float],
             constraints: Iterable[Callable[["Propeller"], float]] = (),
+            method: OptimizationMethod = slsqp,
             diameter_min: float = 0.03,
-            diameter_max: float = float('inf'),
+            diameter_max: float = 30.0,
             verbose: bool = False
     ) -> Self:
+        """
+        Optimize the parameters of this propeller as to minimize the objective under the given constraints.
 
-        @dataclass(frozen=True)
-        class ConstraintFunction:
-            base: Propeller
-            func: Callable[[Propeller], float]
+        The most common use-case of this function is to minimize the losses of a propeller on a given working point.
+        It is usually relevant to take some constraints into account, for example a maximum torque or a tip-speed limit
+        to prevent cavitation.
 
-            def __call__(self, x: Any) -> float:
-                x = (float(arg) for arg in x)
-                return self.func(self.base.new(self.base.blades, *x))
+        Parameters
+        ----------
+        objective
+            The function which needs to be minimized. The optimizer will call this function multiple times to check
+            the quality of a certain propeller. The objective function needs to have 1 argument: a propeller and it
+            must return a floating point number. This is commonly achieved using a lambda function, see the example
+            below.
+        constraints
+            An itterable of constraint functions. The optimizer will call these functions multiple times to check the
+            validity of a certain propeller. The constrain functions need to have 1 argument: a propeller and it must
+            return a floating point number. The constrain is considered ok when the return value is >= 0.
+        method
+            The optimization method to use. Although it is possible to write a custom method, it is most convenient to
+            use the default optimization methods defined in propy.optimization.
+        diameter_min
+            The minimum allowed propeller diameter. When this is chosen very low (in the order of millimeters), some
+            optimizations can fail due to numerical instabilities.
+        diameter_max
+            The maximum allowed propeller diameter, this is usually relevant when designing within a limited volume
+            claim.
+        verbose
+            Print the progress statements of the optimizer.
+        
+        Returns
+        -------
+        Propeller
+            The resulting propeller from the optimization
 
-        def objective_function(x: Any) -> float:
-            x = (float(arg) for arg in x)
-            return objective(self.new(self.blades, *x))
+        Raises
+        ------
+        RuntimeError
+            When the optimization process exits in with an unsuccesful result. This can happen when the combination
+            of constraints is infeasable for this type of propeller.
 
-        # noinspection PyTypeChecker
-        opt_res = minimize(
-            fun=objective_function,
-            x0=(
-                self.diameter,
-                self.area_ratio,
-                self.pd_ratio,
-            ),
+        Examples
+        --------
+        The code below demonstrates how the `optimize` function can be used to minimize the losses of a 3-bladed
+        propeller when a limit on the torque needs to be taken into account.
+
+        >>> from propy import WageningenBPropeller
+        >>>
+        >>> speed = 5
+        >>> thrust = 1000
+        >>> torque_limit = 60
+        >>>
+        >>> prop = WageningenBPropeller(
+        ...     blades=3,
+        ... ).optimize(
+        ...     objective=lambda p: p.losses(speed, thrust),
+        ...     constraints=[
+        ...         lambda p: p.torque_margin(speed, thrust, torque_limit)
+        ...     ]
+        ... )
+        >>> prop
+        WageningenBPropeller(blades=3, diameter=0.379..., area_ratio=0.3..., pd_ratio=0.917...)
+        """
+
+        args = method(
+            objective=PropFunctionWrapper(self, objective),
+            constraints=tuple(PropFunctionWrapper(self, constraint) for constraint in constraints),
             bounds=(
-                (diameter_min, diameter_max),
-                (self.area_ratio_min, self.area_ratio_max),
-                (self.pd_ratio_min, self.pd_ratio_max),
+                (diameter_min, self.diameter, diameter_max),
+                (self.area_ratio_min, self.area_ratio, self.area_ratio_max),
+                (self.pd_ratio_min, self.pd_ratio, self.pd_ratio_max)
             ),
-            constraints=[{'type': 'ineq', 'fun': ConstraintFunction(self, cfun)} for cfun in constraints]
+            verbose=verbose
         )
 
-        if verbose:
-            print(opt_res)
-
-        if not opt_res.success:
-            raise RuntimeError(opt_res.message)
-
-        return self.new(self.blades, *(float(arg) for arg in opt_res.x))
+        return self.new(self.blades, *args)
 
     def losses(self, speed: float, thrust: float, rho: float = 1025.) -> float:
+        """
+        Calculate the (relative) losses of the propeller at a certain working point.
+
+        This function can be very convenient to use as an objective for the optimize function.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        thrust
+            The thrust produced by the propeller [N]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+        float
+            The relative losses in the propeller, equal to 1 - efficiency.
+        """
+
         j = self.find_j_for_vt(speed, thrust, rho=rho)
         return 1 - self.eta(j)
 
-    def cavitation_margin(self,
-                          thrust: float,
-                          immersion: float,
-                          rho: float = 1025.0,
-                          single_screw: bool = False) -> float:
+    def cavitation_margin(
+            self,
+            thrust: float,
+            immersion: float,
+            rho: float = 1025.0,
+            single_screw: bool = False
+    ) -> float:
+        """
+        Calculate the (normalized) minimum area ratio to prevent cavitaion according to the Keller criterion.
+
+        The result is normalized relative to the maximum area ratio for this propeller type. This way, the optimizer
+        weighs all the constraints in a similar way.
+
+        Parameters
+        ----------
+        thrust
+            The thrust produced by the propeller [N]
+        immersion
+            The depth at where the propeller operates [m]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+        single_screw
+            When true, the minimum area-ration is higher due to a different flow-field.
+
+        Returns
+        -------
+        float
+            The normalized maximum area ratio, is >= 0 when it satisfies the constraint.
+        """
+
         min_area_ratio = ((1.3 + 0.3 * self.blades) * thrust / self.diameter ** 2 /
                           (1e5 + rho * 9.81 * immersion - 1700))
         if single_screw:
             min_area_ratio += 0.2
         return (self.area_ratio - min_area_ratio) / self.area_ratio_max
 
-    def rotation_speed_margin(self,
-                              speed: float,
-                              thrust: float,
-                              rotation_speed_max: float,
-                              rho: float = 1025.0) -> float:
-        n, q = self.find_nq_for_vt(speed, thrust, rho=rho)
+    def rotation_speed_margin(
+            self,
+            speed: float,
+            thrust: float,
+            rotation_speed_max: float,
+            rho: float = 1025.0
+    ) -> float:
+        """
+        Calculate the (normalized) required rotation speed, can be a constraint to prevent driveshaft vibrations.
+
+        The result is normalized relative to the given maximum rotation speed. This way, the optimizer weighs all the
+        constraints in a similar way.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        thrust
+            The thrust produced by the propeller [N]
+        rotation_speed_max
+            The maximum allowed rotation speed for this constraint [Hz]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+        float
+            The normalized rotation speed, is >= 0 when it satisfies the constraint.
+        """
+
+        n, _ = self.find_nq_for_vt(speed, thrust, rho=rho)
         return (rotation_speed_max - n) / rotation_speed_max
 
     def torque_margin(self, speed: float, thrust: float, torque_max: float, rho: float = 1025.0) -> float:
-        n, q = self.find_nq_for_vt(speed, thrust, rho=rho)
+        """
+        Calculate the (normalized) required torqeu, can be a constraint to prevent gears from breaking.
+
+        The result is normalized relative to the given maximum torque. This way, the optimizer weighs all the
+        constrains in a similar way.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        thrust
+            The thrust produced by the propeller [N]
+        torque_max
+            The maximum allowed torque for this constraint [Nm]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+        float
+            The normalized torque, is >= 0 when it satisfies the constraint.
+        """
+
+        _, q = self.find_nq_for_vt(speed, thrust, rho=rho)
         return (torque_max - q) / torque_max
 
     def tip_speed_margin(self, speed: float, thrust: float, tip_speed_max: float, rho: float = 1025.0) -> float:
-        n, q = self.find_nq_for_vt(speed, thrust, rho=rho)
+        """
+        Calculate the (normalized) tip-speed, can be a constraint to prevent cavitaion.
+
+        The result is normalized relative to the given maximum tip speed. This way, the optimizer weighs all the
+        constraints in a similar way.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        thrust
+            The thrust produced by the propeller [N]
+        tip_speed_max
+            The maximum allowed tip speed for this constraint [m/s]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+        float
+            The normalized tip speed, is >= 0 when it satisfies the constraint.
+        """
+
+        n, _ = self.find_nq_for_vt(speed, thrust, rho=rho)
         return (tip_speed_max - self.diameter * pi * n) / tip_speed_max
