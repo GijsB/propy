@@ -27,6 +27,7 @@ To prevent the user from needing to memorize all the definitions open-water mode
 functions have been defined. These functions can be used to calculate most important properties of a propeller, they use
 the open water models.
 - `find_j_for_vt{_vec}`: Calculate the advance ratio given the speed and thrust.
+- `find_j_for_vq{_vec}`: Calculate the advance ratio given the speed and torque.
 - `find_j_for_vn{_vec}`: Calculate the advance ratio given the speed and rotation rate.
 - `find_j_for_nq{_vec}`: Calculate the advance ratio given the rotation rate and torque.
 - `find_j_for_nt{_vec}`: Calculate the advance ratio given the rotation rate and thrust.

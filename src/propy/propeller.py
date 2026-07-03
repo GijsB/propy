@@ -379,6 +379,58 @@ class Propeller(ABC):
         """
         return array([self.find_j_for_vt(s, t, rho=rho) for s, t in zip(speed, thrust)])
 
+    def find_j_for_vq(
+            self,
+            speed: float,
+            torque: float,
+            rho: float = 1025.0
+    ) -> float:
+        """
+        Calculate the advance ratio given the speed and torque
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        torque
+            The torque load on the propeller [Nm]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+            The advance ratio of the propeller at the given work-point [-]
+        """
+        kqj2 = torque / rho / speed**2 / self.diameter**3
+        return root_scalar(
+            f=lambda j: self.kq(j) / j ** 2 - kqj2,
+            bracket=(self.j_min, self.j_max)
+        ).root
+    
+    def find_j_for_vq_vec(
+        self,
+        speed: NDArray[float64],
+        torque: NDArray[float64],
+        rho: float = 1025.0
+    ) -> NDArray[float64]:
+        """
+        Calculate the advance ratios given an array of speeds and torques
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        torque
+            The torque load on the propeller [Nm]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+            The advance ratio of the propeller at the given work-point [-]
+        """
+        return array([self.find_j_for_vq(s, q, rho=rho) for s, q in zip(speed, torque)])
+
     def find_j_for_vn(
             self,
             speed: float,
