@@ -26,16 +26,15 @@ The propy module contains parametric propeller models of the following types:
 To prevent the user from needing to memorize all the definitions open-water models (below), a number of convenience 
 functions have been defined. These functions can be used to calculate most important properties of a propeller, they use
 the open water models.
-- `find_j_for_vt`: Calculate the advance ratio given the speed and thrust.
-- `find_j_for_vt_vec`: Calculate the advance ratio given arrays of the speed and thrust.
-- `find_j_for_vn`: Calculate the advance ratio given the speed and rotation rate.
-- `find_j_for_vn_vec`: Calculate the advance ratio given arrays of the speed and rotation rate.
-- `find_beta_for_vn`: Calculate the advance angle of the propeller given the speed and rotation rate.
-- `find_beta_for_vn_vec`: Calculate the advance angle of the propeller given arrays of the speed and rotation rate.
-- `find_tq_for_vn`: Calculate the thrust and torque for a given speed and rotation rate.
-- `find_tq_for_vn_vec`: Calculate arrays of thrust and torque for a given speed and rotation rate.
-- `find_nq_for_vt`: Calculate rotation speed and torque for a given speed and thrust.
-- `find_nq_for_vt_vec`: Calculate arrays of rotation speed and torque for a given speed and thrust.
+- `find_j_for_vt{_vec}`: Calculate the advance ratio given the speed and thrust.
+- `find_j_for_vn{_vec}`: Calculate the advance ratio given the speed and rotation rate.
+- `find_j_for_nq{_vec}`: Calculate the advance ratio given the rotation rate and torque.
+- `find_j_for_nt{_vec}`: Calculate the advance ratio given the rotation rate and thrust.
+- `find_beta_for_vn{_vec}`: Calculate the advance angle of the propeller given the speed and rotation rate.
+- `find_tq_for_vn{_vec}`: Calculate the thrust and torque for a given speed and rotation rate.
+- `find_nq_for_vt{_vec}`: Calculate rotation speed and torque for a given speed and thrust.
+- `find_vt_for_nq{_vec}`: Calculate speed and thrust for a given rotation speed and torque.
+- `find_vq_for_nt{_vec}`: Calculate speed and torque for a given rotation speed and thrust.
 
 
 ### Optimization
