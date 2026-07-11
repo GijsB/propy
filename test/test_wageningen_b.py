@@ -1,9 +1,45 @@
 from propy.wageningen_b import WageningenBPropeller
 
 from pytest import raises, mark
+from pytest_benchmark.fixture import BenchmarkFixture
 from numpy.testing import assert_allclose
+from numpy import linspace
 
 p = WageningenBPropeller()
+
+
+@mark.benchmark(group='Instantiation')
+def test_instantiation_performance(benchmark: BenchmarkFixture) -> None:
+    prop = benchmark(WageningenBPropeller)
+    assert prop is not None
+
+
+@mark.benchmark(group='open_water')
+def test_wageningen_b_kt_vec100(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    j = linspace(prop.j_min, prop.j_max, 100)
+    benchmark(prop.kt, j)
+
+
+@mark.benchmark(group='open_water')
+def test_wageningen_b_kt(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    j = 0.2
+    benchmark(prop.kt, j)
+
+
+@mark.benchmark(group='open_water')
+def test_wageningen_b_kq_vec100(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    j = linspace(prop.j_min, prop.j_max, 100)
+    benchmark(prop.kq, j)
+
+
+@mark.benchmark(group='open_water')
+def test_wageningen_b_kq(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    j = 0.2
+    benchmark(prop.kq, j)
 
 
 def test_valid_blades() -> None:
