@@ -59,6 +59,7 @@ def test_j_for_nq_gawn_burrill(benchmark: BenchmarkFixture) -> None:
     prop = GawnBurrillPropeller()
     benchmark(prop.find_j_for_nq, 10, 1000)
 
+
 def test_valid_blades() -> None:
     # Test whether limits are set
     assert GawnBurrillPropeller.blades_min > 0
