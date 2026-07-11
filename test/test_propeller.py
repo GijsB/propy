@@ -4,7 +4,14 @@ from propy.propeller import Propeller
 from propy.wageningen_b import WageningenBPropeller
 
 from pytest import raises, approx, mark
+from pytest_benchmark.fixture import BenchmarkFixture
 from numpy import pi, array, ndarray
+
+
+@mark.benchmark(group='find')
+def test_j_for_vn(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    benchmark(prop.find_j_for_vn, 10, 10)
 
 
 def test_instantiation() -> None:

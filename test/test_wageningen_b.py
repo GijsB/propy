@@ -42,6 +42,30 @@ def test_kq_wageningen_b(benchmark: BenchmarkFixture) -> None:
     benchmark(prop.kq, j)
 
 
+@mark.benchmark(group='find')
+def test_j_for_vt_wageningen_b(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    benchmark(prop.find_j_for_vt, 10, 10000)
+
+
+@mark.benchmark(group='find')
+def test_j_for_vq_wageningen_b(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    benchmark(prop.find_j_for_vq, 10, 1000)
+
+
+@mark.benchmark(group='find')
+def test_j_for_nq_wageningen_b(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    benchmark(prop.find_j_for_nq, 10, 1000)
+
+
+@mark.benchmark(group='find')
+def test_j_for_nt_wageningen_b(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    benchmark(prop.find_j_for_nt, 10, 10000)
+
+
 def test_valid_blades() -> None:
     # Test whether limits are set
     assert WageningenBPropeller.blades_min > 0

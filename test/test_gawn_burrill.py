@@ -42,6 +42,22 @@ def test_kq_gawn_burrill(benchmark: BenchmarkFixture) -> None:
     benchmark(prop.kq, j)
 
 
+@mark.benchmark(group='find')
+def test_j_for_vt_gawn_burrill(benchmark: BenchmarkFixture) -> None:
+    prop = GawnBurrillPropeller()
+    benchmark(prop.find_j_for_vt, 10, 10000)
+
+
+@mark.benchmark(group='find')
+def test_j_for_vq_gawn_burrill(benchmark: BenchmarkFixture) -> None:
+    prop = GawnBurrillPropeller()
+    benchmark(prop.find_j_for_vq, 10, 1000)
+
+
+@mark.benchmark(group='find')
+def test_j_for_nq_gawn_burrill(benchmark: BenchmarkFixture) -> None:
+    prop = GawnBurrillPropeller()
+    benchmark(prop.find_j_for_nq, 10, 1000)
 
 def test_valid_blades() -> None:
     # Test whether limits are set
