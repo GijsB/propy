@@ -351,9 +351,10 @@ class Propeller(ABC):
             The advance ratio of the propeller at the given work-point [-]
         """
         ktj2 = thrust / rho / speed ** 2 / self.diameter ** 2
+        j_min = max(1e-60, self.j_min)
         return root_scalar(
             f=lambda j: self.kt(j) / j ** 2 - ktj2,
-            bracket=(self.j_min, self.j_max)
+            bracket=(j_min, self.j_max)
         ).root
 
     def find_j_for_vt_vec(
@@ -402,9 +403,10 @@ class Propeller(ABC):
             The advance ratio of the propeller at the given work-point [-]
         """
         kqj2 = torque / rho / speed**2 / self.diameter**3
+        j_min = max(1e-60, self.j_min)
         return root_scalar(
             f=lambda j: self.kq(j) / j ** 2 - kqj2,
-            bracket=(self.j_min, self.j_max)
+            bracket=(j_min, self.j_max)
         ).root
     
     def find_j_for_vq_vec(

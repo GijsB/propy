@@ -3,7 +3,7 @@ from math import atan2
 from propy.propeller import Propeller
 from propy.wageningen_b import WageningenBPropeller
 
-from pytest import raises, approx
+from pytest import raises, approx, mark
 from numpy import pi, array, ndarray
 
 
@@ -81,3 +81,39 @@ def test_finding_type_consistency() -> None:
     assert isinstance(prop.eta(0.1), float)
     assert isinstance(prop.eta(array([0.1, 0.2])), ndarray)
     assert prop.eta(array([0.123456]))[0] == approx(prop.eta(0.123456))
+
+
+@mark.parametrize('speed', [1, 2, 5, 10, 20, 50])
+@mark.parametrize('thrust', [10, 20, 50, 100, 200, 500])
+def test_roundtrip_consistencies(speed: float, thrust: float) -> None:
+    prop = WageningenBPropeller()
+
+    n, q = prop.find_nq_for_vt(speed, thrust)
+    v, t = prop.find_vt_for_nq(n, q)
+
+    assert v == approx(speed)
+    assert t == approx(thrust)
+
+    v, q2 = prop.find_vq_for_nt(n, thrust)
+
+    assert v == approx(speed)
+    assert q2 == approx(q)
+
+    t, q3 = prop.find_tq_for_vn(speed, n)
+
+    assert t == approx(thrust)
+    assert q3 == approx(q)
+
+
+@mark.parametrize('speed', [1, 2, 5, 10, 20, 50])
+@mark.parametrize('thrust', [10, 20, 50, 100, 200, 500])
+def test_j_consistency_for_vt(speed: float, thrust: float) -> None:
+    prop = WageningenBPropeller()
+    
+    j = prop.find_j_for_vt(speed, thrust)
+    n, q = prop.find_nq_for_vt(speed, thrust)
+
+    assert prop.find_j_for_nq(n, q) == approx(j)
+    assert prop.find_j_for_nt(n, thrust) == approx(j)
+    assert prop.find_j_for_vn(speed, n) == approx(j)
+    assert prop.find_j_for_vq(speed, q) == approx(j)
