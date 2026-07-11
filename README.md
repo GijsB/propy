@@ -234,7 +234,7 @@ package in "editable" mode. It's also recommended to install all the dependencie
 ```commandline
 git clone git@github.com:GijsB/propy.git
 cd propy
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 ```
