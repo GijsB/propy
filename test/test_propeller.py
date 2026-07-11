@@ -14,6 +14,12 @@ def test_j_for_vn(benchmark: BenchmarkFixture) -> None:
     benchmark(prop.find_j_for_vn, 10, 10)
 
 
+@mark.benchmark(group='find')
+def test_beta_for_vn(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    benchmark(prop.find_beta_for_vn, 10, 10)
+
+
 def test_instantiation() -> None:
     """Check whether instantiation of an abstract Propeller raises a TypeError"""
     with raises(TypeError):
