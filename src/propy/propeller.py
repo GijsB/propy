@@ -281,18 +281,18 @@ class Propeller(ABC):
     @cached_property
     def kt_inv(self) -> Callable[[ScalarOrArray], ScalarOrArray]:
         """
-        The inverse function of the kt polynomial (single)
+        The inverse function of the kt polynomial
 
-        Calculates j as a function of a given kt. This is achieved using a root-finding algorithm. This way, it's more
-        precise, but only a single value can be calculated at a time.
+        This function returns a callable that calculates j as a function of a given kt. This is achieved using a
+        spline interpolator. The interpolator is only generated once, after which it's cached for your convenience.
 
-        Parameters
-        ----------
+        Parameters of the callable
+        --------------------------
         kt: float
             The thrust coefficient
 
-        Returns
-        -------
+        Callable returns
+        ----------------
         j: float
             The advance ratio
         """
@@ -303,18 +303,18 @@ class Propeller(ABC):
     @cached_property
     def kq_inv(self) -> Callable[[ScalarOrArray], ScalarOrArray]:
         """
-        The inverse function of the kq polynomial (single)
+        The inverse function of the kq polynomial
 
-        Calculates j as a function of a given kq. This is achieved using a root-finding algorithm. This way, it's
-        precise, but only a single value can be calculated at a time.
+        This function returns a callable that calculates j as a function of a given kq. This is achieved using a
+        spline interpolator. The interpolator is only generated once, after which it's cached for your convenience.
 
-        Parameters
-        ----------
+        Parameters of the callable
+        --------------------------
         kq: float
             The torque coefficient
 
-        Returns
-        -------
+        Callable returns
+        ----------------
         j: float
             The advance ratio
         """
