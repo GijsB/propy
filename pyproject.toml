@@ -28,7 +28,8 @@ dev = [
     "flake8>=7.0",
     "mypy>=1.12",
     "scipy-stubs",
-    "matplotlib"
+    "matplotlib>=3.10",
+    "PyQt6>=6.8"
 ]
 
 [tool.setuptools_scm]

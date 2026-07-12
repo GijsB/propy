@@ -163,9 +163,7 @@ def test_kt_inv_roundtrip(blades: int, area_ratio: float, pd_ratio: float) -> No
         pd_ratio=pd_ratio
     )
     js = linspace(prop.j_min, prop.j_min)
-    kts = prop.kt(js)
-    for kt, j in zip(kts, js):
-        assert prop.kt_inv(kt) == approx(j)
+    assert prop.kt_inv(prop.kt(js)) == approx(js)
 
 
 @mark.parametrize('blades', [2, 4, 6])
@@ -178,6 +176,4 @@ def test_kq_inv_roundtrip(blades: int, area_ratio: float, pd_ratio: float) -> No
         pd_ratio=pd_ratio
     )
     js = linspace(prop.j_min, prop.j_min)
-    kqs = prop.kq(js)
-    for kq, j in zip(kqs, js):
-        assert prop.kq_inv(kq) == approx(j)
+    assert prop.kq_inv(prop.kq(js)) == approx(js)

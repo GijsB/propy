@@ -2,14 +2,15 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable, Callable
 from dataclasses import dataclass
 from functools import lru_cache, cached_property
-from typing import ClassVar, Self, Any, TypeVar
+from typing import ClassVar, Self, Any, TypeVar, cast
 from math import cos, sin, sqrt, atan2, pi
-from numpy import float64, array, zeros_like
+from numpy import float64, array, zeros_like, linspace
 from numpy import atan2 as atan2_v
 from numpy import sin as sin_v
 from numpy.typing import NDArray
 from numpy.linalg import solve
 from scipy.optimize import root_scalar
+from scipy.interpolate import make_interp_spline
 
 from propy.optimization import slsqp, PropFunctionWrapper, OptimizationMethod
 
@@ -277,7 +278,8 @@ class Propeller(ABC):
         )
 
     # Inverse propeller model
-    def kt_inv(self, kt: float) -> float:
+    @cached_property
+    def kt_inv(self) -> Callable[[ScalarOrArray], ScalarOrArray]:
         """
         The inverse function of the kt polynomial (single)
 
@@ -294,16 +296,12 @@ class Propeller(ABC):
         j: float
             The advance ratio
         """
+        js = linspace(self.j_min, self.j_max, 50)
+        kts = self.kt(js)
+        return cast(Callable[[ScalarOrArray], ScalarOrArray], make_interp_spline(kts[::-1], js[::-1], k=3))
 
-        if self.kt_min <= kt <= self.kt_max:
-            return root_scalar(
-                f=lambda j: self.kt(j) - kt,
-                bracket=(self.j_min, self.j_max)
-            ).root
-        
-        return float('NaN')
-
-    def kq_inv(self, kq: float) -> float:
+    @cached_property
+    def kq_inv(self) -> Callable[[ScalarOrArray], ScalarOrArray]:
         """
         The inverse function of the kq polynomial (single)
 
@@ -320,13 +318,9 @@ class Propeller(ABC):
         j: float
             The advance ratio
         """
-        if self.kq_min <= kq <= self.kq_max:
-            return root_scalar(
-                f=lambda j: self.kq(j) - kq,
-                bracket=(self.j_min, self.j_max)
-            ).root
-        
-        return float('NaN')
+        js = linspace(self.j_min, self.j_max, 200)
+        kqs = self.kq(js)
+        return cast(Callable[[ScalarOrArray], ScalarOrArray], make_interp_spline(kqs[::-1], js[::-1], k=4))
     
     def find_j_for_vt(
             self,
