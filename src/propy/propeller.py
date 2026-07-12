@@ -296,9 +296,9 @@ class Propeller(ABC):
         j: float
             The advance ratio
         """
-        js = linspace(self.j_min, self.j_max, 50)
-        kts = self.kt(js)
-        return cast(Callable[[ScalarOrArray], ScalarOrArray], make_interp_spline(kts[::-1], js[::-1], k=3))
+        j = linspace(self.j_max, self.j_min, 50)
+        kt = self.kt(j)
+        return cast(Callable[[ScalarOrArray], ScalarOrArray], make_interp_spline(kt, j, k=3))
 
     @cached_property
     def kq_inv(self) -> Callable[[ScalarOrArray], ScalarOrArray]:
@@ -318,10 +318,24 @@ class Propeller(ABC):
         j: float
             The advance ratio
         """
-        js = linspace(self.j_min, self.j_max, 200)
-        kqs = self.kq(js)
-        return cast(Callable[[ScalarOrArray], ScalarOrArray], make_interp_spline(kqs[::-1], js[::-1], k=4))
+        j = linspace(self.j_max, self.j_min, 200)
+        kq = self.kq(j)
+        return cast(Callable[[ScalarOrArray], ScalarOrArray], make_interp_spline(kq, j, k=4))
     
+    @cached_property
+    def ktj2_inv(self) -> Callable[[ScalarOrArray], ScalarOrArray]:
+        j_min = max(1e-30, self.j_min)
+        j = linspace(self.j_max, j_min, 300)
+        ktj2 = self.kt(j) / j**2
+        return cast(Callable[[ScalarOrArray], ScalarOrArray], make_interp_spline(ktj2, j, k=4))
+    
+    @cached_property
+    def kqj2_inv(self) -> Callable[[ScalarOrArray], ScalarOrArray]:
+        j_min = max(1e-30, self.j_min)
+        j = linspace(self.j_max, j_min, 300)
+        kqj2 = self.kq(j) / j**2
+        return cast(Callable[[ScalarOrArray], ScalarOrArray], make_interp_spline(kqj2, j, k=4))
+
     def find_j_for_vt(
             self,
             speed: float,
@@ -345,11 +359,7 @@ class Propeller(ABC):
             The advance ratio of the propeller at the given work-point [-]
         """
         ktj2 = thrust / rho / speed ** 2 / self.diameter ** 2
-        j_min = max(1e-60, self.j_min)
-        return root_scalar(
-            f=lambda j: self.kt(j) / j ** 2 - ktj2,
-            bracket=(j_min, self.j_max)
-        ).root
+        return float(self.ktj2_inv(ktj2))
 
     def find_j_for_vt_vec(
             self,
@@ -372,7 +382,8 @@ class Propeller(ABC):
         -------
             The advance ratio of the propeller at the given work-point [-]
         """
-        return array([self.find_j_for_vt(s, t, rho=rho) for s, t in zip(speed, thrust)])
+        ktj2 = thrust / rho / speed ** 2 / self.diameter ** 2
+        return self.ktj2_inv(ktj2)
 
     def find_j_for_vq(
             self,
@@ -397,11 +408,7 @@ class Propeller(ABC):
             The advance ratio of the propeller at the given work-point [-]
         """
         kqj2 = torque / rho / speed**2 / self.diameter**3
-        j_min = max(1e-60, self.j_min)
-        return root_scalar(
-            f=lambda j: self.kq(j) / j ** 2 - kqj2,
-            bracket=(j_min, self.j_max)
-        ).root
+        return float(self.kqj2_inv(kqj2))
     
     def find_j_for_vq_vec(
         self,
@@ -425,7 +432,8 @@ class Propeller(ABC):
         -------
             The advance ratio of the propeller at the given work-point [-]
         """
-        return array([self.find_j_for_vq(s, q, rho=rho) for s, q in zip(speed, torque)])
+        kqj2 = torque / rho / speed**2 / self.diameter**3
+        return self.kqj2_inv(kqj2)
 
     def find_j_for_vn(
             self,
@@ -490,7 +498,7 @@ class Propeller(ABC):
             The advance ratio of the propeller at the given work-point [-]
         """
         kq = torque / rho / rotation_speed**2 / self.diameter**5
-        return self.kq_inv(kq)
+        return float(self.kq_inv(kq))
     
     def find_j_for_nq_vec(
             self,
@@ -536,7 +544,7 @@ class Propeller(ABC):
             The advance ratio of the propeller at the given work-point [-]
         """
         kt = thrust / rho / rotation_speed**2 / self.diameter**4
-        return self.kt_inv(kt)
+        return float(self.kt_inv(kt))
     
     def find_j_for_nt_vec(
         self,
