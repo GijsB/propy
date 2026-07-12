@@ -513,7 +513,7 @@ class Propeller(ABC):
             The advance ratio of the propeller at the given work-point [-]
         """
         kqs = torque / rho / rotation_speed**2 / self.diameter**5
-        return array(self.kq_inv(kq) for kq in kqs)
+        return self.kq_inv(kqs)
     
     def find_j_for_nt(
             self,
@@ -559,7 +559,7 @@ class Propeller(ABC):
             The advance ratio of the propeller at the given work-point [-]
         """
         kts = thrust / rho / rotation_speed**2 / self.diameter**4
-        return array(self.kt_inv(kt) for kt in kts)
+        return self.kt_inv(kts)
 
     def find_beta_for_vn(
             self,
