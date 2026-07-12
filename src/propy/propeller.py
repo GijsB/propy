@@ -324,14 +324,14 @@ class Propeller(ABC):
     @cached_property
     def ktj2_inv(self) -> Callable[[ScalarOrArray], ScalarOrArray]:
         j_min = max(1e-30, self.j_min)
-        j = linspace(self.j_max, j_min, 300)
+        j = linspace(self.j_max, j_min, 500)
         ktj2 = self.kt(j) / j**2
         return cast(Callable[[ScalarOrArray], ScalarOrArray], make_interp_spline(ktj2, j, k=4))
     
     @cached_property
     def kqj2_inv(self) -> Callable[[ScalarOrArray], ScalarOrArray]:
         j_min = max(1e-30, self.j_min)
-        j = linspace(self.j_max, j_min, 300)
+        j = linspace(self.j_max, j_min, 500)
         kqj2 = self.kq(j) / j**2
         return cast(Callable[[ScalarOrArray], ScalarOrArray], make_interp_spline(kqj2, j, k=4))
 
