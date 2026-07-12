@@ -141,7 +141,7 @@ def test_rpm_limit(method: OptimizationMethod, propeller_type: Type[Propeller]) 
 
     n, q = prop.find_nq_for_vt(speed, thrust)
 
-    assert prop.rotation_speed_margin(speed, thrust, 17) > -1-15
+    assert prop.rotation_speed_margin(speed, thrust, 17) > -1e-6
     assert n == approx(17, rel=1e-3, abs=1e-3)
 
 
