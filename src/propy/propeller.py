@@ -4,12 +4,11 @@ from dataclasses import dataclass
 from functools import lru_cache, cached_property
 from typing import ClassVar, Self, Any, TypeVar, cast
 from math import cos, sin, sqrt, atan2, pi
-from numpy import float64, array, zeros_like, linspace
+from numpy import float64, zeros_like, linspace
 from numpy import atan2 as atan2_v
 from numpy import sin as sin_v
 from numpy.typing import NDArray
 from numpy.linalg import solve
-from scipy.optimize import root_scalar
 from scipy.interpolate import make_interp_spline
 
 from propy.optimization import slsqp, PropFunctionWrapper, OptimizationMethod

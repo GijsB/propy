@@ -59,11 +59,26 @@ def test_finding_type_consistency() -> None:
     assert isinstance(prop.find_j_for_vn_vec(array([1]), array([1])), ndarray)
     assert (prop.find_j_for_vn_vec(array([1.23456]), array([6.789]))[0] ==
             approx(prop.find_j_for_vn(1.23456, 6.789)))
-    
+
     assert isinstance(prop.find_j_for_vt(1, 1), float)
     assert isinstance(prop.find_j_for_vt_vec(array([1]), array([1])), ndarray)
     assert (prop.find_j_for_vt_vec(array([1.23456]), array([6.789]))[0] ==
             approx(prop.find_j_for_vt(1.23456, 6.789)))
+    
+    assert isinstance(prop.find_j_for_vq(1, 1), float)
+    assert isinstance(prop.find_j_for_vq_vec(array([1]), array([1])), ndarray)
+    assert (prop.find_j_for_vq_vec(array([1.23456]), array([6.789]))[0] ==
+            approx(prop.find_j_for_vq(1.23456, 6.789)))
+    
+    assert isinstance(prop.find_j_for_nq(1, 1), float)
+    assert isinstance(prop.find_j_for_nq_vec(array([1]), array([1])), ndarray)
+    assert (prop.find_j_for_nq_vec(array([1.23456]), array([6.789]))[0] ==
+            approx(prop.find_j_for_nq(1.23456, 6.789)))
+    
+    assert isinstance(prop.find_j_for_nt(1, 1), float)
+    assert isinstance(prop.find_j_for_nt_vec(array([1]), array([1])), ndarray)
+    assert (prop.find_j_for_nt_vec(array([1.23456]), array([6.789]))[0] ==
+            approx(prop.find_j_for_nt(1.23456, 6.789)))
 
     assert isinstance(prop.find_beta_for_vn(1, 1), float)
     assert isinstance(prop.find_beta_for_vn_vec(array([1]), array([1])), ndarray)
