@@ -1,9 +1,69 @@
 from propy import GawnBurrillPropeller
 
 from pytest import raises, mark
+from pytest_benchmark.fixture import BenchmarkFixture
 from numpy.testing import assert_allclose
+from numpy import linspace
 
 p = GawnBurrillPropeller()
+
+
+@mark.benchmark(group='Instantiation')
+def test_instantiation_gawn_burrill(benchmark: BenchmarkFixture) -> None:
+    prop = benchmark(GawnBurrillPropeller)
+    assert prop is not None
+
+
+@mark.benchmark(group='open_water')
+def test_kt_vec100_gawn_burrill(benchmark: BenchmarkFixture) -> None:
+    prop = GawnBurrillPropeller()
+    j = linspace(prop.j_min, prop.j_max, 100)
+    benchmark(prop.kt, j)
+
+
+@mark.benchmark(group='open_water')
+def test_kt_gawn_burrill(benchmark: BenchmarkFixture) -> None:
+    prop = GawnBurrillPropeller()
+    j = 0.2
+    benchmark(prop.kt, j)
+
+
+@mark.benchmark(group='open_water')
+def test_kq_vec100_gawn_burrill(benchmark: BenchmarkFixture) -> None:
+    prop = GawnBurrillPropeller()
+    j = linspace(prop.j_min, prop.j_max, 100)
+    benchmark(prop.kq, j)
+
+
+@mark.benchmark(group='open_water')
+def test_kq_gawn_burrill(benchmark: BenchmarkFixture) -> None:
+    prop = GawnBurrillPropeller()
+    j = 0.2
+    benchmark(prop.kq, j)
+
+
+@mark.benchmark(group='find')
+def test_j_for_vt_gawn_burrill(benchmark: BenchmarkFixture) -> None:
+    prop = GawnBurrillPropeller()
+    benchmark(prop.find_j_for_vt, 10, 10000)
+
+
+@mark.benchmark(group='find')
+def test_j_for_vq_gawn_burrill(benchmark: BenchmarkFixture) -> None:
+    prop = GawnBurrillPropeller()
+    benchmark(prop.find_j_for_vq, 10, 1000)
+
+
+@mark.benchmark(group='find')
+def test_j_for_nq_gawn_burrill(benchmark: BenchmarkFixture) -> None:
+    prop = GawnBurrillPropeller()
+    benchmark(prop.find_j_for_nq, 10, 1000)
+
+
+@mark.benchmark(group='find')
+def test_j_for_nt_gawn_burrill(benchmark: BenchmarkFixture) -> None:
+    prop = GawnBurrillPropeller()
+    benchmark(prop.find_j_for_nt, 10, 10000)
 
 
 def test_valid_blades() -> None:

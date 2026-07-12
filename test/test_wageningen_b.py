@@ -1,9 +1,69 @@
 from propy.wageningen_b import WageningenBPropeller
 
 from pytest import raises, mark
+from pytest_benchmark.fixture import BenchmarkFixture
 from numpy.testing import assert_allclose
+from numpy import linspace
 
 p = WageningenBPropeller()
+
+
+@mark.benchmark(group='Instantiation')
+def test_instantiation_wageningen_b(benchmark: BenchmarkFixture) -> None:
+    prop = benchmark(WageningenBPropeller)
+    assert prop is not None
+
+
+@mark.benchmark(group='open_water')
+def test_kt_vec100_wageningen_b(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    j = linspace(prop.j_min, prop.j_max, 100)
+    benchmark(prop.kt, j)
+
+
+@mark.benchmark(group='open_water')
+def test_kt_wageningen_b(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    j = 0.2
+    benchmark(prop.kt, j)
+
+
+@mark.benchmark(group='open_water')
+def test_kq_vec100_wageningen_b(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    j = linspace(prop.j_min, prop.j_max, 100)
+    benchmark(prop.kq, j)
+
+
+@mark.benchmark(group='open_water')
+def test_kq_wageningen_b(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    j = 0.2
+    benchmark(prop.kq, j)
+
+
+@mark.benchmark(group='find')
+def test_j_for_vt_wageningen_b(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    benchmark(prop.find_j_for_vt, 10, 10000)
+
+
+@mark.benchmark(group='find')
+def test_j_for_vq_wageningen_b(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    benchmark(prop.find_j_for_vq, 10, 1000)
+
+
+@mark.benchmark(group='find')
+def test_j_for_nq_wageningen_b(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    benchmark(prop.find_j_for_nq, 10, 1000)
+
+
+@mark.benchmark(group='find')
+def test_j_for_nt_wageningen_b(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    benchmark(prop.find_j_for_nt, 10, 10000)
 
 
 def test_valid_blades() -> None:

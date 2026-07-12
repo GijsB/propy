@@ -4,7 +4,20 @@ from propy.propeller import Propeller
 from propy.wageningen_b import WageningenBPropeller
 
 from pytest import raises, approx, mark
-from numpy import pi, array, ndarray
+from pytest_benchmark.fixture import BenchmarkFixture
+from numpy import pi, array, ndarray, linspace
+
+
+@mark.benchmark(group='find')
+def test_j_for_vn(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    benchmark(prop.find_j_for_vn, 10, 10)
+
+
+@mark.benchmark(group='find')
+def test_beta_for_vn(benchmark: BenchmarkFixture) -> None:
+    prop = WageningenBPropeller()
+    benchmark(prop.find_beta_for_vn, 10, 10)
 
 
 def test_instantiation() -> None:
@@ -20,8 +33,15 @@ def test_new() -> None:
         Propeller.new()
 
 
-def test_4q_prop() -> None:
-    prop = WageningenBPropeller()
+@mark.parametrize('blades', [2, 4, 6])
+@mark.parametrize('area_ratio', [0.3, 0.6, 0.9])
+@mark.parametrize('pd_ratio', [0.5, 0.8, 1.1])
+def test_4q_prop(blades: int, area_ratio: float, pd_ratio: float) -> None:
+    prop = WageningenBPropeller(
+        blades=blades,
+        area_ratio=area_ratio,
+        pd_ratio=pd_ratio
+    )
 
     assert prop.ct(0) == approx(8 * prop.kt(0) / pi / (0.7**2 * pi**2))
     assert prop.cq(0) == approx(8 * prop.kq(0) / pi / (0.7**2 * pi**2))
@@ -44,6 +64,21 @@ def test_finding_type_consistency() -> None:
     assert isinstance(prop.find_j_for_vt_vec(array([1]), array([1])), ndarray)
     assert (prop.find_j_for_vt_vec(array([1.23456]), array([6.789]))[0] ==
             approx(prop.find_j_for_vt(1.23456, 6.789)))
+    
+    assert isinstance(prop.find_j_for_vq(1, 1), float)
+    assert isinstance(prop.find_j_for_vq_vec(array([1]), array([1])), ndarray)
+    assert (prop.find_j_for_vq_vec(array([1.23456]), array([6.789]))[0] ==
+            approx(prop.find_j_for_vq(1.23456, 6.789)))
+    
+    assert isinstance(prop.find_j_for_nq(1, 1), float)
+    assert isinstance(prop.find_j_for_nq_vec(array([1]), array([1])), ndarray)
+    assert (prop.find_j_for_nq_vec(array([1.23456]), array([6.789]))[0] ==
+            approx(prop.find_j_for_nq(1.23456, 6.789)))
+    
+    assert isinstance(prop.find_j_for_nt(1, 1), float)
+    assert isinstance(prop.find_j_for_nt_vec(array([1]), array([1])), ndarray)
+    assert (prop.find_j_for_nt_vec(array([1.23456]), array([6.789]))[0] ==
+            approx(prop.find_j_for_nt(1.23456, 6.789)))
 
     assert isinstance(prop.find_beta_for_vn(1, 1), float)
     assert isinstance(prop.find_beta_for_vn_vec(array([1]), array([1])), ndarray)
@@ -83,10 +118,17 @@ def test_finding_type_consistency() -> None:
     assert prop.eta(array([0.123456]))[0] == approx(prop.eta(0.123456))
 
 
+@mark.parametrize('blades', [2, 4, 6])
+@mark.parametrize('area_ratio', [0.3, 0.6, 0.9])
+@mark.parametrize('pd_ratio', [0.5, 0.8, 1.1])
 @mark.parametrize('speed', [1, 2, 5, 10, 20, 50])
 @mark.parametrize('thrust', [10, 20, 50, 100, 200, 500])
-def test_roundtrip_consistencies(speed: float, thrust: float) -> None:
-    prop = WageningenBPropeller()
+def test_roundtrip_consistencies(blades: int, area_ratio: float, pd_ratio: float, speed: float, thrust: float) -> None:
+    prop = WageningenBPropeller(
+        blades=blades,
+        area_ratio=area_ratio,
+        pd_ratio=pd_ratio
+    )
 
     n, q = prop.find_nq_for_vt(speed, thrust)
     v, t = prop.find_vt_for_nq(n, q)
@@ -105,10 +147,17 @@ def test_roundtrip_consistencies(speed: float, thrust: float) -> None:
     assert q3 == approx(q)
 
 
+@mark.parametrize('blades', [2, 4, 6])
+@mark.parametrize('area_ratio', [0.3, 0.6, 0.9])
+@mark.parametrize('pd_ratio', [0.5, 0.8, 1.1])
 @mark.parametrize('speed', [1, 2, 5, 10, 20, 50])
 @mark.parametrize('thrust', [10, 20, 50, 100, 200, 500])
-def test_j_consistency_for_vt(speed: float, thrust: float) -> None:
-    prop = WageningenBPropeller()
+def test_j_consistency_for_vt(blades: int, area_ratio: float, pd_ratio: float, speed: float, thrust: float) -> None:
+    prop = WageningenBPropeller(
+        blades=blades,
+        area_ratio=area_ratio,
+        pd_ratio=pd_ratio
+    )
     
     j = prop.find_j_for_vt(speed, thrust)
     n, q = prop.find_nq_for_vt(speed, thrust)
@@ -117,3 +166,29 @@ def test_j_consistency_for_vt(speed: float, thrust: float) -> None:
     assert prop.find_j_for_nt(n, thrust) == approx(j)
     assert prop.find_j_for_vn(speed, n) == approx(j)
     assert prop.find_j_for_vq(speed, q) == approx(j)
+
+
+@mark.parametrize('blades', [2, 4, 6])
+@mark.parametrize('area_ratio', [0.3, 0.6, 0.9])
+@mark.parametrize('pd_ratio', [0.5, 0.8, 1.1])
+def test_kt_inv_roundtrip(blades: int, area_ratio: float, pd_ratio: float) -> None:
+    prop = WageningenBPropeller(
+        blades=blades,
+        area_ratio=area_ratio,
+        pd_ratio=pd_ratio
+    )
+    js = linspace(prop.j_min, prop.j_min)
+    assert prop.kt_inv(prop.kt(js)) == approx(js)
+
+
+@mark.parametrize('blades', [2, 4, 6])
+@mark.parametrize('area_ratio', [0.3, 0.6, 0.9])
+@mark.parametrize('pd_ratio', [0.5, 0.8, 1.1])
+def test_kq_inv_roundtrip(blades: int, area_ratio: float, pd_ratio: float) -> None:
+    prop = WageningenBPropeller(
+        blades=blades,
+        area_ratio=area_ratio,
+        pd_ratio=pd_ratio
+    )
+    js = linspace(prop.j_min, prop.j_min)
+    assert prop.kq_inv(prop.kq(js)) == approx(js)

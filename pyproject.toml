@@ -24,17 +24,25 @@ license         = {file = "LICENSE"}
 [project.optional-dependencies]
 dev = [
     "pytest>=6.0",
+    "pytest-benchmark>=5.0",
     "flake8>=7.0",
     "mypy>=1.12",
     "scipy-stubs",
-    "matplotlib"
+    "matplotlib>=3.10",
+    "PyQt6>=6.8"
 ]
 
 [tool.setuptools_scm]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--doctest-modules --doctest-glob='*.md'"
+addopts = [
+    "--doctest-modules",
+    "--doctest-glob='*.md'",
+    "--benchmark-warmup=on",
+    "--benchmark-warmup-iterations=2",
+    "--benchmark-max-time=0.1"
+]
 
 [tool.mypy]
 python_version = "3.13"
