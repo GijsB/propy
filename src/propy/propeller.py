@@ -483,8 +483,6 @@ class Propeller(ABC):
             
         return atan2(speed, 0.7 * pi * rotation_speed * self.diameter)
 
-        
-
     def find_tq_for_vn(
             self,
             speed: ScalarOrArray,
