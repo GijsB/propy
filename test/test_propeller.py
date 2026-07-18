@@ -55,65 +55,65 @@ def test_4q_prop(blades: int, area_ratio: float, pd_ratio: float) -> None:
 def test_finding_type_consistency() -> None:
     prop = WageningenBPropeller()
 
-    assert isinstance(prop.find_j_for_vn(1, 1), float)
-    assert isinstance(prop.find_j_for_vn_vec(array([1]), array([1])), ndarray)
-    assert (prop.find_j_for_vn_vec(array([1.23456]), array([6.789]))[0] ==
+    assert isinstance(prop.find_j_for_vn(1, 1), ndarray)
+    assert isinstance(prop.find_j_for_vn(array([1]), array([1])), ndarray)
+    assert (prop.find_j_for_vn(array([1.23456]), array([6.789]))[0] ==
             approx(prop.find_j_for_vn(1.23456, 6.789)))
 
-    assert isinstance(prop.find_j_for_vt(1, 1), float)
-    assert isinstance(prop.find_j_for_vt_vec(array([1]), array([1])), ndarray)
-    assert (prop.find_j_for_vt_vec(array([1.23456]), array([6.789]))[0] ==
+    assert isinstance(prop.find_j_for_vt(1, 1), ndarray)
+    assert isinstance(prop.find_j_for_vt(array([1]), array([1])), ndarray)
+    assert (prop.find_j_for_vt(array([1.23456]), array([6.789]))[0] ==
             approx(prop.find_j_for_vt(1.23456, 6.789)))
     
-    assert isinstance(prop.find_j_for_vq(1, 1), float)
-    assert isinstance(prop.find_j_for_vq_vec(array([1]), array([1])), ndarray)
-    assert (prop.find_j_for_vq_vec(array([1.23456]), array([6.789]))[0] ==
+    assert isinstance(prop.find_j_for_vq(1, 1), ndarray)
+    assert isinstance(prop.find_j_for_vq(array([1]), array([1])), ndarray)
+    assert (prop.find_j_for_vq(array([1.23456]), array([6.789]))[0] ==
             approx(prop.find_j_for_vq(1.23456, 6.789)))
     
-    assert isinstance(prop.find_j_for_nq(1, 1), float)
-    assert isinstance(prop.find_j_for_nq_vec(array([1]), array([1])), ndarray)
-    assert (prop.find_j_for_nq_vec(array([1.23456]), array([6.789]))[0] ==
+    assert isinstance(prop.find_j_for_nq(1, 1), ndarray)
+    assert isinstance(prop.find_j_for_nq(array([1]), array([1])), ndarray)
+    assert (prop.find_j_for_nq(array([1.23456]), array([6.789]))[0] ==
             approx(prop.find_j_for_nq(1.23456, 6.789)))
     
-    assert isinstance(prop.find_j_for_nt(1, 1), float)
-    assert isinstance(prop.find_j_for_nt_vec(array([1]), array([1])), ndarray)
-    assert (prop.find_j_for_nt_vec(array([1.23456]), array([6.789]))[0] ==
+    assert isinstance(prop.find_j_for_nt(1, 1), ndarray)
+    assert isinstance(prop.find_j_for_nt(array([1]), array([1])), ndarray)
+    assert (prop.find_j_for_nt(array([1.23456]), array([6.789]))[0] ==
             approx(prop.find_j_for_nt(1.23456, 6.789)))
 
-    assert isinstance(prop.find_beta_for_vn(1, 1), float)
-    assert isinstance(prop.find_beta_for_vn_vec(array([1]), array([1])), ndarray)
-    assert (prop.find_beta_for_vn_vec(array([1.23456]), array([6.789]))[0] ==
+    assert isinstance(prop.find_beta_for_vn(1, 1), ndarray)
+    assert isinstance(prop.find_beta_for_vn(array([1]), array([1])), ndarray)
+    assert (prop.find_beta_for_vn(array([1.23456]), array([6.789]))[0] ==
             approx(prop.find_beta_for_vn(1.23456, 6.789)))
 
     t, q = prop.find_tq_for_vn(1.23456, 6.789)
-    t_vec, q_vec = prop.find_tq_for_vn_vec(array([1.23456]), array([6.789]))
-    assert t_vec == approx(t)
-    assert q_vec == approx(q)
+    t_vec, q_vec = prop.find_tq_for_vn(array([1.23456]), array([6.789]))
+    assert t_vec[0] == approx(t)
+    assert q_vec[0] == approx(q)
 
     n, q = prop.find_nq_for_vt(1.23456, 6.789)
-    n_vec, q_vec = prop.find_nq_for_vt_vec(array([1.23456]), array([6.789]))
-    assert n_vec == approx(n)
-    assert q_vec == approx(q)
+    n_vec, q_vec = prop.find_nq_for_vt(array([1.23456]), array([6.789]))
+    assert n_vec[0] == approx(n)
+    assert q_vec[0] == approx(q)
 
-    assert isinstance(prop.ct(1), float)
-    assert isinstance(prop.ct(1.0), float)
+    assert isinstance(prop.ct(1), ndarray)
+    assert isinstance(prop.ct(1.0), ndarray)
     assert isinstance(prop.ct(array([1, 2])), ndarray)
     assert prop.ct(array([0.123456]))[0] == approx(prop.ct(0.123456))
 
-    assert isinstance(prop.cq(1), float)
-    assert isinstance(prop.cq(1.0), float)
+    assert isinstance(prop.cq(1), ndarray)
+    assert isinstance(prop.cq(1.0), ndarray)
     assert isinstance(prop.cq(array([1, 2])), ndarray)
     assert prop.cq(array([0.123456]))[0] == approx(prop.cq(0.123456))
 
-    assert isinstance(prop.kt(0.1), float)
+    assert isinstance(prop.kt(0.1), ndarray)
     assert isinstance(prop.kt(array([0.1, 0.2])), ndarray)
     assert prop.kt(array([0.123456]))[0] == approx(prop.kt(0.123456))
 
-    assert isinstance(prop.kq(0.1), float)
+    assert isinstance(prop.kq(0.1), ndarray)
     assert isinstance(prop.kq(array([0.1, 0.2])), ndarray)
     assert prop.kq(array([0.123456]))[0] == approx(prop.kq(0.123456))
 
-    assert isinstance(prop.eta(0.1), float)
+    assert isinstance(prop.eta(0.1), ndarray)
     assert isinstance(prop.eta(array([0.1, 0.2])), ndarray)
     assert prop.eta(array([0.123456]))[0] == approx(prop.eta(0.123456))
 
@@ -136,12 +136,12 @@ def test_roundtrip_consistencies(blades: int, area_ratio: float, pd_ratio: float
     assert v == approx(speed)
     assert t == approx(thrust)
 
-    v, q2 = prop.find_vq_for_nt(n, thrust)
+    v, q2 = prop.find_vq_for_nt(float(n), thrust)
 
     assert v == approx(speed)
     assert q2 == approx(q)
 
-    t, q3 = prop.find_tq_for_vn(speed, n)
+    t, q3 = prop.find_tq_for_vn(speed, float(n))
 
     assert t == approx(thrust)
     assert q3 == approx(q)
@@ -163,9 +163,9 @@ def test_j_consistency_for_vt(blades: int, area_ratio: float, pd_ratio: float, s
     n, q = prop.find_nq_for_vt(speed, thrust)
 
     assert prop.find_j_for_nq(n, q) == approx(j)
-    assert prop.find_j_for_nt(n, thrust) == approx(j)
-    assert prop.find_j_for_vn(speed, n) == approx(j)
-    assert prop.find_j_for_vq(speed, q) == approx(j)
+    assert prop.find_j_for_nt(float(n), thrust) == approx(j)
+    assert prop.find_j_for_vn(speed, float(n)) == approx(j)
+    assert prop.find_j_for_vq(speed, float(q)) == approx(j)
 
 
 @mark.parametrize('blades', [2, 4, 6])
