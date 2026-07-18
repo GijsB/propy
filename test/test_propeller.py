@@ -55,7 +55,7 @@ def test_4q_prop(blades: int, area_ratio: float, pd_ratio: float) -> None:
 def test_finding_type_consistency() -> None:
     prop = WageningenBPropeller()
 
-    assert isinstance(prop.find_j_for_vn(1, 1), ndarray)
+    assert isinstance(prop.find_j_for_vn(1, 1), float)
     assert isinstance(prop.find_j_for_vn(array([1]), array([1])), ndarray)
     assert (prop.find_j_for_vn(array([1.23456]), array([6.789]))[0] ==
             approx(prop.find_j_for_vn(1.23456, 6.789)))
@@ -80,7 +80,7 @@ def test_finding_type_consistency() -> None:
     assert (prop.find_j_for_nt(array([1.23456]), array([6.789]))[0] ==
             approx(prop.find_j_for_nt(1.23456, 6.789)))
 
-    assert isinstance(prop.find_beta_for_vn(1, 1), ndarray)
+    assert isinstance(prop.find_beta_for_vn(1, 1), float)
     assert isinstance(prop.find_beta_for_vn(array([1]), array([1])), ndarray)
     assert (prop.find_beta_for_vn(array([1.23456]), array([6.789]))[0] ==
             approx(prop.find_beta_for_vn(1.23456, 6.789)))

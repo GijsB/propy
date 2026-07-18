@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable, Callable
 from dataclasses import dataclass
 from functools import lru_cache, cached_property
-from typing import ClassVar, Self, Any, TypeVar
+from typing import ClassVar, Self, Any, TypeVar, cast
 from math import cos, sin, sqrt, atan2, pi
 from numpy import float64, zeros_like, linspace, array
 from numpy import atan2 as atan2_v
@@ -392,7 +392,7 @@ class Propeller(ABC):
             self,
             speed: ScalarOrArray,
             rotation_speed: ScalarOrArray
-    ) -> NDArray[float64]:
+    ) -> ScalarOrArray:
         """
         Calculate the advance ratio given the speed and rotation rate.
 
@@ -405,9 +405,11 @@ class Propeller(ABC):
 
         Returns
         -------
-            The advance ratio of the propeller at the given work-point [-]
+            The advance ratio of the propeller at the given work-point [-]. NOTE: The return type of this function is
+            different from all similar functions. To prevent slowdown from explicitly casting to an array, the return
+            type is equal to the input types.
         """
-        return array(speed / rotation_speed / self.diameter, dtype=float64)
+        return speed / rotation_speed / self.diameter
     
     def find_j_for_nq(
             self,
@@ -459,7 +461,7 @@ class Propeller(ABC):
             self,
             speed: ScalarOrArray,
             rotation_speed: ScalarOrArray
-    ) -> NDArray[float64]:
+    ) -> ScalarOrArray:
         """
         Calculate the advance angle of the propeller given the speed and rotation rate.
 
@@ -472,9 +474,11 @@ class Propeller(ABC):
 
         Returns
         -------
-            The advance angle of the propeller at the given work-point [rad]
+            The advance angle of the propeller at the given work-point [rad]. NOTE: The return type of this function is
+            different from all similar functions. To prevent slowdown from explicitly casting to an array, the return
+            type is equal to the input types.
         """
-        return array(atan2_v(speed, 0.7 * pi * rotation_speed * self.diameter), dtype=float64)
+        return cast(ScalarOrArray, atan2_v(speed, 0.7 * pi * rotation_speed * self.diameter))
 
     def find_tq_for_vn(
             self,
