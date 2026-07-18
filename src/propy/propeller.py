@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable, Callable
 from dataclasses import dataclass
 from functools import lru_cache, cached_property
-from typing import ClassVar, Self, Any, TypeVar, cast
+from typing import ClassVar, Self, Any, TypeVar
 from math import cos, sin, sqrt, atan2, pi
-from numpy import float64, zeros_like, linspace, array
+from numpy import float64, zeros_like, linspace, array, ndarray
 from numpy import atan2 as atan2_v
 from numpy import sin as sin_v
 from numpy.typing import NDArray
@@ -478,7 +478,12 @@ class Propeller(ABC):
             different from all similar functions. To prevent slowdown from explicitly casting to an array, the return
             type is equal to the input types.
         """
-        return cast(ScalarOrArray, atan2_v(speed, 0.7 * pi * rotation_speed * self.diameter))
+        if isinstance(speed, ndarray):
+            return atan2_v(speed, 0.7 * pi * rotation_speed * self.diameter)
+            
+        return atan2(speed, 0.7 * pi * rotation_speed * self.diameter)
+
+        
 
     def find_tq_for_vn(
             self,
