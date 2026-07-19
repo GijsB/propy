@@ -259,7 +259,7 @@ Any new releases are tagged in git:
 ```
 git checkout main
 git merge develop
-git tag -a vX.X.X
+git tag -a vX.X.X -m vX.X.X
 git push origin main
 git push origin vX.X.X
 ```
