@@ -255,6 +255,15 @@ release, the changes from the develop branch are pulled into the main branch. Ne
 `feature/...` branches. These changes are reviewed in a GitHub pull-request. After all the checks are passed, they can 
 be merged into the develop branch. 
 
+Any new releases are tagged in git:
+```
+git checkout main
+git merge develop
+git tag -a vX.X.X
+git push origin main
+git push origin vX.X.X
+```
+
 
 ### Testing & validation
 The following steps could be performed manually during development, but are also tested upon each pull-request.
