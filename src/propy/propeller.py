@@ -40,10 +40,26 @@ class Propeller(ABC):
 
     blades_min:     ClassVar[int] = -1
     blades_max:     ClassVar[int] = -1
-    area_ratio_min: ClassVar[float] = float('NaN')
-    area_ratio_max: ClassVar[float] = float('NaN')
-    pd_ratio_min:   ClassVar[float] = float('NaN')
-    pd_ratio_max:   ClassVar[float] = float('NaN')
+
+    @property
+    @abstractmethod
+    def area_ratio_min(self) -> float:
+        pass
+
+    @property
+    @abstractmethod
+    def area_ratio_max(self) -> float:
+        pass
+
+    @property
+    @abstractmethod
+    def pd_ratio_min(self) -> float:
+        pass
+
+    @property
+    @abstractmethod
+    def pd_ratio_max(self) -> float:
+        pass
 
     # Class housekeeping
     @classmethod

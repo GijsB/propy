@@ -89,36 +89,36 @@ def test_valid_blades() -> None:
 
 def test_valid_area_ratio() -> None:
     # Test whether limits are set
-    assert WageningenBPropeller.area_ratio_min > 0
-    assert WageningenBPropeller.area_ratio_max >= WageningenBPropeller.area_ratio_min
+    assert p.area_ratio_min > 0
+    assert p.area_ratio_max >= p.area_ratio_min
 
     # Test ability to instantiate at limits
-    WageningenBPropeller(area_ratio=WageningenBPropeller.area_ratio_min)
-    WageningenBPropeller(area_ratio=WageningenBPropeller.area_ratio_max)
+    WageningenBPropeller(area_ratio=p.area_ratio_min)
+    WageningenBPropeller(area_ratio=p.area_ratio_max)
 
     # Test ability to instantiate outside limits
     with raises(ValueError):
-        WageningenBPropeller(area_ratio=WageningenBPropeller.area_ratio_min * 0.9)
+        WageningenBPropeller(area_ratio=p.area_ratio_min * 0.9)
 
     with raises(ValueError):
-        WageningenBPropeller(area_ratio=WageningenBPropeller.area_ratio_max * 1.1)
+        WageningenBPropeller(area_ratio=p.area_ratio_max * 1.1)
 
 
 def test_valid_pd_ratio() -> None:
     # Test whether limits are set
-    assert WageningenBPropeller.pd_ratio_min > 0
-    assert WageningenBPropeller.pd_ratio_max >= WageningenBPropeller.pd_ratio_min
+    assert p.pd_ratio_min > 0
+    assert p.pd_ratio_max >= p.pd_ratio_min
 
     # Test ability to instantiate at limits
-    WageningenBPropeller(pd_ratio=WageningenBPropeller.pd_ratio_min)
-    WageningenBPropeller(pd_ratio=WageningenBPropeller.pd_ratio_max)
+    WageningenBPropeller(pd_ratio=p.pd_ratio_min)
+    WageningenBPropeller(pd_ratio=p.pd_ratio_max)
 
     # Test ability to instantiate outside limits
     with raises(ValueError):
-        WageningenBPropeller(pd_ratio=WageningenBPropeller.pd_ratio_min * 0.9)
+        WageningenBPropeller(pd_ratio=p.pd_ratio_min * 0.9)
 
     with raises(ValueError):
-        WageningenBPropeller(pd_ratio=WageningenBPropeller.pd_ratio_max * 1.1)
+        WageningenBPropeller(pd_ratio=p.pd_ratio_max * 1.1)
 
 
 def test_valid_diameter() -> None:

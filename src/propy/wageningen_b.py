@@ -35,10 +35,22 @@ class WageningenBPropeller(Propeller):
 
     blades_min: ClassVar[int] = 2
     blades_max: ClassVar[int] = 7
-    area_ratio_min: ClassVar[float] = 0.3
-    area_ratio_max: ClassVar[float] = 1.05
-    pd_ratio_min: ClassVar[float] = 0.5
-    pd_ratio_max: ClassVar[float] = 1.4
+    
+    @property
+    def area_ratio_min(self) -> float:
+        return 0.3
+
+    @property
+    def area_ratio_max(self) -> float:
+        return 1.05
+    
+    @property
+    def pd_ratio_min(self) -> float:
+        return 0.5
+    
+    @property
+    def pd_ratio_max(self) -> float:
+        return 1.4
 
     @cached_property
     def kq(self) -> Callable[[ScalarOrArray], NDArray[float64]]:
