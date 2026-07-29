@@ -26,16 +26,17 @@ The propy module contains parametric propeller models of the following types:
 To prevent the user from needing to memorize all the definitions open-water models (below), a number of convenience 
 functions have been defined. These functions can be used to calculate most important properties of a propeller, they use
 the open water models.
+- `find_j_for_vn`: Calculate the advance ratio given the speed and rotation rate.
 - `find_j_for_vt`: Calculate the advance ratio given the speed and thrust.
 - `find_j_for_vq`: Calculate the advance ratio given the speed and torque.
-- `find_j_for_vn`: Calculate the advance ratio given the speed and rotation rate.
-- `find_j_for_nq`: Calculate the advance ratio given the rotation rate and torque.
 - `find_j_for_nt`: Calculate the advance ratio given the rotation rate and thrust.
+- `find_j_for_nq`: Calculate the advance ratio given the rotation rate and torque.
 - `find_beta_for_vn`: Calculate the advance angle of the propeller given the speed and rotation rate.
 - `find_tq_for_vn`: Calculate the thrust and torque for a given speed and rotation rate.
 - `find_nq_for_vt`: Calculate rotation speed and torque for a given speed and thrust.
-- `find_vt_for_nq`: Calculate speed and thrust for a given rotation speed and torque.
+- `find_nt_for_vq`: Calculate rotation speed and thrust for a given speed and torque.
 - `find_vq_for_nt`: Calculate speed and torque for a given rotation speed and thrust.
+- `find_vt_for_nq`: Calculate speed and thrust for a given rotation speed and torque.
 
 
 ### Optimization
