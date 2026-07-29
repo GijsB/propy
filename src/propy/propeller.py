@@ -614,12 +614,41 @@ class Propeller(ABC):
         Returns
         -------
         tuple[float, float]
-            The speed [m/s] and the toque [Nm] of the propeller
+            The speed [m/s] and the torque [Nm] of the propeller
         """
         j = self.find_j_for_nt(rotation_speed=rotation_speed, thrust=thrust, rho=rho)
         speed = j * rotation_speed * self.diameter
         torque = self.kq(j) * rho * rotation_speed**2 * self.diameter**5
         return speed, torque
+
+    def find_nt_for_vq(
+        self,
+        speed: ScalarOrArray,
+        torque: ScalarOrArray,
+        rho: float = 1025
+    ) -> tuple[NDArray[float64], NDArray[float64]]:
+        """
+        Calculate rotation speed and thrust for a given speed and torque.
+
+        Parameters
+        ----------
+        speed
+            The speed of in flow into the propeller [m/s]
+        torque
+            The torque load on the propeller [Nm]
+        rho
+            The density of the water [kg/m^3], defaults to 1025 kg/m^3
+
+        Returns
+        -------
+        tuple[float, float]
+            The rotation speed [Hz] and the thrust [N] of the propeller
+        """
+        kqj2 = torque / rho / speed**2 / self.diameter**3
+        j = self.kqj2_inv(kqj2)
+        rotation_speed = speed / j / self.diameter
+        thrust = self.kt(j) * rho * rotation_speed**2 * self.diameter**4
+        return rotation_speed, thrust
 
     # Optimisation methods
     def optimize(
