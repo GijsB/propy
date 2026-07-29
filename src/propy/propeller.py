@@ -514,7 +514,7 @@ class Propeller(ABC):
 
         j = zeros_like(is_1q, dtype=float64)
         j[is_1q] = self.find_j_for_vn(speed_arr[is_1q], rotation_speed_arr[is_1q])
-        j[~is_1q] = self.find_j_for_vn(speed_arr[~is_1q], rotation_speed_arr[~is_1q])
+        j[~is_1q] = self.find_beta_for_vn(speed_arr[~is_1q], rotation_speed_arr[~is_1q])
 
         kt = zeros_like(is_1q, dtype=float64)
         kt[is_1q] = self.kt(j[is_1q])
