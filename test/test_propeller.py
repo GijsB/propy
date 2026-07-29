@@ -146,6 +146,11 @@ def test_roundtrip_consistencies(blades: int, area_ratio: float, pd_ratio: float
     assert t == approx(thrust)
     assert q3 == approx(q)
 
+    n2, t2 = prop.find_nt_for_vq(speed, float(q))
+
+    assert n2 == approx(n)
+    assert t2 == approx(thrust)
+
 
 @mark.parametrize('blades', [2, 4, 6])
 @mark.parametrize('area_ratio', [0.3, 0.6, 0.9])
