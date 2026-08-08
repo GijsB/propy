@@ -123,7 +123,7 @@ class Propeller(ABC):
         return float(self.kq(self.j_max))
 
     # Basic model as a function of the advance ratio (j)
-    @property
+    @cached_property
     @abstractmethod
     def kt(self) -> Callable[[ScalarOrArray], NDArray[float64]]:
         """
@@ -151,7 +151,7 @@ class Propeller(ABC):
         """
         pass
 
-    @property
+    @cached_property
     @abstractmethod
     def kq(self) -> Callable[[ScalarOrArray], NDArray[float64]]:
         """
