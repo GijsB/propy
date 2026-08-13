@@ -224,4 +224,51 @@ class MAUPropeller(Propeller):
             - 0.00312009 * self.pd_ratio**2 +
             + 0.00402354 * self.pd_ratio**3,
         ], dtype=float64)
+
+    @property
+    def _kt4_55(self) -> NDArray[float64]:
+        return array([
+            - 0.0560577 * self.pd_ratio**0 +
+            + 0.5440128 * self.pd_ratio**1 +
+            - 0.0131719 * self.pd_ratio**2 +
+            - 0.0313747 * self.pd_ratio**3,
+
+            - 0.1937437 * self.pd_ratio**0 +
+            - 0.1383095 * self.pd_ratio**1 +
+            - 0.0009202 * self.pd_ratio**2 +
+            + 0.0495503 * self.pd_ratio**3,
+
+            - 0.3207175 * self.pd_ratio**0 +
+            + 0.2505594 * self.pd_ratio**1 +
+            - 0.0267239 * self.pd_ratio**2 +
+            - 0.0331890 * self.pd_ratio**3,
+
+            + 0.1415830 * self.pd_ratio**0 +
+            - 0.2201395 * self.pd_ratio**1 +
+            + 0.1222395 * self.pd_ratio**2 +
+            - 0.0206896 * self.pd_ratio**3,
+        ], dtype=float64)
     
+    @property
+    def _kq4_55(self) -> NDArray[float64]:
+        return array([
+            + 0.1129100 * self.pd_ratio**0 +
+            - 0.3487319 * self.pd_ratio**1 +
+            + 1.0633678 * self.pd_ratio**2 +
+            - 0.1919152 * self.pd_ratio**3,
+
+            - 0.1389722 * self.pd_ratio**0 +
+            + 0.4873902 * self.pd_ratio**1 +
+            - 1.1009982 * self.pd_ratio**2 +
+            + 0.3767585 * self.pd_ratio**3,
+
+            - 0.1521688 * self.pd_ratio**0 +
+            - 0.5244194 * self.pd_ratio**1 +
+            + 0.9886425 * self.pd_ratio**2 +
+            - 0.3868991 * self.pd_ratio**3,
+
+            + 0.0740959 * self.pd_ratio**0 +
+            - 0.1423152 * self.pd_ratio**1 +
+            - 0.0556094 * self.pd_ratio**2 +
+            + 0.0650457 * self.pd_ratio**3,
+        ], dtype=float64)
