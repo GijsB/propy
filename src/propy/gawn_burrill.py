@@ -24,20 +24,20 @@ class GawnBurrillPropeller(Propeller):
     blades_min: ClassVar[int] = 3
     blades_max: ClassVar[int] = 3
     
-    @property
-    def area_ratio_min(self) -> float:
+    @staticmethod
+    def area_ratio_min_for_blades(blades: int) -> float:
         return 0.34 * 0.5 * (2.75 + 0.5 / 3)
     
-    @property
-    def area_ratio_max(self) -> float:
+    @staticmethod
+    def area_ratio_max_for_blades(blades: int) -> float:
         return 0.34 * 1.1 * (2.75 + 1.1 / 3)
 
-    @property
-    def pd_ratio_min(self) -> float:
+    @staticmethod
+    def pd_ratio_min_for_blades(blades: int) -> float:
         return 0.8
     
-    @property
-    def pd_ratio_max(self) -> float:
+    @staticmethod
+    def pd_ratio_max_for_blades(blades: int) -> float:
         return 1.8
 
     @property

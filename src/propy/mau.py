@@ -37,10 +37,6 @@ class MAUPropeller(Propeller):
             case _:
                 return float('NaN')
 
-    @property
-    def area_ratio_min(self) -> float:
-        return self.area_ratio_min_for_blades(self.blades)
-
     @staticmethod
     def area_ratio_max_for_blades(blades: int) -> float:
         match blades:
@@ -55,10 +51,6 @@ class MAUPropeller(Propeller):
             case _:
                 return float('NaN')
 
-    @property
-    def area_ratio_max(self) -> float:
-        return self.area_ratio_max_for_blades(self.blades)
-
     @staticmethod
     def pd_ratio_min_for_blades(blades: int) -> float:
         match blades:
@@ -68,10 +60,6 @@ class MAUPropeller(Propeller):
                 return 0.5
             case _:
                 return float('NaN')
-
-    @property
-    def pd_ratio_min(self) -> float:
-        return self.pd_ratio_min_for_blades(self.blades)
 
     @staticmethod
     def pd_ratio_max_for_blades(blades: int) -> float:
@@ -84,10 +72,6 @@ class MAUPropeller(Propeller):
                 return 1.5
             case _:
                 return float('NaN')
-    
-    @property
-    def pd_ratio_max(self) -> float:
-        return self.pd_ratio_max_for_blades(self.blades)
     
     @cached_property
     def kt(self) -> Callable[[ScalarOrArray], NDArray[float64]]:

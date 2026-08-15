@@ -41,25 +41,41 @@ class Propeller(ABC):
     blades_min:     ClassVar[int] = -1
     blades_max:     ClassVar[int] = -1
 
-    @property
+    @staticmethod
     @abstractmethod
+    def area_ratio_min_for_blades(blades: int) -> float:
+        pass
+
+    @property
     def area_ratio_min(self) -> float:
+        return self.area_ratio_min_for_blades(self.blades)
+
+    @staticmethod
+    @abstractmethod
+    def area_ratio_max_for_blades(blades: int) -> float:
         pass
 
     @property
-    @abstractmethod
     def area_ratio_max(self) -> float:
+        return self.area_ratio_max_for_blades(self.blades)
+
+    @staticmethod
+    @abstractmethod
+    def pd_ratio_min_for_blades(blades: int) -> float:
         pass
 
     @property
-    @abstractmethod
     def pd_ratio_min(self) -> float:
+        return self.pd_ratio_min_for_blades(self.blades)
+    
+    @staticmethod
+    @abstractmethod
+    def pd_ratio_max_for_blades(blades: int) -> float:
         pass
 
     @property
-    @abstractmethod
     def pd_ratio_max(self) -> float:
-        pass
+        return self.pd_ratio_max_for_blades(self.blades)
 
     # Class housekeeping
     @classmethod
@@ -228,7 +244,7 @@ class Propeller(ABC):
 
         # The thrust coefficient at j_min
         beta_min = atan2(self.j_min, 0.7 * pi)
-        ct_max = self.kt_max * 8 / pi / (0.7**2 * pi**2)
+        ct_max = self.kt_max * 8 / pi / (self.j_min**2 + 0.7**2 * pi**2)
 
         # Linearly fit the ct(beta) function on these two points
         (a_c, ), (a_s, ) = solve(
@@ -280,7 +296,7 @@ class Propeller(ABC):
 
         # The torque coefficient at J=0 (and thus beta=0)
         beta_min = atan2(self.j_min, 0.7 * pi)
-        cq_max = self.kq_max * 8 / pi / (0.7 ** 2 * pi ** 2)
+        cq_max = self.kq_max * 8 / pi / (self.j_min**2 + 0.7**2 * pi**2)
 
         # Linearly fit the ct(beta) function on these two points
         (a_c,), (a_s,) = solve(
