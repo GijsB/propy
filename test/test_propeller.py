@@ -137,15 +137,11 @@ def test_finding_type_consistency(propeller_type: type[Propeller]) -> None:
 @mark.parametrize('blades', [2, 3, 4, 5, 6])
 @mark.parametrize('area_ratio_rel', [0.1, 0.5, 0.9])
 @mark.parametrize('pd_ratio_rel', [0.1, 0.5, 0.9])
-@mark.parametrize('speed', [1, 2, 5, 10, 20, 50])
-@mark.parametrize('thrust', [10, 20, 50, 100, 200, 500])
 @mark.parametrize('prop_type', [WageningenBPropeller, GawnBurrillPropeller, MAUPropeller])
 def test_roundtrip_consistencies(
     blades: int,
     area_ratio_rel: float,
     pd_ratio_rel: float,
-    speed: float,
-    thrust: float,
     prop_type: type[Propeller]
 ) -> None:
     if not (prop_type.blades_min <= blades <= prop_type.blades_max):
@@ -163,40 +159,38 @@ def test_roundtrip_consistencies(
         pd_ratio=pd_ratio_min + pd_ratio_rel * (pd_ratio_max - pd_ratio_min)
     )
 
-    n, q = prop.find_nq_for_vt(speed, thrust)
-    v, t = prop.find_vt_for_nq(n, q)
+    for speed in [1, 2, 5, 10, 20, 50]:
+        for thrust in [10, 20, 50, 100, 200, 500]:
+            n, q = prop.find_nq_for_vt(speed, thrust)
+            v, t = prop.find_vt_for_nq(n, q)
 
-    assert v == approx(speed)
-    assert t == approx(thrust)
+            assert v == approx(speed)
+            assert t == approx(thrust)
 
-    v, q2 = prop.find_vq_for_nt(float(n), thrust)
+            v, q2 = prop.find_vq_for_nt(float(n), thrust)
 
-    assert v == approx(speed)
-    assert q2 == approx(q)
+            assert v == approx(speed)
+            assert q2 == approx(q)
 
-    t, q3 = prop.find_tq_for_vn(speed, float(n))
+            t, q3 = prop.find_tq_for_vn(speed, float(n))
 
-    assert t == approx(thrust)
-    assert q3 == approx(q)
+            assert t == approx(thrust)
+            assert q3 == approx(q)
 
-    n2, t2 = prop.find_nt_for_vq(speed, float(q))
+            n2, t2 = prop.find_nt_for_vq(speed, float(q))
 
-    assert n2 == approx(n)
-    assert t2 == approx(thrust)
+            assert n2 == approx(n)
+            assert t2 == approx(thrust)
 
 
 @mark.parametrize('blades', [2, 3, 4, 5, 6])
 @mark.parametrize('area_ratio_rel', [0.1, 0.5, 0.9])
 @mark.parametrize('pd_ratio_rel', [0.1, 0.5, 0.9])
-@mark.parametrize('speed', [1, 2, 5, 10, 20, 50])
-@mark.parametrize('thrust', [10, 20, 50, 100, 200, 500])
 @mark.parametrize('prop_type', [WageningenBPropeller, GawnBurrillPropeller, MAUPropeller])
 def test_j_consistency_for_vt(
     blades: int,
     area_ratio_rel: float,
     pd_ratio_rel: float,
-    speed: float,
-    thrust: float,
     prop_type: type[Propeller]
 ) -> None:
     if not (prop_type.blades_min <= blades <= prop_type.blades_max):
@@ -213,14 +207,16 @@ def test_j_consistency_for_vt(
         area_ratio=area_ratio_min + area_ratio_rel * (area_ratio_max - area_ratio_min),
         pd_ratio=pd_ratio_min + pd_ratio_rel * (pd_ratio_max - pd_ratio_min)
     )
-    
-    j = prop.find_j_for_vt(speed, thrust)
-    n, q = prop.find_nq_for_vt(speed, thrust)
 
-    assert prop.find_j_for_nq(n, q) == approx(j)
-    assert prop.find_j_for_nt(float(n), thrust) == approx(j)
-    assert prop.find_j_for_vn(speed, float(n)) == approx(j)
-    assert prop.find_j_for_vq(speed, float(q)) == approx(j)
+    for speed in [1, 2, 5, 10, 20, 50]:
+        for thrust in [10, 20, 50, 100, 200, 500]:
+            j = prop.find_j_for_vt(speed, thrust)
+            n, q = prop.find_nq_for_vt(speed, thrust)
+
+            assert prop.find_j_for_nq(n, q) == approx(j)
+            assert prop.find_j_for_nt(float(n), thrust) == approx(j)
+            assert prop.find_j_for_vn(speed, float(n)) == approx(j)
+            assert prop.find_j_for_vq(speed, float(q)) == approx(j)
 
 
 @mark.parametrize('blades', [2, 3, 4, 5, 6])
