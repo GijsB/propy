@@ -864,7 +864,7 @@ class Propeller(ABC):
 
     def torque_margin(self, speed: float, thrust: float, torque_max: float, rho: float = 1025.0) -> float:
         """
-        Calculate the (normalized) required torqeu, can be a constraint to prevent gears from breaking.
+        Calculate the (normalized) required torque, can be a constraint to prevent gears from breaking.
 
         The result is normalized relative to the given maximum torque. This way, the optimizer weighs all the
         constrains in a similar way.

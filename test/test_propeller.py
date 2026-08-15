@@ -42,7 +42,7 @@ def test_new() -> None:
 @mark.parametrize('prop_type', [WageningenBPropeller, GawnBurrillPropeller, MAUPropeller])
 def test_4q_prop(blades: int, area_ratio_rel: float, pd_ratio_rel: float, prop_type: type[Propeller]) -> None:
     if not (prop_type.blades_min <= blades <= prop_type.blades_max):
-        return 
+        return
         
     area_ratio_min = prop_type.area_ratio_min_for_blades(blades)
     area_ratio_max = prop_type.area_ratio_min_for_blades(blades)
@@ -141,15 +141,15 @@ def test_finding_type_consistency(propeller_type: type[Propeller]) -> None:
 @mark.parametrize('thrust', [10, 20, 50, 100, 200, 500])
 @mark.parametrize('prop_type', [WageningenBPropeller, GawnBurrillPropeller, MAUPropeller])
 def test_roundtrip_consistencies(
-    blades: int, 
-    area_ratio_rel: float, 
-    pd_ratio_rel: float, 
-    speed: float, 
-    thrust: float, 
+    blades: int,
+    area_ratio_rel: float,
+    pd_ratio_rel: float,
+    speed: float,
+    thrust: float,
     prop_type: type[Propeller]
 ) -> None:
     if not (prop_type.blades_min <= blades <= prop_type.blades_max):
-        return 
+        return
         
     area_ratio_min = prop_type.area_ratio_min_for_blades(blades)
     area_ratio_max = prop_type.area_ratio_min_for_blades(blades)
@@ -192,15 +192,15 @@ def test_roundtrip_consistencies(
 @mark.parametrize('thrust', [10, 20, 50, 100, 200, 500])
 @mark.parametrize('prop_type', [WageningenBPropeller, GawnBurrillPropeller, MAUPropeller])
 def test_j_consistency_for_vt(
-    blades: int, 
-    area_ratio_rel: float, 
-    pd_ratio_rel: float, 
-    speed: float, 
-    thrust: float, 
+    blades: int,
+    area_ratio_rel: float,
+    pd_ratio_rel: float,
+    speed: float,
+    thrust: float,
     prop_type: type[Propeller]
 ) -> None:
     if not (prop_type.blades_min <= blades <= prop_type.blades_max):
-        return 
+        return
     
     area_ratio_min = prop_type.area_ratio_min_for_blades(blades)
     area_ratio_max = prop_type.area_ratio_min_for_blades(blades)
@@ -229,7 +229,7 @@ def test_j_consistency_for_vt(
 @mark.parametrize('prop_type', [WageningenBPropeller, GawnBurrillPropeller, MAUPropeller])
 def test_kt_inv_roundtrip(blades: int, area_ratio_rel: float, pd_ratio_rel: float, prop_type: type[Propeller]) -> None:
     if not (prop_type.blades_min <= blades <= prop_type.blades_max):
-        return 
+        return
     
     area_ratio_min = prop_type.area_ratio_min_for_blades(blades)
     area_ratio_max = prop_type.area_ratio_min_for_blades(blades)
@@ -252,7 +252,7 @@ def test_kt_inv_roundtrip(blades: int, area_ratio_rel: float, pd_ratio_rel: floa
 @mark.parametrize('prop_type', [WageningenBPropeller, GawnBurrillPropeller, MAUPropeller])
 def test_kq_inv_roundtrip(blades: int, area_ratio_rel: float, pd_ratio_rel: float, prop_type: type[Propeller]) -> None:
     if not (prop_type.blades_min <= blades <= prop_type.blades_max):
-        return 
+        return
     
     area_ratio_min = prop_type.area_ratio_min_for_blades(blades)
     area_ratio_max = prop_type.area_ratio_min_for_blades(blades)
