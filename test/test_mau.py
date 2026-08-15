@@ -1,6 +1,6 @@
 from propy import MAUPropeller
 
-from pytest import raises, mark
+from pytest import raises, mark, approx
 from pytest_benchmark.fixture import BenchmarkFixture
 from numpy.testing import assert_allclose
 from numpy import linspace
@@ -181,3 +181,28 @@ def test_kq_range(blades: int) -> None:
             assert_allclose(p.kq_min, p.kq(p.j_max), rtol=1e-15, atol=1e-15)
             assert_allclose(p.kq_max, p.kq(p.j_min), rtol=1e-15, atol=1e-15)
 
+
+@mark.parametrize('blades,area_ratio', [
+    (3, 0.35),
+])
+def test_kt_kq(blades: int, area_ratio: float) -> None:
+    """
+    
+    """
+    with open(f'test/data/MAU{blades}-{int(area_ratio*100)}.csv') as file:
+        for line in file:
+            if line.startswith('x'):
+                _, pd_ratio = line.split(',')
+                k_type, pd_ratio = pd_ratio.split('_')
+                func = MAUPropeller(
+                    blades=blades,
+                    area_ratio=area_ratio,
+                    pd_ratio=float(pd_ratio.strip()[-2:])/10
+                ).__getattribute__(k_type)
+            elif len(line.strip()) > 0:
+                j: float
+                k: float
+                j, k = (float(x) for x in line.strip().split(','))
+                if k_type == 'kq':
+                    k /= 10
+                assert func(j) == approx(k, rel=1e-2, abs=5e-3)

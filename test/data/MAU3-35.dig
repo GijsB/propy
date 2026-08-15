@@ -21,15 +21,15 @@
                 <PointStyle Radius="10" LineWidth="1" Color="6" ColorString="Red" Shape="1" ShapeString="Cross"/>
             </CurveStyle>
             <CurvePoints>
-                <Point Identifier="Axes&#9;point&#9;1" Ordinal="1" IsAxisPoint="True" IsXOnly="False" Index="16">
+                <Point Identifier="Axes&#9;point&#9;1" Ordinal="1" IsAxisPoint="True" IsXOnly="False" Index="161">
                     <PositionScreen X="52" Y="1350.5"/>
                     <PositionGraph X="0" Y="0"/>
                 </Point>
-                <Point Identifier="Axes&#9;point&#9;3" Ordinal="2" IsAxisPoint="True" IsXOnly="False" Index="16">
+                <Point Identifier="Axes&#9;point&#9;3" Ordinal="2" IsAxisPoint="True" IsXOnly="False" Index="161">
                     <PositionScreen X="56" Y="33"/>
                     <PositionGraph X="0" Y="0.8"/>
                 </Point>
-                <Point Identifier="Axes&#9;point&#9;5" Ordinal="3" IsAxisPoint="True" IsXOnly="False" Index="16">
+                <Point Identifier="Axes&#9;point&#9;5" Ordinal="3" IsAxisPoint="True" IsXOnly="False" Index="161">
                     <PositionScreen X="935" Y="1357.5"/>
                     <PositionGraph X="1.2" Y="0"/>
                 </Point>
@@ -43,35 +43,551 @@
                     <PointStyle Radius="10" LineWidth="1" Color="1" ColorString="Blue" Shape="1" ShapeString="Cross"/>
                 </CurveStyle>
                 <CurvePoints>
-                    <Point Identifier="kt_pd04&#9;point&#9;6" Ordinal="0" IsAxisPoint="False" IsXOnly="False" Index="16">
+                    <Point Identifier="kt_pd04&#9;point&#9;6" Ordinal="0" IsAxisPoint="False" IsXOnly="False" Index="161">
                         <PositionScreen X="53" Y="1120"/>
                     </Point>
-                    <Point Identifier="kt_pd04&#9;point&#9;7" Ordinal="1" IsAxisPoint="False" IsXOnly="False" Index="16">
+                    <Point Identifier="kt_pd04&#9;point&#9;7" Ordinal="1" IsAxisPoint="False" IsXOnly="False" Index="161">
                         <PositionScreen X="89.5" Y="1136.5"/>
                     </Point>
-                    <Point Identifier="kt_pd04&#9;point&#9;8" Ordinal="2" IsAxisPoint="False" IsXOnly="False" Index="16">
+                    <Point Identifier="kt_pd04&#9;point&#9;8" Ordinal="2" IsAxisPoint="False" IsXOnly="False" Index="161">
                         <PositionScreen X="126.5" Y="1155"/>
                     </Point>
-                    <Point Identifier="kt_pd04&#9;point&#9;9" Ordinal="3" IsAxisPoint="False" IsXOnly="False" Index="16">
+                    <Point Identifier="kt_pd04&#9;point&#9;9" Ordinal="3" IsAxisPoint="False" IsXOnly="False" Index="161">
                         <PositionScreen X="162.5" Y="1173"/>
                     </Point>
-                    <Point Identifier="kt_pd04&#9;point&#9;10" Ordinal="4" IsAxisPoint="False" IsXOnly="False" Index="16">
+                    <Point Identifier="kt_pd04&#9;point&#9;10" Ordinal="4" IsAxisPoint="False" IsXOnly="False" Index="161">
                         <PositionScreen X="198.5" Y="1194.5"/>
                     </Point>
-                    <Point Identifier="kt_pd04&#9;point&#9;11" Ordinal="5" IsAxisPoint="False" IsXOnly="False" Index="16">
+                    <Point Identifier="kt_pd04&#9;point&#9;11" Ordinal="5" IsAxisPoint="False" IsXOnly="False" Index="161">
                         <PositionScreen X="236.5" Y="1218"/>
                     </Point>
-                    <Point Identifier="kt_pd04&#9;point&#9;12" Ordinal="6" IsAxisPoint="False" IsXOnly="False" Index="16">
+                    <Point Identifier="kt_pd04&#9;point&#9;12" Ordinal="6" IsAxisPoint="False" IsXOnly="False" Index="161">
                         <PositionScreen X="272.5" Y="1240"/>
                     </Point>
-                    <Point Identifier="kt_pd04&#9;point&#9;13" Ordinal="7" IsAxisPoint="False" IsXOnly="False" Index="16">
+                    <Point Identifier="kt_pd04&#9;point&#9;13" Ordinal="7" IsAxisPoint="False" IsXOnly="False" Index="161">
                         <PositionScreen X="309.5" Y="1267.5"/>
                     </Point>
-                    <Point Identifier="kt_pd04&#9;point&#9;14" Ordinal="8" IsAxisPoint="False" IsXOnly="False" Index="16">
+                    <Point Identifier="kt_pd04&#9;point&#9;14" Ordinal="8" IsAxisPoint="False" IsXOnly="False" Index="161">
                         <PositionScreen X="346.5" Y="1295"/>
                     </Point>
-                    <Point Identifier="kt_pd04&#9;point&#9;15" Ordinal="9" IsAxisPoint="False" IsXOnly="False" Index="16">
+                    <Point Identifier="kt_pd04&#9;point&#9;15" Ordinal="9" IsAxisPoint="False" IsXOnly="False" Index="161">
                         <PositionScreen X="383.5" Y="1323.5"/>
+                    </Point>
+                </CurvePoints>
+            </Curve>
+            <Curve CurveName="kt_pd06">
+                <ColorFilter CurveName="kt_pd06" Mode="2" ModeString="Intensity" IntensityLow="0" IntensityHigh="50" ForegroundLow="0" ForegroundHigh="10" HueLow="180" HueHigh="360" SaturationLow="50" SaturationHigh="100" ValueLow="0" ValueHigh="50"/>
+                <CurveStyle CurveName="kt_pd06">
+                    <LineStyle Width="1" Color="1" ColorString="Blue" ConnectAs="0" ConnectAsString="FunctionSmooth"/>
+                    <PointStyle Radius="10" LineWidth="1" Color="1" ColorString="Blue" Shape="5" ShapeString="X"/>
+                </CurveStyle>
+                <CurvePoints>
+                    <Point Identifier="kt_pd06&#9;point&#9;16" Ordinal="0" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="58" Y="983.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd06&#9;point&#9;17" Ordinal="1" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="107.75" Y="1007.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd06&#9;point&#9;18" Ordinal="2" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="146" Y="1028"/>
+                    </Point>
+                    <Point Identifier="kt_pd06&#9;point&#9;19" Ordinal="3" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="181.75" Y="1049.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd06&#9;point&#9;20" Ordinal="4" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="220.75" Y="1072.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd06&#9;point&#9;21" Ordinal="5" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="257" Y="1094.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd06&#9;point&#9;22" Ordinal="6" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="282.5" Y="1112"/>
+                    </Point>
+                    <Point Identifier="kt_pd06&#9;point&#9;23" Ordinal="7" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="330.75" Y="1146.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd06&#9;point&#9;24" Ordinal="8" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="367.5" Y="1175"/>
+                    </Point>
+                    <Point Identifier="kt_pd06&#9;point&#9;25" Ordinal="9" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="404.5" Y="1204.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd06&#9;point&#9;26" Ordinal="10" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="443" Y="1235.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd06&#9;point&#9;27" Ordinal="11" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="482.5" Y="1269.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd06&#9;point&#9;28" Ordinal="12" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="514.25" Y="1298.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd06&#9;point&#9;29" Ordinal="13" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="550" Y="1330.25"/>
+                    </Point>
+                </CurvePoints>
+            </Curve>
+            <Curve CurveName="kt_pd08">
+                <ColorFilter CurveName="kt_pd08" Mode="2" ModeString="Intensity" IntensityLow="0" IntensityHigh="50" ForegroundLow="0" ForegroundHigh="10" HueLow="180" HueHigh="360" SaturationLow="50" SaturationHigh="100" ValueLow="0" ValueHigh="50"/>
+                <CurveStyle CurveName="kt_pd08">
+                    <LineStyle Width="1" Color="1" ColorString="Blue" ConnectAs="0" ConnectAsString="FunctionSmooth"/>
+                    <PointStyle Radius="10" LineWidth="1" Color="1" ColorString="Blue" Shape="2" ShapeString="Diamond"/>
+                </CurveStyle>
+                <CurvePoints>
+                    <Point Identifier="kt_pd08&#9;point&#9;30" Ordinal="0" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="62" Y="855.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd08&#9;point&#9;31" Ordinal="1" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="109.5" Y="880.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd08&#9;point&#9;32" Ordinal="2" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="146.5" Y="901.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd08&#9;point&#9;33" Ordinal="3" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="184.5" Y="923.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd08&#9;point&#9;34" Ordinal="4" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="219.75" Y="944.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd08&#9;point&#9;35" Ordinal="5" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="257" Y="967.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd08&#9;point&#9;36" Ordinal="6" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="292.75" Y="992"/>
+                    </Point>
+                    <Point Identifier="kt_pd08&#9;point&#9;37" Ordinal="7" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="331" Y="1018.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd08&#9;point&#9;38" Ordinal="8" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="370" Y="1045.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd08&#9;point&#9;39" Ordinal="9" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="405.75" Y="1073"/>
+                    </Point>
+                    <Point Identifier="kt_pd08&#9;point&#9;40" Ordinal="10" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="443.75" Y="1102"/>
+                    </Point>
+                    <Point Identifier="kt_pd08&#9;point&#9;41" Ordinal="11" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="477" Y="1129.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd08&#9;point&#9;42" Ordinal="12" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="510.75" Y="1157"/>
+                    </Point>
+                    <Point Identifier="kt_pd08&#9;point&#9;43" Ordinal="13" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="559" Y="1198.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd08&#9;point&#9;44" Ordinal="14" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="590.75" Y="1225.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd08&#9;point&#9;45" Ordinal="15" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="626.5" Y="1257.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd08&#9;point&#9;46" Ordinal="16" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="658.5" Y="1286.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd08&#9;point&#9;47" Ordinal="17" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="695.25" Y="1320.75"/>
+                    </Point>
+                </CurvePoints>
+            </Curve>
+            <Curve CurveName="kt_pd10">
+                <ColorFilter CurveName="kt_pd10" Mode="2" ModeString="Intensity" IntensityLow="0" IntensityHigh="50" ForegroundLow="0" ForegroundHigh="10" HueLow="180" HueHigh="360" SaturationLow="50" SaturationHigh="100" ValueLow="0" ValueHigh="50"/>
+                <CurveStyle CurveName="kt_pd10">
+                    <LineStyle Width="1" Color="1" ColorString="Blue" ConnectAs="0" ConnectAsString="FunctionSmooth"/>
+                    <PointStyle Radius="10" LineWidth="1" Color="1" ColorString="Blue" Shape="3" ShapeString="Square"/>
+                </CurveStyle>
+                <CurvePoints>
+                    <Point Identifier="kt_pd10&#9;point&#9;48" Ordinal="0" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="61" Y="735.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;49" Ordinal="1" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="112" Y="762.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;50" Ordinal="2" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="148.75" Y="784.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;51" Ordinal="3" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="185.25" Y="805.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;52" Ordinal="4" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="219.75" Y="827"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;53" Ordinal="5" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="257.5" Y="850.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;54" Ordinal="6" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="294.75" Y="874"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;55" Ordinal="7" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="330.75" Y="897.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;56" Ordinal="8" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="369" Y="924"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;57" Ordinal="9" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="404.75" Y="948.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;58" Ordinal="10" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="442.75" Y="975.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;59" Ordinal="11" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="480.75" Y="1003.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;60" Ordinal="12" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="517.25" Y="1032"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;61" Ordinal="13" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="553" Y="1059"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;62" Ordinal="14" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="589.75" Y="1088.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;63" Ordinal="15" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="628.75" Y="1120.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;64" Ordinal="16" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="663.25" Y="1148.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;65" Ordinal="17" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="698.5" Y="1179.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;66" Ordinal="18" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="737.25" Y="1212"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;67" Ordinal="19" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="771.25" Y="1243.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;68" Ordinal="20" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="808.75" Y="1280.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd10&#9;point&#9;69" Ordinal="21" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="844.75" Y="1314"/>
+                    </Point>
+                </CurvePoints>
+            </Curve>
+            <Curve CurveName="kt_pd12">
+                <ColorFilter CurveName="kt_pd12" Mode="2" ModeString="Intensity" IntensityLow="0" IntensityHigh="50" ForegroundLow="0" ForegroundHigh="10" HueLow="180" HueHigh="360" SaturationLow="50" SaturationHigh="100" ValueLow="0" ValueHigh="50"/>
+                <CurveStyle CurveName="kt_pd12">
+                    <LineStyle Width="1" Color="1" ColorString="Blue" ConnectAs="0" ConnectAsString="FunctionSmooth"/>
+                    <PointStyle Radius="10" LineWidth="1" Color="1" ColorString="Blue" Shape="1" ShapeString="Cross"/>
+                </CurveStyle>
+                <CurvePoints>
+                    <Point Identifier="kt_pd12&#9;point&#9;70" Ordinal="0" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="63" Y="629"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;71" Ordinal="1" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="112.25" Y="653.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;72" Ordinal="2" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="150.5" Y="675.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;73" Ordinal="3" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="183.5" Y="694.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;74" Ordinal="4" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="221.5" Y="717"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;75" Ordinal="5" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="257.75" Y="739.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;76" Ordinal="6" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="293" Y="761.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;77" Ordinal="7" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="330.5" Y="785.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;78" Ordinal="8" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="367.75" Y="810.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;79" Ordinal="9" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="403.75" Y="835.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;80" Ordinal="10" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="442" Y="862"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;81" Ordinal="11" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="480" Y="888.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;82" Ordinal="12" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="516" Y="914.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;83" Ordinal="13" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="551.25" Y="939.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;84" Ordinal="14" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="589.75" Y="968.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;85" Ordinal="15" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="626.75" Y="995.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;86" Ordinal="16" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="664.75" Y="1025.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;87" Ordinal="17" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="740.5" Y="1084"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;88" Ordinal="18" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="777" Y="1114.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;89" Ordinal="19" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="809.25" Y="1141.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;90" Ordinal="20" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="848.5" Y="1174.75"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;91" Ordinal="21" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="883.75" Y="1204.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;92" Ordinal="22" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="921.75" Y="1238.25"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;93" Ordinal="23" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="954" Y="1268.5"/>
+                    </Point>
+                    <Point Identifier="kt_pd12&#9;point&#9;94" Ordinal="24" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="999.25" Y="1311"/>
+                    </Point>
+                </CurvePoints>
+            </Curve>
+            <Curve CurveName="kq_pd04">
+                <ColorFilter CurveName="kq_pd04" Mode="2" ModeString="Intensity" IntensityLow="0" IntensityHigh="50" ForegroundLow="0" ForegroundHigh="10" HueLow="180" HueHigh="360" SaturationLow="50" SaturationHigh="100" ValueLow="0" ValueHigh="50"/>
+                <CurveStyle CurveName="kq_pd04">
+                    <LineStyle Width="1" Color="1" ColorString="Blue" ConnectAs="0" ConnectAsString="FunctionSmooth"/>
+                    <PointStyle Radius="10" LineWidth="1" Color="1" ColorString="Blue" Shape="5" ShapeString="X"/>
+                </CurveStyle>
+                <CurvePoints>
+                    <Point Identifier="kq_pd04&#9;point&#9;95" Ordinal="0" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="74" Y="1188"/>
+                    </Point>
+                    <Point Identifier="kq_pd04&#9;point&#9;96" Ordinal="1" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="114" Y="1198.5"/>
+                    </Point>
+                    <Point Identifier="kq_pd04&#9;point&#9;97" Ordinal="2" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="155.25" Y="1209.25"/>
+                    </Point>
+                    <Point Identifier="kq_pd04&#9;point&#9;98" Ordinal="3" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="191.25" Y="1220"/>
+                    </Point>
+                    <Point Identifier="kq_pd04&#9;point&#9;99" Ordinal="4" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="230" Y="1233.25"/>
+                    </Point>
+                    <Point Identifier="kq_pd04&#9;point&#9;100" Ordinal="5" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="329.25" Y="1271.5"/>
+                    </Point>
+                    <Point Identifier="kq_pd04&#9;point&#9;101" Ordinal="6" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="367" Y="1289.75"/>
+                    </Point>
+                    <Point Identifier="kq_pd04&#9;point&#9;102" Ordinal="7" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="406" Y="1311.25"/>
+                    </Point>
+                </CurvePoints>
+            </Curve>
+            <Curve CurveName="kq_pd06">
+                <ColorFilter CurveName="kq_pd06" Mode="2" ModeString="Intensity" IntensityLow="0" IntensityHigh="50" ForegroundLow="0" ForegroundHigh="10" HueLow="180" HueHigh="360" SaturationLow="50" SaturationHigh="100" ValueLow="0" ValueHigh="50"/>
+                <CurveStyle CurveName="kq_pd06">
+                    <LineStyle Width="1" Color="1" ColorString="Blue" ConnectAs="0" ConnectAsString="FunctionSmooth"/>
+                    <PointStyle Radius="10" LineWidth="1" Color="1" ColorString="Blue" Shape="2" ShapeString="Diamond"/>
+                </CurveStyle>
+                <CurvePoints>
+                    <Point Identifier="kq_pd06&#9;point&#9;103" Ordinal="0" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="59" Y="1027.5"/>
+                    </Point>
+                    <Point Identifier="kq_pd06&#9;point&#9;104" Ordinal="1" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="115" Y="1048.75"/>
+                    </Point>
+                    <Point Identifier="kq_pd06&#9;point&#9;105" Ordinal="2" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="171" Y="1070.75"/>
+                    </Point>
+                    <Point Identifier="kq_pd06&#9;point&#9;106" Ordinal="3" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="228" Y="1094"/>
+                    </Point>
+                    <Point Identifier="kq_pd06&#9;point&#9;107" Ordinal="4" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="285.5" Y="1120.25"/>
+                    </Point>
+                    <Point Identifier="kq_pd06&#9;point&#9;108" Ordinal="5" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="359.75" Y="1157.5"/>
+                    </Point>
+                    <Point Identifier="kq_pd06&#9;point&#9;109" Ordinal="6" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="436.25" Y="1202.5"/>
+                    </Point>
+                    <Point Identifier="kq_pd06&#9;point&#9;110" Ordinal="7" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="512" Y="1256.5"/>
+                    </Point>
+                    <Point Identifier="kq_pd06&#9;point&#9;111" Ordinal="8" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="558.25" Y="1293.25"/>
+                    </Point>
+                </CurvePoints>
+            </Curve>
+            <Curve CurveName="kq_pd08">
+                <ColorFilter CurveName="kq_pd08" Mode="2" ModeString="Intensity" IntensityLow="0" IntensityHigh="50" ForegroundLow="0" ForegroundHigh="10" HueLow="180" HueHigh="360" SaturationLow="50" SaturationHigh="100" ValueLow="0" ValueHigh="50"/>
+                <CurveStyle CurveName="kq_pd08">
+                    <LineStyle Width="1" Color="1" ColorString="Blue" ConnectAs="0" ConnectAsString="FunctionSmooth"/>
+                    <PointStyle Radius="10" LineWidth="1" Color="1" ColorString="Blue" Shape="3" ShapeString="Square"/>
+                </CurveStyle>
+                <CurvePoints>
+                    <Point Identifier="kq_pd08&#9;point&#9;112" Ordinal="0" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="62" Y="816.25"/>
+                    </Point>
+                    <Point Identifier="kq_pd08&#9;point&#9;113" Ordinal="1" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="100" Y="836.75"/>
+                    </Point>
+                    <Point Identifier="kq_pd08&#9;point&#9;114" Ordinal="2" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="153" Y="864.5"/>
+                    </Point>
+                    <Point Identifier="kq_pd08&#9;point&#9;115" Ordinal="3" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="195.75" Y="888.25"/>
+                    </Point>
+                    <Point Identifier="kq_pd08&#9;point&#9;116" Ordinal="4" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="248.75" Y="918.75"/>
+                    </Point>
+                    <Point Identifier="kq_pd08&#9;point&#9;117" Ordinal="5" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="324.25" Y="962"/>
+                    </Point>
+                    <Point Identifier="kq_pd08&#9;point&#9;118" Ordinal="6" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="369" Y="989.75"/>
+                    </Point>
+                    <Point Identifier="kq_pd08&#9;point&#9;119" Ordinal="7" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="440.5" Y="1036.25"/>
+                    </Point>
+                    <Point Identifier="kq_pd08&#9;point&#9;120" Ordinal="8" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="552.25" Y="1123.25"/>
+                    </Point>
+                    <Point Identifier="kq_pd08&#9;point&#9;121" Ordinal="9" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="649.75" Y="1209.25"/>
+                    </Point>
+                    <Point Identifier="kq_pd08&#9;point&#9;122" Ordinal="10" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="689.75" Y="1251"/>
+                    </Point>
+                </CurvePoints>
+            </Curve>
+            <Curve CurveName="kq_pd10">
+                <ColorFilter CurveName="kq_pd10" Mode="2" ModeString="Intensity" IntensityLow="0" IntensityHigh="50" ForegroundLow="0" ForegroundHigh="10" HueLow="180" HueHigh="360" SaturationLow="50" SaturationHigh="100" ValueLow="0" ValueHigh="50"/>
+                <CurveStyle CurveName="kq_pd10">
+                    <LineStyle Width="1" Color="1" ColorString="Blue" ConnectAs="0" ConnectAsString="FunctionSmooth"/>
+                    <PointStyle Radius="10" LineWidth="1" Color="1" ColorString="Blue" Shape="1" ShapeString="Cross"/>
+                </CurveStyle>
+                <CurvePoints>
+                    <Point Identifier="kq_pd10&#9;point&#9;123" Ordinal="0" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="62" Y="537.75"/>
+                    </Point>
+                    <Point Identifier="kq_pd10&#9;point&#9;124" Ordinal="1" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="116.5" Y="576"/>
+                    </Point>
+                    <Point Identifier="kq_pd10&#9;point&#9;125" Ordinal="2" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="159.75" Y="605.5"/>
+                    </Point>
+                    <Point Identifier="kq_pd10&#9;point&#9;126" Ordinal="3" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="211.25" Y="644"/>
+                    </Point>
+                    <Point Identifier="kq_pd10&#9;point&#9;127" Ordinal="4" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="268.25" Y="686.75"/>
+                    </Point>
+                    <Point Identifier="kq_pd10&#9;point&#9;128" Ordinal="5" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="324.75" Y="727.75"/>
+                    </Point>
+                    <Point Identifier="kq_pd10&#9;point&#9;129" Ordinal="6" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="379.75" Y="769.25"/>
+                    </Point>
+                    <Point Identifier="kq_pd10&#9;point&#9;130" Ordinal="7" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="444" Y="820.25"/>
+                    </Point>
+                    <Point Identifier="kq_pd10&#9;point&#9;131" Ordinal="8" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="519.75" Y="882.25"/>
+                    </Point>
+                    <Point Identifier="kq_pd10&#9;point&#9;132" Ordinal="9" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="589.75" Y="943.5"/>
+                    </Point>
+                    <Point Identifier="kq_pd10&#9;point&#9;133" Ordinal="10" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="630.75" Y="981"/>
+                    </Point>
+                    <Point Identifier="kq_pd10&#9;point&#9;134" Ordinal="11" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="687.5" Y="1037"/>
+                    </Point>
+                    <Point Identifier="kq_pd10&#9;point&#9;135" Ordinal="12" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="760" Y="1113"/>
+                    </Point>
+                    <Point Identifier="kq_pd10&#9;point&#9;136" Ordinal="13" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="797.75" Y="1159.75"/>
+                    </Point>
+                    <Point Identifier="kq_pd10&#9;point&#9;137" Ordinal="14" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="840.75" Y="1214.25"/>
+                    </Point>
+                    <Point Identifier="kq_pd10&#9;point&#9;138" Ordinal="15" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="858.75" Y="1237.5"/>
+                    </Point>
+                </CurvePoints>
+            </Curve>
+            <Curve CurveName="kq_pd12">
+                <ColorFilter CurveName="kq_pd12" Mode="2" ModeString="Intensity" IntensityLow="0" IntensityHigh="50" ForegroundLow="0" ForegroundHigh="10" HueLow="180" HueHigh="360" SaturationLow="50" SaturationHigh="100" ValueLow="0" ValueHigh="50"/>
+                <CurveStyle CurveName="kq_pd12">
+                    <LineStyle Width="1" Color="1" ColorString="Blue" ConnectAs="0" ConnectAsString="FunctionSmooth"/>
+                    <PointStyle Radius="10" LineWidth="1" Color="1" ColorString="Blue" Shape="5" ShapeString="X"/>
+                </CurveStyle>
+                <CurvePoints>
+                    <Point Identifier="kq_pd12&#9;point&#9;139" Ordinal="0" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="64.25" Y="181"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;140" Ordinal="1" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="121.5" Y="229.75"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;141" Ordinal="2" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="160.25" Y="264"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;142" Ordinal="3" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="211.75" Y="311.5"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;143" Ordinal="4" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="251.5" Y="348.25"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;144" Ordinal="5" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="305.75" Y="399.25"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;145" Ordinal="6" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="344.5" Y="436.75"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;146" Ordinal="7" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="398.25" Y="488.25"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;147" Ordinal="8" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="441.25" Y="529.75"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;148" Ordinal="9" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="483.25" Y="570.75"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;149" Ordinal="10" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="518.75" Y="607.75"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;150" Ordinal="11" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="556.5" Y="646.5"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;151" Ordinal="12" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="596" Y="686.25"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;152" Ordinal="13" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="632.75" Y="725"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;153" Ordinal="14" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="670.75" Y="765"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;154" Ordinal="15" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="708" Y="806"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;155" Ordinal="16" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="746.5" Y="848"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;156" Ordinal="17" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="802.5" Y="913.25"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;157" Ordinal="18" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="859.75" Y="983.75"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;158" Ordinal="19" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="897.5" Y="1032"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;159" Ordinal="20" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="953.25" Y="1109"/>
+                    </Point>
+                    <Point Identifier="kq_pd12&#9;point&#9;160" Ordinal="21" IsAxisPoint="False" IsXOnly="False" Index="161">
+                        <PositionScreen X="989.75" Y="1163.25"/>
                     </Point>
                 </CurvePoints>
             </Curve>
