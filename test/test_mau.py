@@ -140,6 +140,7 @@ def test_valid_diameter() -> None:
     with raises(ValueError):
         MAUPropeller(diameter=-1.0)
 
+
 @mark.parametrize('blades', [3, 4, 5, 6])
 def test_j_range(blades: int) -> None:
     area_ratio_min = MAUPropeller.area_ratio_min_for_blades(blades)
@@ -160,7 +161,6 @@ def test_j_range(blades: int) -> None:
             assert_allclose(0, p.kt(p.j_max), rtol=1e-15, atol=1e-15)
 
     
-
 @mark.parametrize('blades', [3, 4, 5, 6])
 def test_kq_range(blades: int) -> None:
     area_ratio_min = MAUPropeller.area_ratio_min_for_blades(blades)
