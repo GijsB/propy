@@ -373,7 +373,7 @@ class MAUPropeller(Propeller):
     def _kt5_65(self) -> NDArray[float64]:
         return array([
             - 0.0764546 * self.pd_ratio**0 +
-            + 0.629426 * self.pd_ratio**1 +
+            + 0.6294264 * self.pd_ratio**1 +
             - 0.0654519 * self.pd_ratio**2 +
             - 0.0077443 * self.pd_ratio**3,
 
@@ -415,4 +415,52 @@ class MAUPropeller(Propeller):
             - 0.00174664 * self.pd_ratio**1 +
             + 0.00408763 * self.pd_ratio**2 +
             - 0.00172860 * self.pd_ratio**3,
+        ], dtype=float64)
+
+    @property
+    def _kt5_80(self) -> NDArray[float64]:
+        return array([
+            - 0.0128748 * self.pd_ratio**0 +
+            + 0.3192149 * self.pd_ratio**1 +
+            + 0.3379987 * self.pd_ratio**2 +
+            - 0.1450585 * self.pd_ratio**3,
+
+            - 0.1388527 * self.pd_ratio**0 +
+            - 0.2423269 * self.pd_ratio**1 +
+            - 0.0076956 * self.pd_ratio**2 +
+            + 0.0553135 * self.pd_ratio**3,
+
+            - 0.4703999 * self.pd_ratio**0 +
+            + 0.2855924 * self.pd_ratio**1 +
+            + 0.1192634 * self.pd_ratio**2 +
+            - 0.0997479 * self.pd_ratio**3,
+
+            + 0.3010865 * self.pd_ratio**0 +
+            - 0.4185277 * self.pd_ratio**1 +
+            + 0.1686530 * self.pd_ratio**2 +
+            - 0.0092374 * self.pd_ratio**3,
+        ], dtype=float64)
+    
+    @property
+    def _kq5_80(self) -> NDArray[float64]:
+        return array([
+            + 0.00729184 * self.pd_ratio**0 +
+            - 0.02298344 * self.pd_ratio**1 +
+            + 0.10367990 * self.pd_ratio**2 +
+            - 0.01521706 * self.pd_ratio**3,
+
+            + 0.02803990 * self.pd_ratio**0 +
+            - 0.14434922 * self.pd_ratio**1 +
+            + 0.12027810 * self.pd_ratio**2 +
+            - 0.04279097 * self.pd_ratio**3,
+
+            - 0.00306121 * self.pd_ratio**0 +
+            - 0.03035455 * self.pd_ratio**1 +
+            - 0.00355549 * self.pd_ratio**2 +
+            + 0.01225184 * self.pd_ratio**3,
+
+            + 0.03271438 * self.pd_ratio**0 +
+            - 0.05411986 * self.pd_ratio**1 +
+            + 0.03452750 * self.pd_ratio**2 +
+            - 0.00889198 * self.pd_ratio**3,
         ], dtype=float64)
