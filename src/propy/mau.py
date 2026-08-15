@@ -23,9 +23,9 @@ class MAUPropeller(Propeller):
     blades_min: ClassVar[int] = 3
     blades_max: ClassVar[int] = 6
 
-    @property
-    def area_ratio_min(self) -> float:
-        match self.blades:
+    @staticmethod
+    def area_ratio_min_for_blades(blades: int) -> float:
+        match blades:
             case 3:
                 return 0.35
             case 4:
@@ -38,8 +38,12 @@ class MAUPropeller(Propeller):
                 return float('NaN')
 
     @property
-    def area_ratio_max(self) -> float:
-        match self.blades:
+    def area_ratio_min(self) -> float:
+        return self.area_ratio_min_for_blades(self.blades)
+
+    @staticmethod
+    def area_ratio_max_for_blades(blades: int) -> float:
+        match blades:
             case 3:
                 return 0.50
             case 4:
@@ -50,20 +54,28 @@ class MAUPropeller(Propeller):
                 return 0.85
             case _:
                 return float('NaN')
-            
+
     @property
-    def pd_ratio_min(self) -> float:
-        match self.blades:
+    def area_ratio_max(self) -> float:
+        return self.area_ratio_max_for_blades(self.blades)
+
+    @staticmethod
+    def pd_ratio_min_for_blades(blades: int) -> float:
+        match blades:
             case 3 | 5:
                 return 0.4
             case 4 | 6:
                 return 0.5
             case _:
                 return float('NaN')
-    
+
     @property
-    def pd_ratio_max(self) -> float:
-        match self.blades:
+    def pd_ratio_min(self) -> float:
+        return self.pd_ratio_min_for_blades(self.blades)
+
+    @staticmethod
+    def pd_ratio_max_for_blades(blades: int) -> float:
+        match blades:
             case 3:
                 return 1.2
             case 4 | 5:
@@ -73,13 +85,97 @@ class MAUPropeller(Propeller):
             case _:
                 return float('NaN')
     
+    @property
+    def pd_ratio_max(self) -> float:
+        return self.pd_ratio_max_for_blades(self.blades)
+    
     @cached_property
     def kt(self) -> Callable[[ScalarOrArray], NDArray[float64]]:
-        return lambda j: array(j)
+        match self.blades:
+            case 3:
+                p = Polynomial(symbol='J', coef=self._kt3)
+            case 4:
+                p = Polynomial(symbol='J', coef=self._kt4)
+            case 5:
+                p = Polynomial(symbol='J', coef=self._kt5)
+            case 6:
+                p = Polynomial(symbol='J', coef=self._kt6)
+            case _:
+                p = Polynomial(coef=[])
+
+        def res(j: ScalarOrArray) -> NDArray[float64]:
+            return array(p(j), dtype=float64)
+        
+        return res
 
     @cached_property
     def kq(self) -> Callable[[ScalarOrArray], NDArray[float64]]:
-        return lambda j: array(j)
+        match self.blades:
+            case 3:
+                p = Polynomial(symbol='J', coef=self._kq3)
+            case 4:
+                p = Polynomial(symbol='J', coef=self._kq4)
+            case 5:
+                p = Polynomial(symbol='J', coef=self._kq5)
+            case 6:
+                p = Polynomial(symbol='J', coef=self._kq6)
+            case _:
+                p = Polynomial(coef=[])
+
+        def res(j: ScalarOrArray) -> NDArray[float64]:
+            return array(p(j), dtype=float64)
+        
+        return res
+
+    @property
+    def _kt3(self) -> NDArray[float64]:
+        return self._kt3_35 + (self.area_ratio - 0.35) * (self._kt3_50 - self._kt3_35) / (0.5 - 0.35)
+
+    @property
+    def _kt4(self) -> NDArray[float64]:
+        if self.area_ratio < 0.55:
+            return self._kt4_40 + (self.area_ratio - 0.4) * (self._kt4_55 - self._kt4_40) / (0.55 - 0.4)
+        else:
+            return self._kt4_55 + (self.area_ratio - 0.55) * (self._kt4_70 - self._kt4_55) / (0.70 - 0.55)
+
+    @property
+    def _kt5(self) -> NDArray[float64]:
+        if self.area_ratio < 0.65:
+            return self._kt5_50 + (self.area_ratio - 0.5) * (self._kt5_65 - self._kt5_50) / (0.65 - 0.5)
+        else:
+            return self._kt5_65 + (self.area_ratio - 0.65) * (self._kt5_80 - self._kt5_65) / (0.80 - 0.65)
+
+    @property
+    def _kt6(self) -> NDArray[float64]:
+        if self.area_ratio < 0.7:
+            return self._kt6_55 + (self.area_ratio - 0.55) * (self._kt6_70 - self._kt6_55) / (0.70 - 0.55)
+        else:
+            return self._kt6_70 + (self.area_ratio - 0.7) * (self._kt6_85 - self._kt6_70) / (0.85 - 0.7)
+
+    @property
+    def _kq3(self) -> NDArray[float64]:
+        return self._kq3_35 + (self.area_ratio - 0.35) * (self._kq3_50 - self._kq3_35) / (0.5 - 0.35)
+    
+    @property
+    def _kq4(self) -> NDArray[float64]:
+        if self.area_ratio < 0.55:
+            return self._kq4_40 + (self.area_ratio - 0.4) * (self._kq4_55 - self._kq4_40) / (0.55 - 0.4)
+        else:
+            return self._kq4_55 + (self.area_ratio - 0.55) * (self._kq4_70 - self._kq4_55) / (0.70 - 0.55)
+
+    @property
+    def _kq5(self) -> NDArray[float64]:
+        if self.area_ratio < 0.65:
+            return self._kq5_50 + (self.area_ratio - 0.5) * (self._kq5_65 - self._kq5_50) / (0.65 - 0.5)
+        else:
+            return self._kq5_65 + (self.area_ratio - 0.65) * (self._kq5_80 - self._kq5_65) / (0.80 - 0.65)
+
+    @property
+    def _kq6(self) -> NDArray[float64]:
+        if self.area_ratio < 0.7:
+            return self._kq6_55 + (self.area_ratio - 0.55) * (self._kq6_70 - self._kq6_55) / (0.70 - 0.55)
+        else:
+            return self._kq6_70 + (self.area_ratio - 0.7) * (self._kq6_85 - self._kq6_70) / (0.85 - 0.7)
 
     @property
     def _kt3_35(self) -> NDArray[float64]:
