@@ -232,7 +232,7 @@ def test_kt_kq_bernitsas(blades: int, area_ratio: float) -> None:
         [2] M. M. Bernitsas, D. Ray and P. Kinley: Kt, Kq and efficiency curves for the wageningen b-series propellers,
         Department of Naval Architecture and Marine Engineering, University of Michigan. May 1981.
     """
-    with open(f'test/data/z{blades}_a{int(area_ratio*10)}.csv') as file:
+    with open(f'test/data/B{blades}-{int(area_ratio*100)}.csv') as file:
         for line in file:
             if line.startswith('x'):
                 _, pd_ratio = line.split(';')

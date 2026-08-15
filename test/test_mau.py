@@ -180,3 +180,4 @@ def test_kq_range(blades: int) -> None:
             # The kq-curve should stop before it's at 0, where kt=0
             assert_allclose(p.kq_min, p.kq(p.j_max), rtol=1e-15, atol=1e-15)
             assert_allclose(p.kq_max, p.kq(p.j_min), rtol=1e-15, atol=1e-15)
+
