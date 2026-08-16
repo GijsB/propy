@@ -184,6 +184,8 @@ def test_kq_range(blades: int) -> None:
 
 @mark.parametrize('blades,area_ratio', [
     (3, 0.35),
+    (3, 0.50),
+    (4, 0.40),
 ])
 def test_kt_kq(blades: int, area_ratio: float) -> None:
     """
@@ -191,6 +193,7 @@ def test_kt_kq(blades: int, area_ratio: float) -> None:
     """
     with open(f'test/data/MAU{blades}-{int(area_ratio*100)}.csv') as file:
         for line in file:
+            print(line)
             if line.startswith('x'):
                 _, pd_ratio = line.split(',')
                 k_type, pd_ratio = pd_ratio.split('_')
