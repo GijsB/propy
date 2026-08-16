@@ -31,7 +31,7 @@
                 </Point>
                 <Point Identifier="Axes&#9;point&#9;5" Ordinal="3" IsAxisPoint="True" IsXOnly="False" Index="157">
                     <PositionScreen X="1069.5" Y="1349.5"/>
-                    <PositionGraph X="1.65" Y="0"/>
+                    <PositionGraph X="1.7" Y="0"/>
                 </Point>
             </CurvePoints>
         </Curve>
