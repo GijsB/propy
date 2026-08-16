@@ -12,7 +12,7 @@ description     = "A package for dimensioning and optimizing (marine) propellers
 dynamic         = ["version"]
 dependencies    = [
     "numpy>=2.0",
-    "scipy>=1.10",
+    "scipy>=1.15",
 ]
 authors         = [
     {name = "Gijs Bruining"}

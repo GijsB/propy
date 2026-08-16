@@ -89,36 +89,36 @@ def test_valid_blades() -> None:
 
 def test_valid_area_ratio() -> None:
     # Test whether limits are set
-    assert GawnBurrillPropeller.area_ratio_min > 0
-    assert GawnBurrillPropeller.area_ratio_max >= GawnBurrillPropeller.area_ratio_min
+    assert p.area_ratio_min > 0
+    assert p.area_ratio_max >= p.area_ratio_min
 
     # Test ability to instantiate at limits
-    GawnBurrillPropeller(area_ratio=GawnBurrillPropeller.area_ratio_min)
-    GawnBurrillPropeller(area_ratio=GawnBurrillPropeller.area_ratio_max)
+    GawnBurrillPropeller(area_ratio=p.area_ratio_min)
+    GawnBurrillPropeller(area_ratio=p.area_ratio_max)
 
     # Test ability to instantiate outside limits
     with raises(ValueError):
-        GawnBurrillPropeller(area_ratio=GawnBurrillPropeller.area_ratio_min * 0.9)
+        GawnBurrillPropeller(area_ratio=p.area_ratio_min * 0.9)
 
     with raises(ValueError):
-        GawnBurrillPropeller(area_ratio=GawnBurrillPropeller.area_ratio_max * 1.1)
+        GawnBurrillPropeller(area_ratio=p.area_ratio_max * 1.1)
 
 
 def test_valid_pd_ratio() -> None:
     # Test whether limits are set
-    assert GawnBurrillPropeller.pd_ratio_min > 0
-    assert GawnBurrillPropeller.pd_ratio_max >= GawnBurrillPropeller.pd_ratio_min
+    assert p.pd_ratio_min > 0
+    assert p.pd_ratio_max >= p.pd_ratio_min
 
     # Test ability to instantiate at limits
-    GawnBurrillPropeller(pd_ratio=GawnBurrillPropeller.pd_ratio_min)
-    GawnBurrillPropeller(pd_ratio=GawnBurrillPropeller.pd_ratio_max)
+    GawnBurrillPropeller(pd_ratio=p.pd_ratio_min)
+    GawnBurrillPropeller(pd_ratio=p.pd_ratio_max)
 
     # Test ability to instantiate outside limits
     with raises(ValueError):
-        GawnBurrillPropeller(pd_ratio=GawnBurrillPropeller.pd_ratio_min * 0.9)
+        GawnBurrillPropeller(pd_ratio=p.pd_ratio_min * 0.9)
 
     with raises(ValueError):
-        GawnBurrillPropeller(pd_ratio=GawnBurrillPropeller.pd_ratio_max * 1.1)
+        GawnBurrillPropeller(pd_ratio=p.pd_ratio_max * 1.1)
 
 
 def test_valid_diameter() -> None:

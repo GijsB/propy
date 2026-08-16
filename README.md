@@ -17,8 +17,9 @@ After installation, the package can be used like any other python package.
 
 ### Propeller types
 The propy module contains parametric propeller models of the following types:
- - `WageningenBPropeller`: The famous Wageningen B-type propeller.
+ - `WageningenBPropeller`: The Wageningen B-type propeller.
  - `GawnBurrillPropeller`: The Gawn-Burrill series.
+ - `MAUPropeller`: The MAU series.
  - ...
 
 

@@ -2,6 +2,7 @@ from propy.propeller import Propeller, ScalarOrArray
 
 from dataclasses import dataclass
 from typing import ClassVar, Callable
+from functools import cached_property
 from math import sqrt
 
 from numpy.polynomial.polynomial import Polynomial
@@ -22,16 +23,28 @@ class GawnBurrillPropeller(Propeller):
 
     blades_min: ClassVar[int] = 3
     blades_max: ClassVar[int] = 3
-    area_ratio_min: ClassVar[float] = 0.34 * 0.5 * (2.75 + 0.5 / 3)
-    area_ratio_max: ClassVar[float] = 0.34 * 1.1 * (2.75 + 1.1 / 3)
-    pd_ratio_min: ClassVar[float] = 0.8
-    pd_ratio_max: ClassVar[float] = 1.8
+    
+    @staticmethod
+    def area_ratio_min_for_blades(blades: int) -> float:
+        return 0.34 * 0.5 * (2.75 + 0.5 / 3)
+    
+    @staticmethod
+    def area_ratio_max_for_blades(blades: int) -> float:
+        return 0.34 * 1.1 * (2.75 + 1.1 / 3)
+
+    @staticmethod
+    def pd_ratio_min_for_blades(blades: int) -> float:
+        return 0.8
+    
+    @staticmethod
+    def pd_ratio_max_for_blades(blades: int) -> float:
+        return 1.8
 
     @property
     def j_min(self) -> float:
         return self.area_ratio / 2
 
-    @property
+    @cached_property
     def kt(self) -> Callable[[ScalarOrArray], NDArray[float64]]:
         area_ratio = (sqrt(0.935**2 + 4 * 0.113 * self.area_ratio) - 0.935) / 2 / 0.1133
         p = Polynomial(symbol='J', coef=[
@@ -61,7 +74,7 @@ class GawnBurrillPropeller(Propeller):
         
         return res
 
-    @property
+    @cached_property
     def kq(self) -> Callable[[ScalarOrArray], NDArray[float64]]:
         area_ratio = (sqrt(0.935**2 + 4 * 0.113 * self.area_ratio) - 0.935) / 2 / 0.1133
         p = Polynomial(symbol='J', coef=[
