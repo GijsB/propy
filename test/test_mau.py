@@ -192,6 +192,7 @@ def test_kq_range(blades: int) -> None:
     (5, 0.65),
     (5, 0.80),
     (6, 0.55),
+    (6, 0.70),
 ])
 def test_kt_kq(blades: int, area_ratio: float) -> None:
     """
