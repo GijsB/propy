@@ -197,7 +197,9 @@ def test_kq_range(blades: int) -> None:
 ])
 def test_kt_kq(blades: int, area_ratio: float) -> None:
     """
+    Compare the calculated kq values with manual digitized data from [1].
     
+        [1] Jun Chun Suh, Chang Sup Lee, Polynomial Representation for MAU-Propeller Open Water Characteristics
     """
     with open(f'test/data/MAU{blades}-{int(area_ratio*100)}.csv') as file:
         for line in file:
