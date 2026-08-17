@@ -40,10 +40,42 @@ class Propeller(ABC):
 
     blades_min:     ClassVar[int] = -1
     blades_max:     ClassVar[int] = -1
-    area_ratio_min: ClassVar[float] = float('NaN')
-    area_ratio_max: ClassVar[float] = float('NaN')
-    pd_ratio_min:   ClassVar[float] = float('NaN')
-    pd_ratio_max:   ClassVar[float] = float('NaN')
+
+    @staticmethod
+    @abstractmethod
+    def area_ratio_min_for_blades(blades: int) -> float:
+        pass
+
+    @property
+    def area_ratio_min(self) -> float:
+        return self.area_ratio_min_for_blades(self.blades)
+
+    @staticmethod
+    @abstractmethod
+    def area_ratio_max_for_blades(blades: int) -> float:
+        pass
+
+    @property
+    def area_ratio_max(self) -> float:
+        return self.area_ratio_max_for_blades(self.blades)
+
+    @staticmethod
+    @abstractmethod
+    def pd_ratio_min_for_blades(blades: int) -> float:
+        pass
+
+    @property
+    def pd_ratio_min(self) -> float:
+        return self.pd_ratio_min_for_blades(self.blades)
+    
+    @staticmethod
+    @abstractmethod
+    def pd_ratio_max_for_blades(blades: int) -> float:
+        pass
+
+    @property
+    def pd_ratio_max(self) -> float:
+        return self.pd_ratio_max_for_blades(self.blades)
 
     # Class housekeeping
     @classmethod
@@ -107,7 +139,7 @@ class Propeller(ABC):
         return float(self.kq(self.j_max))
 
     # Basic model as a function of the advance ratio (j)
-    @property
+    @cached_property
     @abstractmethod
     def kt(self) -> Callable[[ScalarOrArray], NDArray[float64]]:
         """
@@ -135,7 +167,7 @@ class Propeller(ABC):
         """
         pass
 
-    @property
+    @cached_property
     @abstractmethod
     def kq(self) -> Callable[[ScalarOrArray], NDArray[float64]]:
         """
@@ -212,7 +244,7 @@ class Propeller(ABC):
 
         # The thrust coefficient at j_min
         beta_min = atan2(self.j_min, 0.7 * pi)
-        ct_max = self.kt_max * 8 / pi / (0.7**2 * pi**2)
+        ct_max = self.kt_max * 8 / pi / (self.j_min**2 + 0.7**2 * pi**2)
 
         # Linearly fit the ct(beta) function on these two points
         (a_c, ), (a_s, ) = solve(
@@ -264,7 +296,7 @@ class Propeller(ABC):
 
         # The torque coefficient at J=0 (and thus beta=0)
         beta_min = atan2(self.j_min, 0.7 * pi)
-        cq_max = self.kq_max * 8 / pi / (0.7 ** 2 * pi ** 2)
+        cq_max = self.kq_max * 8 / pi / (self.j_min**2 + 0.7**2 * pi**2)
 
         # Linearly fit the ct(beta) function on these two points
         (a_c,), (a_s,) = solve(
@@ -832,7 +864,7 @@ class Propeller(ABC):
 
     def torque_margin(self, speed: float, thrust: float, torque_max: float, rho: float = 1025.0) -> float:
         """
-        Calculate the (normalized) required torqeu, can be a constraint to prevent gears from breaking.
+        Calculate the (normalized) required torque, can be a constraint to prevent gears from breaking.
 
         The result is normalized relative to the given maximum torque. This way, the optimizer weighs all the
         constrains in a similar way.

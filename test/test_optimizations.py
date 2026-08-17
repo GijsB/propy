@@ -6,12 +6,13 @@ from numpy import pi
 
 from propy.wageningen_b import WageningenBPropeller
 from propy.gawn_burrill import GawnBurrillPropeller
+from propy.mau import MAUPropeller
 from propy.propeller import Propeller
 from propy.optimization import slsqp, trust_constrained, OptimizationMethod
 
 
 optimization_methods = (slsqp, trust_constrained, )
-propeller_types = (WageningenBPropeller, GawnBurrillPropeller)
+propeller_types = (WageningenBPropeller, GawnBurrillPropeller, MAUPropeller)
 
 
 @mark.parametrize('method', optimization_methods)
