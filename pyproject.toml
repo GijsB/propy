@@ -1,5 +1,4 @@
 [build-system]
-requires-python = ">=3.11"
 requires        = [
     "setuptools>=80",
     "setuptools-scm[simple]>=9.2"
@@ -10,6 +9,7 @@ build-backend   = "setuptools.build_meta"
 name            = "propy"
 description     = "A package for dimensioning and optimizing (marine) propellers"
 dynamic         = ["version"]
+requires-python = ">=3.11"
 dependencies    = [
     "numpy>=2.0",
     "scipy>=1.10",
@@ -38,7 +38,7 @@ dev = [
 minversion = "6.0"
 addopts = [
     "--doctest-modules",
-    "--doctest-glob='*.md'",
+    "--doctest-glob=*.md",
     "--benchmark-warmup=on",
     "--benchmark-warmup-iterations=2",
     "--benchmark-max-time=0.1"

@@ -182,7 +182,7 @@ def test_kt_inv_roundtrip(blades: int, area_ratio: float, pd_ratio: float) -> No
         area_ratio=area_ratio,
         pd_ratio=pd_ratio
     )
-    js = linspace(prop.j_min, prop.j_min)
+    js = linspace(prop.j_min, prop.j_max)
     assert prop.kt_inv(prop.kt(js)) == approx(js)
 
 
@@ -195,5 +195,5 @@ def test_kq_inv_roundtrip(blades: int, area_ratio: float, pd_ratio: float) -> No
         area_ratio=area_ratio,
         pd_ratio=pd_ratio
     )
-    js = linspace(prop.j_min, prop.j_min)
+    js = linspace(prop.j_min, prop.j_max)
     assert prop.kq_inv(prop.kq(js)) == approx(js)
