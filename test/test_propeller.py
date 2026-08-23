@@ -1,4 +1,4 @@
-from math import atan2
+from math import atan2, isfinite
 
 from propy.propeller import Propeller
 from propy.wageningen_b import WageningenBPropeller
@@ -263,3 +263,21 @@ def test_kq_inv_roundtrip(blades: int, area_ratio_rel: float, pd_ratio_rel: floa
     )
     js = linspace(prop.j_min, prop.j_max)
     assert prop.kq_inv(prop.kq(js)) == approx(js)
+
+
+
+@mark.parametrize('prop_type', [WageningenBPropeller])
+def test_extrapolation(prop_type: type[Propeller]) -> None:
+    prop = prop_type()
+
+    assert not isfinite(prop.kt(prop.j_min - 0.1))
+    assert isfinite(prop.kt(prop.j_min))
+    assert isfinite(prop.kt(prop.j_max))
+    assert not isfinite(prop.kt(prop.j_max + 0.1))
+
+    # assert not isfinite(prop.kt(prop.j_min - 0.1))
+    # assert isfinite(prop.kt(prop.j_min))
+    # assert isfinite(prop.kt(prop.j_max))
+    # assert not isfinite(prop.kt(prop.j_max + 0.1))
+
+    
